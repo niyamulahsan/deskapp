@@ -29,7 +29,7 @@ deno task dev
 
 A desktop window opens with the starter dashboard, backed by the full local stack (SQLite, queue, cron, storage, Playwright) exposed through the `app` facade.
 
-Requires **Deno >= 2.4** and a desktop OS (Windows, macOS, or Linux).
+Requires **Deno >= 2.9** and a desktop OS (Windows, macOS, or Linux).
 
 ### Headless
 
@@ -41,26 +41,26 @@ deno run -A src/main.ts
 
 ### Runtime
 
-| Tool  | Minimum version | Notes                                                            |
-| ----- | --------------- | ---------------------------------------------------------------- |
-| **Deno** | `>= 2.4`     | `deno create` scaffolds the starter; `deno task maker` runs everything |
+| Tool     | Minimum version | Notes                                                                  |
+| -------- | --------------- | ---------------------------------------------------------------------- |
+| **Deno** | `>= 2.4`        | `deno create` scaffolds the starter; `deno task maker` runs everything |
 
 ## Features
 
-| Category       | What you get                                                      |
-| -------------- | ----------------------------------------------------------------- |
-| **Windows**    | Window presets, manager, native chrome, dialogs — all via `app.window.*` |
-| **Bindings**   | Backend controllers auto-registered and callable from the UI in-process |
-| **Storage**    | Private / public / tmp app storage with JSON + file helpers       |
-| **Database**   | SQLite + Drizzle ORM, generated schema and migrations             |
-| **Queue**      | Recursive, resumable queue with status tracking                   |
-| **Scheduler**  | Cron-based task scheduling                                        |
-| **Validation** | Zod-powered request validation                                    |
-| **Security**   | Bcrypt password hashing, CORS, rate limiting                      |
-| **Automation** | Playwright control of webview tabs and external pages             |
-| **UI**         | Vue 3 + Vite — run a dev server with HMR or serve the built SPA   |
-| **CLI**        | Maker commands for modules, controllers, models, seeds, bundling  |
-| **Distribution** | Native folder apps / binaries per OS (`bundle:*`)              |
+| Category         | What you get                                                             |
+| ---------------- | ------------------------------------------------------------------------ |
+| **Windows**      | Window presets, manager, native chrome, dialogs — all via `app.window.*` |
+| **Bindings**     | Backend controllers auto-registered and callable from the UI in-process  |
+| **Storage**      | Private / public / tmp app storage with JSON + file helpers              |
+| **Database**     | SQLite + Drizzle ORM, generated schema and migrations                    |
+| **Queue**        | Recursive, resumable queue with status tracking                          |
+| **Scheduler**    | Cron-based task scheduling                                               |
+| **Validation**   | Zod-powered request validation                                           |
+| **Security**     | Bcrypt password hashing, CORS, rate limiting                             |
+| **Automation**   | Playwright control of webview tabs and external pages                    |
+| **UI**           | Vue 3 + Vite — run a dev server with HMR or serve the built SPA          |
+| **CLI**          | Maker commands for modules, controllers, models, seeds, bundling         |
+| **Distribution** | Native folder apps / binaries per OS (`bundle:*`)                        |
 
 ## Architecture
 
@@ -113,20 +113,20 @@ await app.net.fetchJson("https://jsonplaceholder.typicode.com/todos/1");
 
 ## CLI Reference
 
-| Command                          | Description                              |
-| -------------------------------- | ---------------------------------------- |
-| `deno task dev`                  | Codegen + build UI + open desktop window |
-| `deno task ui`                   | Run the Vue dev server (HMR)             |
-| `deno run -A src/main.ts`        | Headless, tray-only service              |
-| `deno task test`                 | Run Deno tests                           |
-| `deno task maker`                | List all maker commands                  |
-| `deno task maker make:module <n>`| Scaffold a new module                    |
-| `deno task maker bindings:gen`   | Regenerate the UI bindings               |
-| `deno task maker db:schema`      | Regenerate `src/database/schema.ts`      |
-| `deno task maker db:migrate`     | Generate + run migrations                |
-| `deno task maker db:seed`        | Run all seeders                          |
-| `deno task maker db:studio`      | Launch Drizzle Studio                    |
-| `deno task maker bundle:win`     | Bundle a Windows folder app              |
+| Command                           | Description                              |
+| --------------------------------- | ---------------------------------------- |
+| `deno task dev`                   | Codegen + build UI + open desktop window |
+| `deno task ui`                    | Run the Vue dev server (HMR)             |
+| `deno run -A src/main.ts`         | Headless, tray-only service              |
+| `deno task test`                  | Run Deno tests                           |
+| `deno task maker`                 | List all maker commands                  |
+| `deno task maker make:module <n>` | Scaffold a new module                    |
+| `deno task maker bindings:gen`    | Regenerate the UI bindings               |
+| `deno task maker db:schema`       | Regenerate `src/database/schema.ts`      |
+| `deno task maker db:migrate`      | Generate + run migrations                |
+| `deno task maker db:seed`         | Run all seeders                          |
+| `deno task maker db:studio`       | Launch Drizzle Studio                    |
+| `deno task maker bundle:win`      | Bundle a Windows folder app              |
 
 ## Distribution
 
