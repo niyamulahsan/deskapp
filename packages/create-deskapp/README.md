@@ -65,8 +65,9 @@ window, database, queue, and scheduler are available everywhere.
 ### Deno
 
 ```sh
-deno create jsr:@niyam/deskapp my-app
+mkdir my-app
 cd my-app
+deno create jsr:@niyam/deskapp
 deno install
 deno task dev
 ```

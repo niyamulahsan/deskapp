@@ -34,7 +34,7 @@ features:
     details: Bounded in-process queue and croner-backed scheduling built into the facade.
   - icon: 🚀
     title: Scaffold &amp; build
-    details: <code>deno create jsr:@niyam/deskapp my-app</code> gets you running, and <code>deno task maker bundle:win</code> ships a package.
+    details: <code>deno create jsr:@niyam/deskapp</code> gets you running, and <code>deno task maker bundle:win</code> ships a package.
 ---
 
 <style>

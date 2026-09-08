@@ -7,19 +7,20 @@
 
 ## Create a project
 
+Create a folder, step into it, and scaffold:
+
 ```sh
-deno create jsr:@niyam/deskapp my-app
+mkdir my-app
+cd my-app
+deno create jsr:@niyam/deskapp
 ```
 
-This downloads the `@niyam/deskapp` package from JSR and runs its `./create` scaffold script. Your whole framework + starter app is copied into `my-app/`, a `.env` is created from `.env.example`, and everything is ready to run.
+This downloads the `@niyam/deskapp` package from JSR and runs its `./create` scaffold script. Your whole framework + starter app is copied into the current folder (named after it), a `.env` is created from `.env.example`, and everything is ready to run.
 
 ::: tip
-The `jsr:` prefix is required — `deno create deskapp` by itself is not supported. If you want to overwrite an existing non-empty folder, add `--force`:
-
-```sh
-deno create jsr:@niyam/deskapp my-app -- --force
-```
-
+- The `jsr:` prefix is required — `deno create deskapp` by itself is not supported.
+- Alternatively, scaffold from anywhere with an explicit name:
+  `deno run -A jsr:@niyam/deskapp/create my-app` (add `--force` to overwrite an existing folder).
 :::
 
 ## Install dependencies

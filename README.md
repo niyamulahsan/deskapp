@@ -20,8 +20,9 @@ deskapp is a batteries-included desktop framework built on **Deno Desktop**: a D
 ## Quick Start
 
 ```bash
-deno create jsr:@niyam/deskapp my-app
+mkdir my-app
 cd my-app
+deno create jsr:@niyam/deskapp
 deno install
 deno task dev
 ```

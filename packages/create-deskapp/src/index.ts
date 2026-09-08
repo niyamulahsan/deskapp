@@ -3,11 +3,14 @@
 /**
  * index.ts — the `./create` entry of `@niyam/deskapp`.
  *
- * `deno create jsr:@niyam/deskapp my-app` downloads this package and runs
- * this script. The scaffold content lives in ../template (a clean sync of the
- * repo's live template/, produced by scripts/sync-template.mjs). The script
- * copies it into ./my-app, materializes `.gitignore` from the gitignore-stub,
- * writes `.env` from `.env.example`, renames the app, and prints next steps.
+ * `deno create jsr:@niyam/deskapp` downloads this package, runs the `./create`
+ * entry, and scaffolds the starter project. When run with a project name it
+ * creates a new folder; when run without one it scaffolds into the current
+ * directory (the `deno create` flow). The scaffold content lives in
+ * ../template — a clean sync of the repo's live template/ produced by
+ * scripts/sync-template.mjs. The script copies it into place, materializes
+ * `.gitignore` from the gitignore-stub, writes `.env` from `.env.example`,
+ * renames the app, and prints next steps.
  */
 
 import {
@@ -15,11 +18,12 @@ import {
   existsSync,
   mkdirSync,
   readFileSync,
+  readdirSync,
   renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const TEMPLATE = fileURLToPath(new URL("../template/", import.meta.url));
@@ -49,26 +53,44 @@ function toPascal(name: string): string {
 
 function main(): void {
   const { name, force } = parseArgs(Deno.args);
+  const inPlace = !name;
+  const projectName = inPlace ? basename(resolve(".")) : name!;
 
-  if (!name || !isValidName(name)) {
+  if (!isValidName(projectName)) {
+    console.error(`Error: "${projectName}" is not a valid project name.`);
     console.error(
-      "Usage: deno run -A jsr:@niyam/deskapp/create <project-name> [--force]",
+      "Project names must use letters, digits, dashes, or underscores.",
     );
-    console.error("Project name may use alphanumeric, dashes, or underscores.");
+    console.error();
+    console.error("Usage:");
+    console.error("  deno create jsr:@niyam/deskapp            # run inside your new project folder");
+    console.error("  deno run -A jsr:@niyam/deskapp/create <project-name> [--force]");
     Deno.exit(1);
   }
 
-  const target = resolve(name);
+  const target = inPlace ? resolve(".") : resolve(projectName);
 
-  if (existsSync(target)) {
-    if (!force) {
-      console.error(`Error: Directory "${name}" already exists. Pass --force to overwrite it.`);
+  if (inPlace) {
+    if (readdirSync(target).length > 0 && !force) {
+      console.error(
+        `Error: the current directory is not empty. Run in an empty folder, or scaffold with a name:`,
+      );
+      console.error("  deno run -A jsr:@niyam/deskapp/create <project-name> [--force]");
       Deno.exit(1);
     }
-    rmSync(target, { recursive: true, force: true });
+  } else {
+    if (existsSync(target)) {
+      if (!force) {
+        console.error(
+          `Error: Directory "${projectName}" already exists. Pass --force to overwrite it.`,
+        );
+        Deno.exit(1);
+      }
+      rmSync(target, { recursive: true, force: true });
+    }
+    mkdirSync(target, { recursive: true });
   }
 
-  mkdirSync(target, { recursive: true });
   cpSync(TEMPLATE, target, { recursive: true });
 
   const gitignoreStub = join(target, "gitignore-stub");
@@ -88,14 +110,16 @@ function main(): void {
   if (existsSync(denoJsonPath)) {
     const cfg = JSON.parse(readFileSync(denoJsonPath, "utf-8"));
     if (cfg?.desktop?.app?.name === "Deskapp") {
-      cfg.desktop.app.name = toPascal(name);
+      cfg.desktop.app.name = toPascal(projectName);
     }
     writeFileSync(denoJsonPath, JSON.stringify(cfg, null, 2) + "\n");
   }
 
-  console.log(`Done! Created "${name}" at ${target}`);
+  console.log(inPlace
+    ? `Done! Created deskapp project "${projectName}" in the current directory.`
+    : `Done! Created "${projectName}" at ${target}`);
   console.log();
-  console.log("  cd " + name);
+  if (!inPlace) console.log("  cd " + projectName);
   console.log("  deno install              # resolve deps (vite, sass, drizzle, ...)");
   console.log("  deno task dev             # codegen + build UI + open the desktop window");
   console.log("  deno run -A src/main.ts   # headless (no window, tray-only)");
