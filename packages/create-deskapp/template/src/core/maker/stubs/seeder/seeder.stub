@@ -1,0 +1,19 @@
+import { db } from "@/core/database/connection.ts";
+import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{name}}.model.ts";
+
+export const table = {{tableVariable}};
+
+export default async function {{ClassName}}Seeder() {
+  const rows: (typeof {{tableVariable}}.$inferInsert)[] = [
+    // Add your seed data here
+    // Example:
+    // { name: "{{ClassName}} 1" },
+    // { name: "{{ClassName}} 2" }
+  ];
+
+  for (const row of rows) {
+    await db.insert({{tableVariable}}).values(row);
+  }
+
+  console.log("{{ClassName}} seeder completed");
+}

@@ -1,0 +1,59 @@
+import { validate } from "@/core/facade.ts";
+import {
+  Create{{ClassName}}Schema,
+  Update{{ClassName}}Schema,
+  {{ClassName}}IdParamsSchema,
+} from "@/modules/{{module}}/controllers/{{controller}}.schema.ts";
+
+/**
+ * Why: Returns collection response shape for list pages.
+ * When: Used by the frontend list view.
+ * Where: bound as "{{module}}.{{controller}}.index".
+ */
+export const index = async () => {
+  return { message: "{{controller}} list fetched successfully", data: [] };
+};
+
+/**
+ * Why: Returns one resource by validated id.
+ * When: Used by detail screens or fetch-by-id calls.
+ * Where: bound as "{{module}}.{{controller}}.show".
+ */
+export const show = async (params: unknown) => {
+  const { id } = await validate.run({{ClassName}}IdParamsSchema, params);
+  return { message: "{{controller}} fetched successfully", data: { id, name: "" } };
+};
+
+/**
+ * Why: Creates a new resource from validated input.
+ * When: Used by create form submissions.
+ * Where: bound as "{{module}}.{{controller}}.store".
+ */
+export const store = async (body: unknown) => {
+  await validate.run(Create{{ClassName}}Schema, body);
+  return { message: "{{controller}} created successfully" };
+};
+
+/**
+ * Why: Updates an existing resource using validated id + body.
+ * When: Used by edit/update form submissions.
+ * Where: bound as "{{module}}.{{controller}}.update".
+ */
+export const update = async (input: { params: unknown; body: unknown }) => {
+  await validate.run({{ClassName}}IdParamsSchema, input.params);
+  await validate.run(Update{{ClassName}}Schema, input.body);
+  return { message: "{{controller}} updated successfully" };
+};
+
+/**
+ * Why: Deletes one resource by validated id.
+ * When: Used by delete actions.
+ * Where: bound as "{{module}}.{{controller}}.destroy".
+ */
+export const destroy = async (params: unknown) => {
+  await validate.run({{ClassName}}IdParamsSchema, params);
+  return { message: "{{controller}} deleted successfully" };
+};
+
+/** Handlers exposed to the frontend via the bindings registry. */
+export const handlers = { index, show, store, update, destroy };

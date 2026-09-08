@@ -1,0 +1,15 @@
+{
+  "name": "@niyam/deskapp-docs",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "@iconify-json/tabler": "^1.2.38",
+    "vitepress": "^1.6.0"
+  }
+}

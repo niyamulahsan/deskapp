@@ -1,0 +1,16 @@
+# Local environment (never commit secrets)
+.env
+
+# Node.js
+node_modules/
+
+# Build output
+dist/
+
+# App-managed runtime data (dev databases, state)
+src/storage/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.log

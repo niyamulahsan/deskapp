@@ -1,0 +1,17 @@
+{
+  "name": "@niyam/deskapp",
+  "version": "1.0.0",
+  "description": "Scaffold a new deskapp desktop project (Deno Desktop + Vue)",
+  "license": "MIT",
+  "exports": {
+    "./create": "./src/index.ts"
+  },
+  "publish": {
+    "exclude": [
+      "deno.lock"
+    ]
+  },
+  "tasks": {
+    "publish": "deno publish --allow-slow-types"
+  }
+}
