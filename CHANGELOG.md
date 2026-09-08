@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] — 2026-09-08
+
+### Fixed
+
+- **`deno create` now actually scaffolds.** `deno create` executes `./create` from the JSR registry (the module runs from an `https://jsr.io/...` URL, not a local path), so the old template loading from disk crashed with `The URL must be of scheme file`. The template is now shipped with a file manifest (`template.manifest.json`) and downloaded over the JSR CDN when running remotely; local repo checkouts still read `template/` from disk.
+
 ## [1.0.0] — 2026-09-08
 
 Initial release.
