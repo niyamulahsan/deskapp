@@ -71,8 +71,6 @@ async function openWebWindow() {
     <header class="top">
       <div class="brand">
         <img :src="deskapp" class="logo" alt="deskapp" />
-        <span class="word">deskapp</span>
-        <span class="tag">starter</span>
       </div>
       <div class="chip"><span class="dot"></span> local stack · running</div>
     </header>
@@ -287,23 +285,6 @@ async function openWebWindow() {
 .logo {
   width: 28px;
   height: 28px;
-}
-
-.word {
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.tag {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--dk-faint);
-  border: 1px solid var(--dk-border);
-  border-radius: 999px;
-  padding: 2px 8px;
 }
 
 .chip {
