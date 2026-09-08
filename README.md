@@ -43,7 +43,7 @@ deno run -A src/main.ts
 
 | Tool     | Minimum version | Notes                                                                  |
 | -------- | --------------- | ---------------------------------------------------------------------- |
-| **Deno** | `>= 2.4`        | `deno create` scaffolds the starter; `deno task maker` runs everything |
+| **Deno** | `>= 2.9`        | `deno create` scaffolds the starter; `deno task maker` runs everything |
 
 ## Features
 
