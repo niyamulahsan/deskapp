@@ -31,6 +31,7 @@ export default defineConfig({
   ],
   themeConfig: {
     logo: "/deskapp.png",
+    siteTitle: false,
     nav: [
       { text: label("home", "Home"), link: "/" },
       { text: label("bolt", "Quick Start"), link: "/guide/quick-start" },
