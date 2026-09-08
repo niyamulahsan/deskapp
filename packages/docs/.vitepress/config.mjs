@@ -39,6 +39,9 @@ export default defineConfig({
       { text: label("puzzle", "API"), link: "/api/" },
       { text: label("tool", "CLI"), link: "/cli/maker" },
     ],
+    socialLinks: [
+      { icon: "github", link: "https://github.com/niyamulahsan/deskapp" },
+    ],
     sidebar: {
       "/guide/": [
         {
@@ -76,21 +79,54 @@ export default defineConfig({
       ],
       "/api/": [
         {
-          text: label("stack", "Namespaces"),
+          text: label("compass", "API Reference"),
           items: [
             { text: label("list", "Overview"), link: "/api/" },
-            { text: label("device-desktop", "Win"), link: "/api/win" },
-            { text: label("apps", "Chrome"), link: "/api/chrome" },
-            { text: label("folder-open", "Pickers"), link: "/api/pickers" },
-            { text: label("database", "Db"), link: "/api/db" },
-            { text: label("list-check", "Paginate"), link: "/api/paginate" },
-            { text: label("inbox", "Queue"), link: "/api/queue" },
-            { text: label("calendar-clock", "Cron"), link: "/api/cron" },
-            { text: label("browser", "Chromium"), link: "/api/chromium" },
-            { text: label("lock", "Pass"), link: "/api/pass" },
-            { text: label("circle-check", "Validate"), link: "/api/validate" },
-            { text: label("folder", "Files"), link: "/api/files" },
-            { text: label("device-floppy", "Storage"), link: "/api/storage" },
+          ],
+        },
+        {
+          text: label("device-desktop", "Desktop"),
+          items: [
+            { text: label("device-desktop", "win"), link: "/api/win" },
+            { text: label("apps", "chrome"), link: "/api/chrome" },
+            { text: label("folder-open", "pickers"), link: "/api/pickers" },
+          ],
+        },
+        {
+          text: label("database", "Database"),
+          items: [
+            { text: label("database", "db"), link: "/api/db" },
+            { text: label("list-check", "paginate"), link: "/api/paginate" },
+            { text: label("box-multiple", "paginateModel"), link: "/api/paginateModel" },
+            { text: label("variable", "paginateQuery"), link: "/api/paginateQuery" },
+            { text: label("table", "paginateTable"), link: "/api/paginateTable" },
+          ],
+        },
+        {
+          text: label("server", "Queue & Scheduler"),
+          items: [
+            { text: label("inbox", "queue"), link: "/api/queue" },
+            { text: label("calendar-clock", "cron"), link: "/api/cron" },
+          ],
+        },
+        {
+          text: label("browser", "Browser"),
+          items: [
+            { text: label("browser", "chromium"), link: "/api/chromium" },
+          ],
+        },
+        {
+          text: label("shield", "Security & Input"),
+          items: [
+            { text: label("lock", "pass"), link: "/api/pass" },
+            { text: label("circle-check", "validate"), link: "/api/validate" },
+          ],
+        },
+        {
+          text: label("folder", "Storage"),
+          items: [
+            { text: label("folder", "files"), link: "/api/files" },
+            { text: label("device-floppy", "storage"), link: "/api/storage" },
           ],
         },
       ],

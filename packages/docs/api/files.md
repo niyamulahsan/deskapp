@@ -6,7 +6,7 @@ Operate on the **user's real file system** — any absolute path the user picks.
 
 All writes are **atomic** (temp-file + rename). All functions are platform-agnostic.
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -113,3 +113,7 @@ for (const p of await files.listFiles(projectDir)) {
 
 Read helpers (`readTextFileOr`, `readJson`, `fileMeta`) return fallbacks/`null` instead of throwing on missing files; write helpers create parent folders automatically.
 - For the app's **own** state, use [`storage`](./storage) instead.
+
+## Related
+
+- [pickers](./pickers) · [storage](./storage)

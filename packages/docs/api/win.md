@@ -22,7 +22,7 @@ win.createWindow(options?, name?)          =>      DesktopWindow | undefined
 win.openWindow(presetOrName)              => Promise<DesktopWindow | undefined>
 ```
 
-## Functions
+## Signature
 
 | Function | Signature | Returns |
 | --- | --- | --- |
@@ -204,3 +204,7 @@ These behaviours come from the framework's window manager and are worth knowing 
 
 > [!IMPORTANT] Known multi-window problems at the Deno Desktop level
 > The **default setup — one `main` window running the SPA at `route: "/"` with in-process bindings — is fully functional** and unaffected by any of this. The framework-level regressions in the [Windows & Native APIs guide](../guide/windows#known-quirks) only bite in the exact combination of OS + Deno version + secondary windows: a version-specific close-button bug (Deno 2.9.6 on Windows), secondary-window `close` events firing globally on macOS, and macOS `close()`/`hide()` hangs. In all cases the window manager keys handlers on the `windowId` and only quits at zero tracked windows, so your app logic above holds — the quirks are in the underlying OS/webview layer and only surface when you add secondary windows on the affected platforms.
+
+## Related
+
+- [chrome](./chrome) · [pickers](./pickers)

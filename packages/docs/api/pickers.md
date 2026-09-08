@@ -4,7 +4,7 @@ Imported from the facade: `import { pickers } from "@/core/facade.ts"`.
 
 Real OS dialogs behind one cross-platform API (WinForms on Windows, NSOpenPanel/NSSavePanel on macOS, zenity/kdialog on Linux). All return the chosen absolute path, or `null` when the user cancels or the dialog fails. See [Windows & Native APIs](../guide/windows).
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -80,3 +80,7 @@ for (const image of images) {
 - Cancelling (or the dialog tool missing on Linux) returns `null` — always check before using the path.
 - Expose a picker to the UI via a controller + binding (the chosen path flows back to the component as plain JSON).
 - Combine with the [`files`](./files) namespace: pick a path, then read/write/copy it.
+
+## Related
+
+- [win](./win) · [chrome](./chrome) · [files](./files)

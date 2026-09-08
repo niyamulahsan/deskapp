@@ -4,7 +4,7 @@ Imported from the facade: `import { queue } from "@/core/facade.ts"`.
 
 Bounded in-process async queue: at most `concurrency` tasks run at once; excess jobs wait. `add(task)` resolves with the task's own result and rejects only that caller when the task throws — other tasks are unaffected. See [Queue](../guide/queue).
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -42,7 +42,7 @@ const results = await Promise.all(jobs); // "sent" statuses, in order
 
 Results come back in submission order. To expose the queue to a UI, wrap a job submission in a controller + binding (`<module>.<controller>.<handler>`) and call it from the frontend in-process.
 
-> Full end-to-end pattern (SQLite list + queue + SMTP + cron): see [Email a list stored in SQLite](../api/index#email-a-list-stored-in-sqlite).
+> Full end-to-end pattern (SQLite list + queue + SMTP + cron): see [Email a list stored in SQLite](./index#email-a-list-stored-in-sqlite).
 
 ### Strictly serial operations (one writer at a time)
 
@@ -95,3 +95,7 @@ setInterval(() => {
 
 - `concurrency` is floored at `1`. There is no per-job timeout — your tasks must resolve or reject.
 - Use for throttled jobs: image processing, API fan-out, file conversion.
+
+## Related
+
+- [db](./db) · [cron](./cron)

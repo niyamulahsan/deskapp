@@ -8,7 +8,7 @@ Imported from the facade: `import { chrome } from "@/core/facade.ts"`.
 
 Tray, application/context menus, and native dialog helpers that sit on top of Deno Desktop. See [Windows & Native APIs](../guide/windows).
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -150,3 +150,7 @@ Anything not bridged — `setupDesktopChrome`, `installAppMenu`, `installContext
 - Each `createTray()` constructs a **fresh** OS tray (you set icon/menu yourself via `setIcon`/`setMenu`); `createAppTray` labels it, sets an icon when `src/icons/tray.png` exists, and wires `click` (show window) + `menuclick` (its menu IDs) handlers. Tray events are `click` and `menuclick`.
 - Native dialogs are **synchronous** (blocking) — use them for short confirmations, not long-running flows.
 - Menus are expressed as a tagged union (`MenuActionItem` / `MenuSubmenu` / `"separator"` / role item) — see the `MenuItem` type above.
+
+## Related
+
+- [win](./win) · [pickers](./pickers)

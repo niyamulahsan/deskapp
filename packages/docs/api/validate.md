@@ -4,7 +4,7 @@ Imported from the facade: `import { validate } from "@/core/facade.ts"`.
 
 Schema validation with a normalized error shape: build a schema with `validate.z` (Zod), run data through it with `validate.run`. See [Validation](../guide/validation).
 
-## Members
+## Signature
 
 | Member | Signature | Description |
 | --- | --- | --- |
@@ -89,3 +89,7 @@ const data = await validate.run(postSchema, input);
 
 - `validate.run` uses `safeParseAsync`, so it never throws raw Zod issues — always the 422 envelope, easy to return to the frontend.
 - The `make:controller` generator scaffolds a controller with a `validate.z` stub ready to customise.
+
+## Related
+
+- [pass](./pass) · [db](./db)

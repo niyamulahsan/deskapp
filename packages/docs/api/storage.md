@@ -9,7 +9,7 @@ The app's **own** internal state — settings, queue data, generated artifacts �
 
 Top-level methods operate on the default `private` disk; scope explicitly with `storage.disk("tmp")`. App-disk helpers reject any path escaping the disk root. See [Storage](../guide/storage).
 
-## Members
+## Signature
 
 | Member | Signature | Description |
 | --- | --- | --- |
@@ -127,3 +127,7 @@ const stream = await storage.disk("private").readStream("big.bin");
 - Expose storage to the UI through a controller + binding (`<module>.<controller>.<handler>`) so the frontend reaches it in-process without file-system access.
 - The layout is mirrored by the [`files`](./files) layer's atomic write semantics, but `storage` is **sandboxed** to its disk root — relative keys with `..` throw.
 - `storage.init()` is called once at boot and creates both `private` and `tmp` folders.
+
+## Related
+
+- [files](./files) · [db](./db)

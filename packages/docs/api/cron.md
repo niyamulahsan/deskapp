@@ -4,7 +4,7 @@ Imported from the facade: `import { cron } from "@/core/facade.ts"`.
 
 Named cron schedules backed by [croner](https://croner.github.io/). Jobs are unique by name — re-scheduling the same name stops and replaces the old job. See [Scheduler](../guide/scheduler).
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -81,3 +81,7 @@ cron.stop();
 
 - Failing tasks are caught and logged (scheduler does not crash the app).
 - Use `name` to make a job replaceable — the same name = the same job slot, so re-running setup never double-schedules.
+
+## Related
+
+- [queue](./queue) · [db](./db)

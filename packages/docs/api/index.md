@@ -4,34 +4,48 @@ Every reusable framework capability is exposed through **one import** — the fa
 
 ```ts
 import {
-  win, chrome, pickers,
-  db, paginate, sql,
-  queue, cron,
-  files, storage,
-  pass, validate,
-  chromium,
+  win,            // desktop window lifecycle
+  chrome,         // tray, menus, dialogs, desktop chrome setup
+  pickers,        // native open / save / folder dialogs
+  db,             // Drizzle connection + query proxy (init / close)
+  paginate,       // nexgen-style pagination (query / table / model)
+  sql,            // tagged-template SQL for where filters
+  queue,          // bounded in-process async queue
+  cron,           // named cron schedules (croner)
+  chromium,       // Chromium binary + bundled-extensions resolution
+  pass,           // bcrypt hashing
+  validate,       // Zod schemas + runner
+  files,          // operate on any path the user picks
+  storage,        // the app's own private/tmp disks
 } from "@/core/facade.ts";
 ```
 
-| Namespace | Purpose | Guide |
+## Function reference
+
+Each facade member below has its own page — every export linked here is a documented part of the public API.
+
+| Function | Purpose | Guide |
 | --- | --- | --- |
-| [`win`](./win) | Desktop window lifecycle | [Windows](../guide/windows) |
-| [`chrome`](./chrome) | Tray, menus, dialogs, chrome setup | [Windows](../guide/windows) |
+| [`win`](./win) | Desktop window lifecycle: create / open / get / count | [Windows](../guide/windows) |
+| [`chrome`](./chrome) | Tray, application & context menus, native dialogs, chrome setup | [Windows](../guide/windows) |
 | [`pickers`](./pickers) | Native open / save / folder dialogs | [Windows](../guide/windows) |
-| [`db`](./db) | Drizzle connection + query | [Database](../guide/database) |
-| [`paginate`](./paginate) | [nexgen](https://niyamulahsan.github.io/nexgen/)-style pagination | [Database](../guide/database) |
-| [`queue`](./queue) | Bounded async job queue | [Queue](../guide/queue) |
-| [`cron`](./cron) | Named cron schedules | [Scheduler](../guide/scheduler) |
-| [`chromium`](./chromium) | Chromium binary + extension resolution | [Playwright](../guide/playwright) |
-| [`pass`](./pass) | bcrypt hashing | [Password](../guide/password) |
-| [`validate`](./validate) | Zod schemas + runner | [Validation](../guide/validation) |
-| [`files`](./files) | Operate on any path the user picks | [Storage](../guide/storage) |
-| [`storage`](./storage) | The app's own private/tmp state | [Storage](../guide/storage) |
+| [`db`](./db) | Drizzle connection + query proxy (`init` / `close`) | [Database](../guide/database) |
+| [`paginate`](./paginate) | nexgen-style `PaginatedResult` envelope, shared by the three paginators below | [Database](../guide/database) |
+| [`paginateQuery`](./paginateQuery) | Generic paginator over custom `total()` / `data(limit, offset)` callbacks | [Database](../guide/database) |
+| [`paginateTable`](./paginateTable) | Paginate a whole schema table with `where` / `orderBy` | [Database](../guide/database) |
+| [`paginateModel`](./paginateModel) | Paginate relational queries (`db.query.<table>`) with eager loading | [Database](../guide/database) |
+| [`queue`](./queue) | Bounded in-process async queue with `create({ concurrency })` | [Queue](../guide/queue) |
+| [`cron`](./cron) | Named cron schedules with `schedule` / `stop` | [Scheduler](../guide/scheduler) |
+| [`chromium`](./chromium) | Chromium binary + bundled extension resolution for Playwright | [Playwright](../guide/playwright) |
+| [`pass`](./pass) | bcrypt hash / verify | [Password](../guide/password) |
+| [`validate`](./validate) | Zod schemas + `run` with a 422-shaped failure | [Validation](../guide/validation) |
+| [`files`](./files) | Open / save / upload / download / remove on any user-picked path | [Storage](../guide/storage) |
+| [`storage`](./storage) | The app's own `private` / `tmp` disks | [Storage](../guide/storage) |
 
-## When do I use which?
+## Which one do I use when?
 
-- **Windows & desktop** — `win` drives your windows; `chrome` adds the menu/tray/native dialogs; `pickers` gets real OS open/save/folder dialogs.
-- **Data** — `db` is the Drizzle client; `paginate` wraps it in a [nexgen](https://niyamulahsan.github.io/nexgen/)-style page; `sql` writes `where` filters.
+- **Windows & desktop** — `win` drives your windows; `chrome` adds the menu/tray/dialogs and one-shot chrome setup; `pickers` gets real OS open/save/folder dialogs.
+- **Data** — `db` holds the Drizzle client; `paginate` is the shared envelope, and you pick which flavor fits: [`paginateQuery`](./paginateQuery) for fully custom queries, [`paginateTable`](./paginateTable) for a whole table, [`paginateModel`](./paginateModel) for relational eager-loaded reads. `sql` writes `where` filters.
 - **Background work** — `queue` throttles async jobs; `cron` runs named schedules and stops them all on shutdown.
 - **Security & input** — `pass` hashes passwords; `validate` runs schemas and throws a structured 422-shaped failure.
 - **Files** — `files` touches the user's real file system anywhere; `storage` keeps the app's own state in `private`/`tmp` disks.

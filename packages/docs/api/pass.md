@@ -4,7 +4,7 @@ Imported from the facade: `import { pass } from "@/core/facade.ts"`.
 
 bcrypt password hashing and verification (10 salt rounds). See [Password](../guide/password).
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -71,3 +71,7 @@ export default async () => {
 
 - Always hash before storing; never store plaintext.
 - `verifyPassword` is constant-time (bcrypt.compare) — safe against timing attacks.
+
+## Related
+
+- [validate](./validate) · [db](./db)

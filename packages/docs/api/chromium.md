@@ -13,7 +13,7 @@ A tool like Playwright needs to know *which* Chromium to launch. That binary exi
 
 `chromium` answers the question "where is the browser + its extensions?" once, and every feature uses the same answer.
 
-## Functions
+## Signature
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -112,3 +112,7 @@ console.table(chromiumApi.candidates());
 
 - Tie the feature to any navigation you like — this page plays a URL, but the same resolution feeds screenshots, scraping, or a kiosk.
 - Keep automation behind your own controller + binding; the UI stays read-only to the world (bindings are the only in-process bridge).
+
+## Related
+
+- [files](./files) · [storage](./storage)
