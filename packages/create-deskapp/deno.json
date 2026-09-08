@@ -1,6 +1,6 @@
 {
   "name": "@niyam/deskapp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Scaffold a new deskapp desktop project (Deno Desktop + Vue)",
   "license": "MIT",
   "exports": {
