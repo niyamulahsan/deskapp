@@ -1,8 +1,68 @@
-# create-deskapp
+# @niyam/deskapp
 
-Scaffold a new **deskapp** desktop project (Deno Desktop + Vue 3).
+> Batteries-included desktop application framework for Deno. One command
+> scaffolds a native desktop app: a Deno backend (window manager, native APIs,
+> storage, SQLite + Drizzle ORM, queue, scheduler, validation, password
+> hashing, Playwright) behind a Vue 3 + Vite UI.
 
-## Usage
+[Documentation](https://niyamulahsan.github.io/deskapp) · [GitHub](https://github.com/niyamulahsan/deskapp) · [MIT License](https://github.com/niyamulahsan/deskapp/blob/main/LICENSE)
+
+---
+
+## 🎯 Features
+
+`@niyam/deskapp` is a full local-first desktop framework. It scaffolds a
+complete project — not a UI shell — with the backend and frontend wired
+together in-process. Everything lives behind a single `app.*` facade, so your
+window, database, queue, and scheduler are available everywhere.
+
+## ✨ Highlights
+
+### Desktop
+
+- **Windows & native APIs** — window presets, manager, native chrome, dialogs
+  and file pickers via `app.window.*`
+- **Bindings** — backend controllers auto-registered and callable from the UI
+  in-process as `bindings['<module>.<controller>.<handler>']()`
+
+### Data
+
+- **SQLite + Drizzle ORM** — type-safe database access with auto-generated
+  schema and migrations
+- **Storage** — private / public / tmp app stores with JSON + file helpers
+
+### Services
+
+- **Queue** — recursive, resumable queue with status tracking
+- **Scheduler** — cron-based task scheduling built into the facade
+
+### Security
+
+- **Validation** — Zod-powered request validation
+- **Password** — Bcrypt hashing (plus CORS and rate limiting)
+
+### UI & Automation
+
+- **Vue 3 + Vite** — run a dev server with HMR or serve the built SPA from the
+  backend
+- **Playwright** — drive webview tabs and external pages
+
+### Distribution
+
+- **Maker CLI** — commands for modules, controllers, models, seeds, schema,
+  migrations, UI, and bundling
+- **Native apps** — per-OS folder apps and binaries (`deno task maker bundle:*`)
+
+## 🎯 Use Cases
+
+- Local-first productivity and data tools
+- Internal desktop dashboards on Windows, macOS, and Linux
+- Apps that want webview rendering without shipping Chromium by default
+- One-codebase desktop apps with a Vue 3 interface
+
+## 📦 Installation
+
+### Deno
 
 ```sh
 deno create jsr:@niyam/deskapp my-app
@@ -11,26 +71,32 @@ deno install
 deno task dev
 ```
 
-Requires **Deno 2.4+**.
+## 🚀 Quick Start
 
-## How it works
+A desktop window opens with the starter dashboard, backed by the full local
+stack. Access every subsystem through one import:
 
-`deno create` downloads this package and runs its `./create` entry
-(`src/index.ts`). The scaffold content ships in `template/` — a clean sync of
-the repository's live `template/` produced by
-[`scripts/sync-template.mjs`](../../scripts/sync-template.mjs).
+```ts
+import { app } from "./src/core/facade.ts";
 
-The create script:
-
-1. Copies `template/` into `./<project-name>`.
-2. Renames `gitignore-stub` → `.gitignore` (JSR never packs a real `.gitignore`).
-3. Writes `.env` from `.env.example`.
-4. Renames the app (`deno.json` → `desktop.app.name`).
-5. Prints next steps.
-
-## Development
-
-```sh
-npm run sync:template   # copy ../../template -> ./template (skips node_modules/dist/locks)
-cd ../.. && npm run publish:cli
+await app.storage.write("data", { hello: "world" });
+await app.queue.push("sum", { a: 1, b: 2 });
+await app.net.fetchJson("https://jsonplaceholder.typicode.com/todos/1");
 ```
+
+Run headless as a tray-only service with `deno run -A src/main.ts`.
+
+## 🌍 Compatibility
+
+| Environment | Version | Status          |
+| ----------- | ------- | --------------- |
+| **Deno**    | 2.9+    | Fully supported |
+| **Windows** | —       | Fully supported |
+| **macOS**   | —       | Fully supported |
+| **Linux**   | —       | Fully supported |
+
+## 📚 Documentation
+
+Complete documentation is available at **[deskapp.dev](https://niyamulahsan.github.io/deskapp)**
+(guide, API reference, CLI). Source and changelog live on
+[GitHub](https://github.com/niyamulahsan/deskapp).
