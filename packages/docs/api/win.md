@@ -30,6 +30,7 @@ win.openWindow(presetOrName)              => Promise<DesktopWindow | undefined>
 | `getWindow` | `(id?: number)` | `DesktopWindow \| undefined` |
 | `getWindowCount` | `()` | `number` |
 | `openWindow` | `(presetOrName: string \| WindowPreset)` | `Promise<DesktopWindow \| undefined>` |
+| `watchFrontend` | `(distPath: string, onChange: () => void)` | `void` |
 
 **Inputs:**
 
@@ -37,6 +38,8 @@ win.openWindow(presetOrName)              => Promise<DesktopWindow | undefined>
 - `name` (`string`): a label used to track the window by name (so reopening the same name focuses it instead of duplicating). Optional. Only meaningful for `createWindow`.
 - `presetOrName` (`string | WindowPreset`): either a **preset name** declared in `src/window/config.ts` (e.g. `"settings"`), or an inline `WindowPreset` object.
 - `id` (`number`): the numeric `windowId` of an open window. **No argument returns the main window.**
+- `distPath` (`string`, `watchFrontend`): a directory to watch for UI rebuilds — the `src/ui/dist` output folder in dev.
+- `onChange` (`() => void`, `watchFrontend`): called each time a rebuild appears in `distPath`.
 
 **Outputs:**
 
@@ -181,6 +184,9 @@ if (!main) {
 - The app quits only when the **last** tracked window closes; each window's close (×) button closes just that window.
 - `createWindow`/`openWindow` never throw when the runtime has no `Deno.BrowserWindow` — they return `undefined`, so callers can skip window work in tests or plain `deno run`.
 - Reopening the same preset name (or same inline `title`) shows the open window instead of creating a duplicate.
+
+> [!TIP] `watchFrontend` is a dev-time helper
+> `watchFrontend` polls `distPath` and calls `onChange` every time the UI rebuilds. `deno task dev` runs `vite build --watch` and sets `FRONTEND_WATCH=1`, which wires it to `win.getWindow()?.reload()` in `src/main.ts` — so editing SCSS/Vue files refreshes the open window without touching anything. Nothing calls it in production (`serve`, packaged builds).
 
 ## Known quirks with multiple windows
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import deskapp from './assets/images/deskapp.png';
+import deskapp from '@/ui/assets/images/deskapp.png';
 
 interface LogEntry {
   kind: 'info' | 'ok' | 'warn' | 'err';
@@ -283,7 +283,7 @@ async function openWebWindow() {
 }
 
 .logo {
-  width: 28px;
+  width: auto;
   height: 28px;
 }
 

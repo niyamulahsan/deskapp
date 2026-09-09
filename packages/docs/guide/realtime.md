@@ -8,10 +8,10 @@ webhook / API call ──▶ engine backend ── Socket.IO event ──▶ Vue
 
 ## Pulse client
 
-`src/ui/src/plugins/pulse.ts` exports a singleton `pulse` client and a `PulsePlugin`. `src/ui/src/main.ts` installs the plugin and re-exports the singleton:
+`src/ui/src/plugins/pulse.ts` exports a singleton `pulse` client and a `PulsePlugin`. `src/ui/src/app.ts` installs the plugin and re-exports the singleton:
 
 ```ts
-import { pulse, PulsePlugin } from "./plugins/pulse.ts"; // src/ui/src/main.ts
+import { pulse, PulsePlugin } from "./plugins/pulse.ts"; // src/ui/src/app.ts
 export { pulse };
 createApp(App).use(PulsePlugin).mount("#app");
 ```

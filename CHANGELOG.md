@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.0.6] — 2026-09-09
+
+### Added
+
+- **Live UI reload in `deno task dev`.** Dev now builds the frontend in watch mode (`vite build --watch`) and sets `FRONTEND_WATCH=1`; the backend polls `src/ui/dist` via the new `win.watchFrontend(dist, onChange)` on the `win` facade and reloads the open window when a rebuild lands. SCSS, Vue template, and SFC `<style>` edits all appear without a manual refresh.
+
+### Changed
+
+- **Frontend entry renamed** `src/ui/src/main.ts` → `src/ui/src/app.ts`. **Bootstrap 5** (CSS + JS bundle) and **Bootstrap Icons** are now imported by default in `app.ts`, and the webview favicon lives in the UI (`src/ui/src/assets/images/favicon/favicon.ico`) instead of the project-root icon folder.
+
+### Fixed
+
+- **`win.watchFrontend` only watched top-level `dist` entry names**, which never change during a Vite rebuild (hashed assets live under `dist/assets/`) — so it could never fire. It now signs the whole `dist` tree plus `index.html` and fires once the rebuilt state settles.
+
 ## [1.0.4] — 2026-09-09
 
 ### Fixed

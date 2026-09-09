@@ -1,17 +1,17 @@
 # UI (Vue + Vite)
 
-The **default** frontend is a **Vue 3** single-page app built with **Vite**, styled with a custom **dark SCSS** theme + **Bootstrap Icons**, served from `src/ui/dist` by the Deno backend running under `deno desktop`. It's a plain static SPA — you can replace it with any other frontend (see [Changing the frontend](#changing-the-frontend)).
+The **default** frontend is a **Vue 3** single-page app built with **Vite**, styled with **Bootstrap 5** (CSS + JS + icons) on top of a custom **dark SCSS** theme, served from `src/ui/dist` by the Deno backend running under `deno desktop`. It's a plain static SPA — you can replace it with any other frontend (see [Changing the frontend](#changing-the-frontend)).
 
 ## Stack
 
 - Vue 3 (`createApp`) mounted into `src/ui/index.html`
 - TypeScript SFCs, Vite + `@vitejs/plugin-vue`
-- Bootstrap Icons + custom SCSS at `src/ui/src/assets/scss/custom.scss` (dark dashboard theme by default)
-- Axios, Vue Router, Pinia and Bootstrap are declared in the root import map — usable on demand
+- Bootstrap 5 (CSS + JS bundle) + Bootstrap Icons + custom SCSS at `src/ui/src/assets/scss/custom.scss` (dark dashboard theme by default)
+- Axios, Vue Router, Pinia, socket.io-client and Playwright are declared in the root import map — usable on demand
 
 ## Entrypoints
 
-- `src/ui/src/main.ts` — createApp, CSS/SCSS imports, sets the favicon from `src/icons/favicon.svg`
+- `src/ui/src/app.ts` — createApp, Bootstrap + SCSS imports, sets the favicon from `@/ui/assets/images/favicon/favicon.ico`
 - `src/ui/src/bindings.d.ts` — types the global `bindings`
 - `src/ui/src/components/**` — the components you write for your app
 
@@ -43,18 +43,21 @@ For browser-based UI development, `src/ui/vite.config.ts` proxies backend HTTP r
 
 These proxy targets are not implemented by the backend yet — they exist so a future "call backend from browser" flow can be added. The desktop build talks exclusively via in-process bindings.
 
-## Shared icons
+## Icons
 
-`src/icons/` sits at the **project root**, not inside the UI package. The UI imports it directly (`import faviconUrl from '../../icons/favicon.svg'`). Vite's `server.fs.allow` is widened to the project root so dev serving works.
+- The **webview favicon** is bundled inside the UI at `src/ui/src/assets/images/favicon/favicon.ico` and set by `src/ui/src/app.ts`.
+- `src/icons/` keeps the **desktop** icons at the project root — the OS taskbar/dock/window icon set referenced by `deno.json` → `desktop.app.icons`, plus the tray icon. Vite's `server.fs.allow` is widened to the project root so files at the repo root can be served during dev.
 
 ## Build
 
 ```sh
-deno task maker dev      # vite build → src/ui/dist, then `deno desktop --hmr`
+deno task maker dev      # vite build → src/ui/dist, then `deno desktop --hmr` (+ a vite watch build)
 deno task maker build    # vite build → src/ui/dist, then a `deno desktop` package
 ```
 
 The backend serves `src/ui/dist` with `serveDir` from `@std/http/file-server` (`src/main.ts`), resolving it from the binary's virtual filesystem in packaged builds and from disk in dev. If no UI is built, `src/main.ts` serves a small JSON status instead (headless/tray mode).
+
+`dev` runs an extra `vite build --watch` in the background and sets `FRONTEND_WATCH=1`; the backend then watches `src/ui/dist` (`win.watchFrontend`) and reloads the open window whenever a rebuild lands — so editing SCSS/Vue files shows up in the desktop window without a manual refresh.
 
 ## Changing the frontend
 
@@ -72,10 +75,10 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 | --- | --- | --- |
 | `src/ui/vite.config.ts` | Vite plugins, aliases, dev server, build output | **Keep.** Swap `plugins: [vue()]` for your framework's plugin; keep the `@`/`@/ui` aliases, `server.fs.allow` (shared `src/icons/`), `server.proxy`, and `build.outDir: "dist"`. |
 | `src/ui/tsconfig.json` | `@/ui/*` → `./src/*` alias, `moduleResolution: "bundler"`, `noEmit` | **Keep** — paths are a convention, not Vue-specific. |
-| `src/ui/index.html` | SPA shell (`<div id="app">` + module script) | **Keep** the shell; repoint the script at your entry (e.g. `/src/main.tsx`). |
+| `src/ui/index.html` | SPA shell (`<div id="app">` + module script) | **Keep** the shell; repoint the script at your entry (e.g. `/src/app.tsx`). |
 | `src/ui/src/bindings.d.ts` | Types the runtime `bindings` global | **Keep** — independent of your framework. |
 | `src/ui/src/vite-env.d.ts` | Vite client types | **Keep.** |
-| `src/ui/src/main.ts` | `createApp(App).use(...).mount('#app')` | **Replace** with your framework's mount code. |
+| `src/ui/src/app.ts` | `createApp(App).use(...).mount('#app')` | **Replace** with your framework's mount code. |
 | `src/ui/src/App.vue`, `components/` | Vue demo UI | **Replace** with your components. |
 | `src/ui/src/plugins/pulse.ts` | Realtime socket bridge (a Vue plugin) | **Replace** with your framework's equivalent if you use realtime. |
 | `src/ui/.vscode/extensions.json` | Recommends `Vue.volar` | Update to your framework's editor extension. |
@@ -312,8 +315,8 @@ The socket client (`createPulse` → the exported `pulse` singleton) is framewor
 
 1. `deno.json` → `imports`: add your framework's Vite plugin (e.g. `@vitejs/plugin-react`), keep `vite`. Drop `vue` / `@vitejs/plugin-vue` once nothing imports them.
 2. `src/ui/vite.config.ts`: set `plugins: [react()]` instead of `[vue()]`. Leave aliases, `server.fs.allow`, `server.proxy`, and `build.outDir: "dist"` untouched.
-3. Replace `src/ui/src/main.ts` (→ `main.tsx`) with your framework's mount, and `App.vue` / `components/` with your components.
-4. `src/ui/index.html`: change the `/src/main.ts` script tag to `/src/main.tsx`.
+3. Replace `src/ui/src/app.ts` (→ `app.tsx`) with your framework's mount, and `App.vue` / `components/` with your components.
+4. `src/ui/index.html`: change the `/src/app.ts` script tag to `/src/app.tsx`.
 5. `src/ui/tsconfig.json`: keep the paths; add framework options like `"jsx": "react-jsx"` if needed.
 6. Run `deno task maker build` and confirm `src/ui/dist/index.html` regenerates, then `deno task dev`.
 

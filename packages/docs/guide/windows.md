@@ -12,6 +12,7 @@ Available from the facade:
 | `win.openWindow(preset)` | Open a window on demand — a config preset name or an inline `WindowPreset`; binds handlers and navigates to its route. |
 | `win.getWindow(id?)` | Look up a window by `windowId`; no arg = the main (first) window. |
 | `win.getWindowCount()` | Number of tracked open windows. |
+| `win.watchFrontend(distPath, onChange)` | **Dev only** — polls a directory (e.g. `src/ui/dist`) and calls `onChange` on rebuild. `deno task dev` uses it to reload the open window after UI edits. |
 
 `win.createWindow` tracks windows by `windowId`. Windows are **independent**: clicking the close (×) button on any window closes only that window — the others keep running. The app quits when the **last** window is closed (this is Deno Desktop's documented lifecycle: closing a window does not stop the runtime; the process keeps running until all windows are closed). Reopening from the tray/menu works again because closed named windows are dropped from tracking in `src/window/manager.ts`.
 

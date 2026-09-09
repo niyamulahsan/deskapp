@@ -38,7 +38,7 @@ deno install
 deno task dev
 ```
 
-`dev` runs codegen (schema + bindings), builds the UI, and opens the desktop app with hot module reload. You should see the main window with the demo dashboard — file operations, API proxy, Playwright button, queue and cron demos — all working against the real backend.
+`dev` runs codegen (schema + bindings), builds the UI, then opens the desktop app with HMR while Vite rebuilds the UI in watch mode — edited SCSS/Vue files refresh the open window automatically. You should see the main window with the demo dashboard — file operations, API proxy, Playwright button, queue and cron demos — all working against the real backend.
 
 ### Headless (no window)
 

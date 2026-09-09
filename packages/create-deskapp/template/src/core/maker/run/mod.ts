@@ -35,6 +35,22 @@ function viteBuild(): void {
   deno(["run", "-A", "npm:vite", "build"], { cwd: UI_DIR, label: "build UI" });
 }
 
+/**
+ * Start Vite in watch mode as a detached background process so the built
+ * frontend (`src/ui/dist`) is rebuilt whenever SCSS/Vue sources change. The
+ * desktop shell picks up the fresh build and reloads its window (see the dist
+ * watcher in src/main.ts). Returns the child process handle.
+ */
+function viteWatchBuild(): Deno.ChildProcess {
+  const cmd = new Deno.Command("deno", {
+    args: ["run", "-A", "npm:vite", "build", "--watch"],
+    cwd: UI_DIR,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  return cmd.spawn();
+}
+
 function desktopForBuild(target?: string): void {
   const args = ["desktop", "-A"];
   if (target) args.push("--target", target);
@@ -89,13 +105,27 @@ function registerBundleCommand(
 /** Register the dev/serve/build/bundle command family on the maker CLI. */
 export function registerRunCommands(program: Command): void {
   program
-    .command("dev", "codegen + build UI + open the desktop app with HMR")
+    .command("dev", "codegen + build UI (watch) + open the desktop app with HMR")
     .action(() => {
       schemaAndBindings();
       viteBuild();
-      deno(["desktop", "--env-file", "--hmr", "-A", "src/main.ts"], {
-        label: "deno desktop (HMR)",
-      });
+      const ui = viteWatchBuild();
+      try {
+        const desktop = new Deno.Command("deno", {
+          args: ["desktop", "--env-file", "--hmr", "-A", "src/main.ts"],
+          env: { FRONTEND_WATCH: "1" },
+          stdout: "inherit",
+          stderr: "inherit",
+        });
+        const status = desktop.outputSync();
+        if (!status.success) Deno.exit(status.code);
+      } finally {
+        try {
+          ui.kill();
+        } catch {
+          // already exited
+        }
+      }
     })
     .command("serve", "codegen + run the server (headless-aware)")
     .action(() => {

@@ -22,6 +22,7 @@
 import { windowConfig, windows as windowPresets, type WindowPreset } from "@/window/config.ts";
 import { bindAll } from "@/core/api/registry.ts";
 import { db } from "@/core/facade.ts";
+import { join } from "@std/path";
 
 /** Subset of the documented Deno.BrowserWindow options used by the app. */
 export interface BrowserWindowOptions {
@@ -211,6 +212,55 @@ function getWindowCount(): number {
 }
 
 /**
+ * Frontend dev watcher. When the maker `dev` command runs (`FRONTEND_WATCH=1`),
+ * Vite rebuilds the UI output dir in watch mode; this polls that dir and calls
+ * `onChange` whenever a rebuild lands so the open window(s) can be reloaded and
+ * SCSS/Vue edits appear without a manual refresh.
+ *
+ * The rebuild only changes files under `dist/assets/` (Vite content-hashes
+ * them) — top-level entry names stay constant — so the signature must cover
+ * the whole tree plus `index.html` (which Vite rewrites to point at the new
+ * hashes on every build). `onChange` fires only after the rebuilt state has
+ * been observed for a full tick, so a reload is never triggered mid-write.
+ */
+function watchFrontend(distPath: string, onChange: () => void): void {
+  const stamp = (): string => {
+    try {
+      const parts: string[] = [];
+      const walk = (dir: string): void => {
+        for (const entry of Deno.readDirSync(dir)) {
+          const full = `${dir}/${entry.name}`;
+          if (entry.isDirectory) walk(full);
+          else parts.push(full.slice(distPath.length));
+        }
+      };
+      walk(distPath);
+      parts.push(Deno.readTextFileSync(join(distPath, "index.html")));
+      return parts.sort().join("|");
+    } catch {
+      return "";
+    }
+  };
+  let previous = stamp();
+  let fired = previous;
+  // Deno Desktop's --hmr loads this module in the same runtime as the UI, so
+  // a setInterval is kept alive by that process.
+  setInterval(() => {
+    const now = stamp();
+    if (now === fired) {
+      previous = now;
+      return;
+    }
+    if (now !== previous) {
+      previous = now; // still writing - wait for the state to settle
+      return;
+    }
+    fired = now;
+    onChange();
+  }, 250);
+}
+
+/**
  * win - window manager facade. Access through the facade:
  *   import { win } from "@/core/facade.ts";
  */
@@ -219,4 +269,5 @@ export const win = {
   getWindow,
   getWindowCount,
   openWindow,
+  watchFrontend,
 };

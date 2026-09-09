@@ -79,6 +79,21 @@ if (import.meta.main) {
   const uiEnabled = config.ui.enabled && DIST_PATH !== undefined;
 
   if (uiEnabled) {
+    // Frontend dev HMR: reload the window when Vite rebuilds src/ui/dist.
+    if (Deno.env.get("FRONTEND_WATCH") === "1" && DIST_PATH) {
+      win.watchFrontend(
+        DIST_PATH,
+        () => {
+          console.log("[desktop] frontend changed - reloading window");
+          try {
+            win.getWindow()?.reload();
+          } catch {
+            // window closed - ignore
+          }
+        },
+      );
+    }
+
     // Bind framework handlers into the webview so the frontend can call them
     // in-process via `bindings` (no HTTP/IPC). Only runs under `deno desktop`.
     // Create one window per entry in src/window/config.ts: the first is the

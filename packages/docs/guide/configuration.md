@@ -10,7 +10,7 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
 {
   "tasks": {
     "maker": "deno run -A src/core/maker/mod.ts",  // CLI: make:* / db:* / build* / bundle* / dev / serve / ui
-    "dev": "deno task maker dev",                  // codegen → build UI → desktop app (HMR)
+    "dev": "deno task maker dev",                  // codegen → build UI → desktop app (HMR + UI watch)
     "serve": "deno task maker serve",              // codegen → server entry (headless-aware)
     "ui": "deno task maker ui",                    // raw Vite dev server (browser tab)
     "test": "deno test -A"
@@ -84,7 +84,7 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
 | Task | Runs |
 | --- | --- |
 | `maker` | The maker CLI (run `deno task maker` for full command help): `make:*` scaffolders, `db:*` database commands, and the build/bundle codegen subcommands below. |
-| `dev` | `deno task maker dev` — codegen (schema + bindings) → build UI → `deno desktop --env-file --hmr -A src/main.ts` |
+| `dev` | `deno task maker dev` — codegen (schema + bindings) → build UI → `deno desktop --env-file --hmr -A src/main.ts`, with a `vite build --watch` (and `FRONTEND_WATCH=1`) so UI edits reload the open window automatically |
 | `serve` | `deno task maker serve` — codegen → `deno run -A --env-file src/main.ts` (headless-aware server) |
 | `ui` | `deno task maker ui` — raw Vite dev server (browser tab, no `bindings`) |
 | `test` | `deno test -A` |

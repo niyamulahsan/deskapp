@@ -30,7 +30,7 @@ There is no network boundary between UI and backend. The `bindings` object in th
 | --- | --- |
 | `src/main.ts` | Backend entrypoint. Serves the UI, boots DB + storage, creates windows, binds handlers. Never edit for new windows — use `src/window/config.ts`. |
 | `src/window/config.ts` | `windows` preset map (add a key = add a window). |
-| `src/window/manager.ts` | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount`), window lifecycle + close-to-quit logic. |
+| `src/window/manager.ts` | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount` / `watchFrontend`), window lifecycle + close-to-quit logic. |
 | `src/window/native.ts` | `chrome` namespace (tray, menus, dialogs, setup). |
 | `src/window/dialogs.ts` | `pickers` namespace (`open` / `save` / `folder`). |
 | `src/core/facade.ts` | **The public API surface.** Everything app code imports it through — one import, no reaching into internals. |

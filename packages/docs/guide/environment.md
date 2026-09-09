@@ -10,6 +10,7 @@ Configuration comes from environment variables in `.env` (loaded automatically b
 | `APP_DATA_DIR` | `./src/storage/app` | Redirects the app-managed storage root (private + tmp disks). Point a packaged build at the OS user-data dir if you want state outside the install folder. |
 | `DESKAPP_UI` | `true` | `false` = headless mode at runtime (server-only + tray, no window). |
 | `DESKAPP_CHROMIUM` | *(unset)* | Overrides the Chromium binary path used by Playwright features. |
+| `FRONTEND_WATCH` | *(unset)* | Set to `1` by `deno task dev`. Makes the backend watch `src/ui/dist` and reload the open window when the UI rebuilds (`win.watchFrontend`). |
 | `DENO_SERVE_ADDRESS` | *(set by Deno)* | Port the backend serves UI on; windows navigate to `http://127.0.0.1:<port><route>`. |
 
 ## Example

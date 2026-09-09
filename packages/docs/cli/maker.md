@@ -50,7 +50,7 @@ The `db:*` commands live under the same CLI — see [Database Commands](./databa
 The same CLI drives the run/build/bundle workflow — that's why `deno.json` ships just five thin tasks (`maker`, `dev`, `serve`, `ui`, `test`):
 
 ```sh
-deno task maker dev            # codegen → build UI → desktop app (HMR)
+deno task maker dev            # codegen → build UI → desktop app (HMR + UI watch/reload)
 deno task maker serve          # codegen → deno run -A --env-file src/main.ts
 deno task maker build          # build UI + desktop app for the host OS
 deno task maker bundle:win     # full package: UI + deps + optional Chromium + zip
