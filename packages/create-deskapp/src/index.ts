@@ -94,28 +94,44 @@ async function loadTemplateFiles(): Promise<TemplateFiles> {
   return files;
 }
 
-const UI_SCRIPT_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs"]);
+const SCRIPT_EXTENSIONS = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mjs",
+  ".cjs",
+  ".vue",
+]);
 
 // deno publish rewrites import-map shorthand into fully-qualified specifiers
-// (e.g. vue → npm:vue@^3.5.42). Deno consumers are fine with that, but Vite /
-// Rolldown must see plain bare specifiers (resolved via node_modules + the
-// scaffold's deno.json imports map). Frontend files live under src/ui/, so for
-// those we undo the npm: prefix (and version) that publish added.
-function stripNpmSpecifiers(text: string): string {
-  return text.replace(
-    /(from\s*["']|import\s*["']|declare\s+module\s*["'])npm:\/?([^"']+)/g,
-    (_, prefix: string, spec: string) =>
-      prefix + spec.replace(/^(@?[^@/]+(?:\/[^@/]+)?)@[^/]+/, "$1"),
-  );
+// (vue → npm:vue@^3.5.42, @std/path → jsr:@std/path@^1.1.6). Deno consumers can
+// read those, but bundlers (Vite/Rolldown) and type references cannot — and the
+// scaffold ships its own deno.json imports map, so the bare names resolve
+// everywhere. When materializing the project we undo the prefix and version
+// that publish added, restoring the original bare specifiers.
+function stripVersionedSpec(spec: string): string {
+  return spec.replace(/^(@?[^@/]+(?:\/[^@/]+)*)@[^/\s"']+/, "$1");
+}
+
+function stripRegistrySpecifiers(text: string): string {
+  return text
+    .replace(
+      /(from\s*["']|import\s*["']|declare\s+module\s*["'])(?:jsr|npm):\/?([^"']+)/g,
+      (_, prefix: string, spec: string) => prefix + stripVersionedSpec(spec),
+    )
+    .replace(
+      /(\/\/\/\s*<reference\s+types\s*=\s*["'])(?:jsr|npm):\/?([^"']*)["']/g,
+      (_, head: string, spec: string) => `${head}${stripVersionedSpec(spec)}"`,
+    );
 }
 
 function transformTemplateFile(rel: string, bytes: Uint8Array): Uint8Array {
-  if (!rel.startsWith("src/ui/")) return bytes;
   const dot = rel.lastIndexOf(".");
   const ext = dot === -1 ? "" : rel.slice(dot);
-  if (!UI_SCRIPT_EXTENSIONS.has(ext)) return bytes;
+  if (!SCRIPT_EXTENSIONS.has(ext)) return bytes;
   const text = new TextDecoder().decode(bytes);
-  const out = stripNpmSpecifiers(text);
+  const out = stripRegistrySpecifiers(text);
   return out === text ? bytes : new TextEncoder().encode(out);
 }
 

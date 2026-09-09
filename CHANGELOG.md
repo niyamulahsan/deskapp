@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.12] — 2026-09-10
+
+### Fixed
+
+- **The scaffold's source now matches the template exactly.** 1.0.11 only re-bared frontend `npm:` imports, but `deno publish` rewrites every specifier across the whole package — `@std/path` → `jsr:@std/path@^1.1.6`, `@std/http/file-server` → `jsr:/@std/http@^1.1.3/file-server`, and `vite-env.d.ts` got `/// <reference types="npm:/vite@^8.2.2/client" />`. The create script now strips the `jsr:`/`npm:` prefix *and* the version from every `from`/`import`/`declare module`/`/// <reference types>` across **all** scaffold files (the scaffold ships its own `deno.json` imports map, so bare names resolve everywhere), restoring the original source bytes.
+
 ## [1.0.11] — 2026-09-10
 
 ### Fixed
