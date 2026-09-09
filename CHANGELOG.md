@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] — 2026-09-09
+
+### Fixed
+
+- **Scaffolded projects are runnable again.** The 1.0.7 published template had been rewritten (by an editor "convert to relative imports" pass) so every `@/…`, `@std/…`, `@libsql/client`, and bare npm import (`vue`, `bootstrap`, `bcryptjs`, `socket.io-client`, …) became a broken relative `./…` path — e.g. `import { Command } from "./@cliffy/command"` — which made `deno task dev` fail with `Module not found "…/src/core/maker/@cliffy/command"`. Bare specifiers resolve through the `deno.json` imports map; `./`-prefixed ones never do. 1.0.8 re-publishes the clean source template. `scripts/sync-template.mjs` now **fails the sync** if any packaged file contains a `./`-prefixed specifier that matches the template's own imports map, so a dirty publish cannot happen again.
+
 ## [1.0.7] — 2026-09-09
 
 ### Fixed

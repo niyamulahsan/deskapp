@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { cpSync, rmSync, renameSync, existsSync, readdirSync, writeFileSync } from "node:fs";
-import { join, dirname, relative } from "node:path";
+import { cpSync, rmSync, renameSync, existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, dirname, extname, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -38,6 +38,40 @@ const gitignorePath = join(DEST, ".gitignore");
 if (existsSync(gitignorePath)) {
   renameSync(gitignorePath, join(DEST, "gitignore-stub"));
   console.log("  renamed .gitignore → gitignore-stub (JSR ignores .gitignore; materialized by ./create)");
+}
+
+// Guard: the scaffolded app resolves @/..., jsr: and npm: packages through the
+// deno.json imports map, so those specifiers must stay BARE. If any file was
+// rewritten into a relative "./..." import (e.g. an editor "convert to relative
+// paths" pass ran before publishing), the scaffold breaks the moment their
+// package isn't vendored next to the file. Fail the sync instead of shipping it.
+const importsMap = existsSync(join(DEST, "deno.json"))
+  ? JSON.parse(readFileSync(join(DEST, "deno.json"), "utf8")).imports ?? {}
+  : {};
+const extensions = new Set([".ts", ".tsx", ".vue", ".js", ".jsx", ".mjs", ".cjs", ".stub"]);
+const offenders = [];
+const scanDir = (dir) => {
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      scanDir(full);
+      continue;
+    }
+    if (!extensions.has(extname(entry.name))) continue;
+    const text = readFileSync(full, "utf8");
+    for (const key of Object.keys(importsMap)) {
+      for (const prefix of [`"./${key}`, `'./${key}`]) {
+        if (text.includes(prefix)) offenders.push(`${relative(DEST, full)}: found relative import "${prefix.slice(1)}…"`);
+      }
+    }
+  }
+};
+scanDir(DEST);
+if (offenders.length > 0) {
+  console.error("Error: template contains relative './' imports that must be bare specifiers:");
+  for (const line of [...new Set(offenders)]) console.error("  " + line);
+  console.error("Fix the source template (template/), then re-run this script.");
+  process.exit(1);
 }
 
 // Emit a manifest of every file shipped inside the template. `deno create`
