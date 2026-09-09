@@ -4,23 +4,23 @@
 
 ### Fixed
 
-- **The scaffold's source now matches the template exactly.** 1.0.11 only re-bared frontend `npm:` imports, but `deno publish` rewrites every specifier across the whole package — `@std/path` → `jsr:@std/path@^1.1.6`, `@std/http/file-server` → `jsr:/@std/http@^1.1.3/file-server`, and `vite-env.d.ts` got `/// <reference types="npm:/vite@^8.2.2/client" />`. The create script now strips the `jsr:`/`npm:` prefix *and* the version from every `from`/`import`/`declare module`/`/// <reference types>` across **all** scaffold files (the scaffold ships its own `deno.json` imports map, so bare names resolve everywhere), restoring the original source bytes.
+- **The scaffold's source now matches the template exactly.** 1.0.11 only re-bared frontend `npm:` imports, but `deno publish` rewrites every specifier across the whole package — `@std/path` → `jsr:@std/path@^1.1.6`, `@std/http/file-server` → `jsr:/@std/http@^1.1.3/file-server`, and `vite-env.d.ts` got `/// <reference types="npm:/vite@^8.2.2/client" />`. The create script now strips the `jsr:`/`npm:` prefix _and_ the version from every `from`/`import`/`declare module`/`/// <reference types>` across **all** scaffold files (the scaffold ships its own `deno.json` imports map, so bare names resolve everywhere), restoring the original source bytes.
 
 ### Added
 
-- **Playwright is now an optional dependency instead of a default one.** The `app.playwright` module was the only consumer of the `playwright` npm package, and it's a lab/demo — shipping it in the default `deno.json` imports makes every scaffold install and bundle carry the package (plus its browser binaries) for a feature most apps never use. Removed `playwright` from the template's imports map; the demo loads it lazily at runtime (`import.meta.resolve("play" + "wright")`, deliberately non-literal so the registry rewrite never hard-maps it). If it's missing, `app.playwright.play` returns instructions — add `"playwright": "npm:playwright@^1.61.1"` to `deno.json` imports, run `deno install`, then retry. If you don't need browser automation at all, just delete the controller. When enabled, missing browser binaries auto-install on first play through the *installed* package's own `cli.js` — fixing `Executable doesn't exist …/ms-playwright/chromium-<rev>` without the trap of the bare `npm:playwright` specifier downloading a different (wrong-build) cached version.
+- **Playwright is now an optional dependency instead of a default one.** The `app.playwright` module was the only consumer of the `playwright` npm package, and it's a lab/demo — shipping it in the default `deno.json` imports makes every scaffold install and bundle carry the package (plus its browser binaries) for a feature most apps never use. Removed `playwright` from the template's imports map; the demo loads it lazily at runtime (`import.meta.resolve("play" + "wright")`, deliberately non-literal so the registry rewrite never hard-maps it). If it's missing, `app.playwright.play` returns instructions — add `"playwright": "npm:playwright@^1.61.1"` to `deno.json` imports, run `deno install`, then retry. If you don't need browser automation at all, just delete the controller. When enabled, missing browser binaries auto-install on first play through the _installed_ package's own `cli.js` — fixing `Executable doesn't exist …/ms-playwright/chromium-<rev>` without the trap of the bare `npm:playwright` specifier downloading a different (wrong-build) cached version.
 
 ## [1.0.11] — 2026-09-10
 
 ### Fixed
 
-- **Frontend builds with the published template.** The 1.0.10 publish proved `deno publish`'s specifier rewrites now produce *valid* fully-qualified imports (`jsr:@cliffy/command@…`, `npm:vue@^3.5.42`) — so the Deno-side scaffold works — but the **frontend** broke: Vite/Rolldown cannot resolve `npm:` specifiers, it needs bare imports resolved through `node_modules`. The create script now **undoes the `npm:…@version` rewrite for files under `src/ui/`** (restoring `vue`, `bootstrap`, `@vitejs/plugin-vue`, …), so the generated `app.ts`, `pulse.ts`, and `vite.config.ts` build again.
+- **Frontend builds with the published template.** The 1.0.10 publish proved `deno publish`'s specifier rewrites now produce _valid_ fully-qualified imports (`jsr:@cliffy/command@…`, `npm:vue@^3.5.42`) — so the Deno-side scaffold works — but the **frontend** broke: Vite/Rolldown cannot resolve `npm:` specifiers, it needs bare imports resolved through `node_modules`. The create script now **undoes the `npm:…@version` rewrite for files under `src/ui/`** (restoring `vue`, `bootstrap`, `@vitejs/plugin-vue`, …), so the generated `app.ts`, `pulse.ts`, and `vite.config.ts` build again.
 
 ## [1.0.10] — 2026-09-10
 
 ### Fixed
 
-- **The real root cause of the relative-import breakage.** `deno publish` automatically rewrites import-map shortcut specifiers into fully-qualified ones ("specifier unfurling"). The package config (`packages/create-deskapp/deno.json`) had no `imports` map — the map only lived in `template/deno.json` — so every bare import in the shipped template (`@cliffy/command`, `@std/…`, `@/…`, `vue`, …) was rewritten from a missing-shortcut state into a broken `./`-prefixed path (e.g. `./@cliffy/command`). The 1.0.7→1.0.9 publications were all re-publishing clean files that *Deno re-broke at publish time*, which is why syncing/scanning the working tree could never catch it. The package now shares the same `imports` map as the template (`@/`/`@/ui/` point into `./template/src/` so the rewrite stays layout-correct), so published specifiers come out fully-qualified (`jsr:@cliffy/command@…`, `npm:vue@…`) or as valid relative paths — and scaffolds work off the registry.
+- **The real root cause of the relative-import breakage.** `deno publish` automatically rewrites import-map shortcut specifiers into fully-qualified ones ("specifier unfurling"). The package config (`packages/create-deskapp/deno.json`) had no `imports` map — the map only lived in `template/deno.json` — so every bare import in the shipped template (`@cliffy/command`, `@std/…`, `@/…`, `vue`, …) was rewritten from a missing-shortcut state into a broken `./`-prefixed path (e.g. `./@cliffy/command`). The 1.0.7→1.0.9 publications were all re-publishing clean files that _Deno re-broke at publish time_, which is why syncing/scanning the working tree could never catch it. The package now shares the same `imports` map as the template (`@/`/`@/ui/` point into `./template/src/` so the rewrite stays layout-correct), so published specifiers come out fully-qualified (`jsr:@cliffy/command@…`, `npm:vue@…`) or as valid relative paths — and scaffolds work off the registry.
 
 ## [1.0.9] — 2026-09-09
 
@@ -38,7 +38,7 @@
 
 ### Fixed
 
-- **`deno create jsr:@niyam/deskapp` works again.** The scaffold script built the JSR base URL with `../../` from the entry module, which strips the version segment — JSR only serves package files (`template.manifest.json`, `template/**`) at the *versioned* package root, so the fetch 404'd with "Could not load template manifest". The base now stays at the versioned root (`../`), so the manifest and every template file download correctly over the registry CDN. This regression was present since the CDN-loading change in 1.0.3.
+- **`deno create jsr:@niyam/deskapp` works again.** The scaffold script built the JSR base URL with `../../` from the entry module, which strips the version segment — JSR only serves package files (`template.manifest.json`, `template/**`) at the _versioned_ package root, so the fetch 404'd with "Could not load template manifest". The base now stays at the versioned root (`../`), so the manifest and every template file download correctly over the registry CDN. This regression was present since the CDN-loading change in 1.0.3.
 
 ## [1.0.6] — 2026-09-09
 
@@ -58,7 +58,7 @@
 
 ### Fixed
 
-- **README no longer presents `app.*` as the framework API.** The facade (`@/core/facade.ts`) exposes per-capability namespace objects — `win`, `chrome`, `pickers`, `db`, `queue`, `cron`, `storage`, … — while `app.*` is only the prefix of the *sample* module's UI bindings (`bindings['<module>.<controller>.<handler>']()`), which developers replace with their own modules. Quick Start now shows real facade usage instead of invented `app.*` examples.
+- **README no longer presents `app.*` as the framework API.** The facade (`@/core/facade.ts`) exposes per-capability namespace objects — `win`, `chrome`, `pickers`, `db`, `queue`, `cron`, `storage`, … — while `app.*` is only the prefix of the _sample_ module's UI bindings (`bindings['<module>.<controller>.<handler>']()`), which developers replace with their own modules. Quick Start now shows real facade usage instead of invented `app.*` examples.
 
 ## [1.0.3] — 2026-09-08
 
