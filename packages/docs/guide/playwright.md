@@ -5,10 +5,10 @@ Deskapp ships Playwright plumbing so backend features can drive a real Chromium 
 > **Playwright is optional.** It is *not* in a scaffold's default `deno.json` imports — only the demo consumes it, so scaffolds start without the package. To enable browser automation:
 >
 > 1. Add `"playwright": "npm:playwright@^1.61.1"` to `deno.json` → `imports`.
-> 2. Run `deno install`.
-> 3. First `app.playwright.play` downloads the browser binary automatically.
+> 2. Run `deno install` (this installs the package — not the browser).
+> 3. Run `app.playwright.play`. The **browser binary** auto-downloads on first use.
 >
-> If you don't need the demo itself, delete `src/modules/app/controllers/playwright.controller.ts` (and its dashboard entry) — the `chromium` facade and the resolution below remain available for your own controllers.
+> The app can't install the `playwright` package itself — steps 1–2 are always manual. If the dependency is missing, clicking Play returns exactly these steps instead of failing silently. If you don't want browser automation, leave it out and delete the demo controller — nothing else needs it.
 
 ## Resolving Chromium
 
@@ -17,7 +17,7 @@ Deskapp ships Playwright plumbing so backend features can drive a real Chromium 
 1. **`DESKAPP_CHROMIUM`** environment variable — a user- or CI-provided binary.
 2. **Bundled Chromium next to the app binary** — `chromium/<platform>/...` beside the executable, where the bundle step placed it (`dist/<app>/chromium/...` on Windows/Linux, `dist/<app>.app/Contents/MacOS/chromium/...` on macOS).
 3. **Bundled Chromium at the working directory** — `chromium/<platform>/...` relative to the launch cwd.
-4. **Playwright's registry cache** — the development fallback: `resolve()` returns `undefined`, and the caller launches *without* an `executablePath` so Playwright uses its own cache. The browser for that cache is not part of `deno install` — it downloads it automatically on the first `app.playwright.play` (or your own binding that follows the same pattern). If the auto-download fails, the returned error shows the manual fallback: `npx playwright install chromium`.
+4. **Playwright's registry cache** — the development fallback: `resolve()` returns `undefined`, and the caller launches *without* an `executablePath` so Playwright uses its own cache. The browser for that cache is not part of `deno install` — once the `playwright` package is enabled, the first `app.playwright.play` downloads it automatically (or your own binding that follows the same pattern). If the auto-download fails, the returned error shows the manual fallback: `npx playwright install chromium`.
 
 ```ts
 import { chromium } from "@/core/facade.ts";
@@ -81,7 +81,7 @@ The registry convention is `<module>.<controller>.<handler>` — in-process, no 
 
 ## Bundling Chromium & extensions
 
-The bundle step can download Chromium into the bundle so the app carries a working browser. See [Bundle](../cli/bundle.md) and its flags.
+The bundle step grabs a Chromium from the Playwright cache and copies it into the bundle so the app carries a working browser (it never downloads — install it manually first). See [Bundle](../cli/bundle.md) and its flags.
 
 **Extensions are bundled only when Chromium is bundled** (the default `--chromium=auto`). Every *directory* under `src/extensions/` is treated as one unpacked extension and copied next to the binary — `extensions/<name>/` on Windows/Linux, `Contents/MacOS/extensions/<name>/` on macOS.
 
