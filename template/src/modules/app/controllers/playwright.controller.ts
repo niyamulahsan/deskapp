@@ -90,12 +90,15 @@ export const play = async (opts?: { url?: string; seconds?: number; headless?: b
       try {
         await ensurePlaywrightBrowser("chromium");
       } catch (error) {
+        const msg = String(error);
         return {
           ok: false,
           url,
           chromium: "playwright-registry",
-          error: String(error),
-          hint: "Run in your terminal: npx playwright install chromium",
+          error: msg,
+          hint: Deno.build.os === "windows" && /spawn|Invalid handle/i.test(msg)
+            ? "Windows blocked the browser download/launch. Disable Smart App Control temporarily (Windows Security -> App & browser control -> Smart App Control -> Off), retry, then re-enable it. Alternative: run 'npx playwright install chromium' in your terminal."
+            : "Run in your terminal: npx playwright install chromium",
         };
       }
     }

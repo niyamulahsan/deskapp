@@ -35,6 +35,33 @@ npx playwright install chromium          # correct: uses the installed playwrigh
 # do NOT use: deno run -A npm:playwright install chromium   # may download the wrong build
 ```
 
+> **Troubleshooting:** if `app.playwright.play` comes back with `Failed to spawn '...': Invalid handle` on **Windows**, Smart App Control is blocking the process spawn — see [Windows & Native APIs — Known quirks](../guide/windows.md#known-quirks). Disable SAC temporarily, retry, then re-enable it. macOS/Linux need no such step.
+
+## The browser cache & freeing space
+
+Downloaded browsers live in a single **per-user registry outside your project**, keyed by Playwright revision:
+
+| OS | Folder |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\ms-playwright` |
+| macOS | `~/Library/Caches/ms-playwright` |
+| Linux | `~/.cache/ms-playwright` |
+
+Inside it: `chromium-<rev>` / `chromium_headless_shell-<rev>` are the browser binaries (the bulk), `ffmpeg-<rev>` is only needed for video recording, and `winldd-*`/`dep-*` are tiny helpers. The npm package itself is a separate, small download in `node_modules`/Deno's npm cache.
+
+To free the space when you don't need browser automation:
+
+```sh
+npx playwright uninstall chromium        # removes this install's browsers (needs a project with playwright)
+# or delete the whole folder — same effect, and it clears every version:
+rm -rf ~/Library/Caches/ms-playwright    # macOS
+rm -rf ~/.cache/ms-playwright            # Linux
+# Windows (PowerShell):
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\ms-playwright"
+```
+
+Then drop the dependency entirely: remove `"playwright"` from `deno.json` imports and run `deno install`. Nothing in this cache ever ends up in your project unless you explicitly bundle it (see [Bundle](../cli/bundle) — bundling copies the **newest** `chromium-*` revision found here, so stale/mismatched builds can be picked up; keep only the revision your resolved playwright version expects).
+
 ## Wiring it to the UI
 
 Chromium run inside your backend controller, exposed as a binding:

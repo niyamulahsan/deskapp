@@ -131,6 +131,9 @@ Options:
 
 ## Known quirks
 
+> [!IMPORTANT] Windows Smart App Control can block child processes
+> On Windows 11, **Smart App Control (SAC)** may silently block the app from spawning helper processes — a Playwright browser download/launch, file dialogs, or the tray. Symptom: an error like `Failed to spawn '...': Invalid handle`. The workaround: turn SAC **off** (Windows Security → App & browser control → Smart App Control → `Off`), run/retry, then switch it back **on** when done. Other OSes have no equivalent gate — this is Windows-specific, so no such step is needed on macOS or Linux.
+
 > [!WARNING] Version-specific Deno Desktop regressions
 > The default setup — one `main` window running the SPA at `route: "/"` with in-process bindings — is unaffected. The items below only bite in the exact combination listed (OS + Deno version + secondary windows):
 

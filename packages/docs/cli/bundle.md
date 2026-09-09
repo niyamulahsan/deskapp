@@ -84,6 +84,8 @@ deno task maker bundle:linux --chromium=force --no-zip
 
 > Don't run `deno run -A npm:playwright install chromium` instead — that bare specifier can resolve to a *different* cached version and download a browser build the bundle can't find (the registry path for the wrong build won't match). If you must use the `deno run` form, pin the exact version `deno install` resolved, e.g. `deno run -A npm:playwright@1.63.0 install chromium`.
 
+**Which cache entry is bundled:** the bundle picks the **newest `chromium-*` folder by modification time** in the Playwright registry (`%LOCALAPPDATA%\ms-playwright` on Windows, `~/Library/Caches/ms-playwright` on macOS, `~/.cache/ms-playwright` on Linux) — it does *not* verify it matches the playwright version your project resolves. If stale revisions piled up (e.g. from a wrong-version manual install), `--chromium=force` may bundle the wrong build. Fix by clearing the mismatch (`npx playwright uninstall chromium`, or delete the whole `ms-playwright` folder — it's outside your project, see [Playwright & Chromium](../guide/playwright)) and install once with the correct command above.
+
 Any `src/extensions/*` folders are copied next to Chromium automatically (`chromium/` / `extensions/` beside the launcher).
 
 ## Flags
