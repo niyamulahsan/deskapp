@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.7] — 2026-09-09
+
+### Fixed
+
+- **`deno create jsr:@niyam/deskapp` works again.** The scaffold script built the JSR base URL with `../../` from the entry module, which strips the version segment — JSR only serves package files (`template.manifest.json`, `template/**`) at the *versioned* package root, so the fetch 404'd with "Could not load template manifest". The base now stays at the versioned root (`../`), so the manifest and every template file download correctly over the registry CDN. This regression was present since the CDN-loading change in 1.0.3.
+
 ## [1.0.6] — 2026-09-09
 
 ### Added

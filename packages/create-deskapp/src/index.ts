@@ -50,7 +50,13 @@ function isRemote(): boolean {
 
 function templateBaseUrl(): URL {
   const override = Deno.env.get("DESKAPP_CREATE_BASE");
-  const raw = override ?? new URL("../../", import.meta.url).href;
+  // When run from the registry, import.meta.url is
+  //   https://jsr.io/@<scope>/<name>/<version>/src/index.ts
+  // One level up is the versioned package root. JSR only serves package files
+  // (template.manifest.json, template/**) at that versioned root — the
+  // unversioned scope URL (`../../`) only serves the entry module and 404s for
+  // everything else.
+  const raw = override ?? new URL("../", import.meta.url).href;
   return raw.endsWith("/") ? new URL(raw) : new URL(raw + "/");
 }
 
