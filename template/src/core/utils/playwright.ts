@@ -125,7 +125,9 @@ export function resolveExtensions(
 export async function ensurePlaywrightBrowser(
   browser = "chromium",
 ): Promise<void> {
-  const entry = import.meta.resolve("playwright");
+  // Non-literal so Deno's export/publish rewrite never treats it as an import
+  // specifier — playwright is an optional dep, resolved only when present.
+  const entry = import.meta.resolve("play" + "wright");
   if (!entry.startsWith("file:")) {
     throw new Error(
       `playwright resolved to a remote specifier (${entry}); install the browser manually with 'npx playwright install ${browser}'.`,

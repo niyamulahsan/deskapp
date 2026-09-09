@@ -1,7 +1,42 @@
-import { chromium } from "playwright";
 import { basename } from "@std/path";
 import { chromium as chromiumApi } from "@/core/facade.ts";
 import { ensurePlaywrightBrowser, existsPath } from "@/core/utils/playwright.ts";
+
+// playwright is an OPTIONAL dependency: it's only needed for this demo, so it
+// is not in the default imports map. `"play" + "wright"` (non-literal) keeps
+// Deno's export/publish rewrite from treating it as an import specifier —
+// resolution happens at runtime, and if it's missing the UI shows how to
+// enable it instead of failing at startup.
+const PW_SPEC = "play" + "wright";
+const NEED_PLAYWRIGHT =
+  '"playwright" is not installed. Add "playwright": "npm:playwright@^1.61.1" to deno.json imports, run "deno install", then retry.';
+
+interface PlaywrightPage {
+  goto(url: string, options?: Record<string, unknown>): Promise<unknown>;
+  title(): Promise<string>;
+}
+interface PlaywrightBrowser {
+  newPage(): Promise<PlaywrightPage>;
+  pages(): Promise<PlaywrightPage[]>;
+  close(): Promise<void>;
+}
+interface PlaywrightChromium {
+  executablePath(): string;
+  launch(options?: Record<string, unknown>): Promise<PlaywrightBrowser>;
+  launchPersistentContext(userDataDir: string, options: Record<string, unknown>): Promise<PlaywrightBrowser>;
+}
+
+async function loadChromium(): Promise<PlaywrightChromium> {
+  let resolved: string;
+  try {
+    resolved = import.meta.resolve(PW_SPEC);
+  } catch (error) {
+    throw new Error(`${String(error)} - ${NEED_PLAYWRIGHT}`);
+  }
+  const mod = (await import(resolved)) as { chromium?: PlaywrightChromium };
+  if (!mod.chromium) throw new Error(NEED_PLAYWRIGHT);
+  return mod.chromium;
+}
 
 /**
  * playwright.controller.ts (app module) - browser automation demo.
@@ -32,6 +67,13 @@ export const play = async (opts?: { url?: string; seconds?: number; headless?: b
   const url = opts?.url?.trim() || EXAMPLE;
   const seconds = Math.min(Math.max(opts?.seconds ?? DEFAULT_SECONDS, 1), 60);
   const started = Date.now();
+
+  let chromium: PlaywrightChromium;
+  try {
+    chromium = await loadChromium();
+  } catch (error) {
+    return { ok: false, url, chromium: "n/a", error: String(error) };
+  }
 
   const chromiumPath = chromiumApi.resolve();
   const extensionsInput = opts?.extensions && opts.extensions.length > 0 ? opts.extensions : chromiumApi.extensions();
