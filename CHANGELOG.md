@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.10] — 2026-09-10
+
+### Fixed
+
+- **The real root cause of the relative-import breakage.** `deno publish` automatically rewrites import-map shortcut specifiers into fully-qualified ones ("specifier unfurling"). The package config (`packages/create-deskapp/deno.json`) had no `imports` map — the map only lived in `template/deno.json` — so every bare import in the shipped template (`@cliffy/command`, `@std/…`, `@/…`, `vue`, …) was rewritten from a missing-shortcut state into a broken `./`-prefixed path (e.g. `./@cliffy/command`). The 1.0.7→1.0.9 publications were all re-publishing clean files that *Deno re-broke at publish time*, which is why syncing/scanning the working tree could never catch it. The package now shares the same `imports` map as the template (`@/`/`@/ui/` point into `./template/src/` so the rewrite stays layout-correct), so published specifiers come out fully-qualified (`jsr:@cliffy/command@…`, `npm:vue@…`) or as valid relative paths — and scaffolds work off the registry.
+
 ## [1.0.9] — 2026-09-09
 
 ### Fixed
