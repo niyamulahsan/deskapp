@@ -245,7 +245,7 @@ async function main(): Promise<void> {
   console.log();
   if (!inPlace) console.log("  cd " + projectName);
   console.log("  deno install              # resolve deps (vite, sass, drizzle, ...)");
-  console.log("  deno task dev             # codegen + build UI + open the desktop window");
+  console.log("  deno task dev             # codegen + build UI + open the desktop window (downloads Playwright Chromium on first use)");
   console.log("  deno run -A src/main.ts   # headless (no window, tray-only)");
   console.log();
   console.log("Tune your app: edit deno.json > desktop.app.name and deepLinks,");

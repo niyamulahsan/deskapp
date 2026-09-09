@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import { basename } from "@std/path";
 import { chromium as chromiumApi } from "@/core/facade.ts";
+import { ensurePlaywrightBrowser, existsPath } from "@/core/utils/playwright.ts";
 
 /**
  * playwright.controller.ts (app module) - browser automation demo.
@@ -36,6 +37,27 @@ export const play = async (opts?: { url?: string; seconds?: number; headless?: b
   const extensionsInput = opts?.extensions && opts.extensions.length > 0 ? opts.extensions : chromiumApi.extensions();
   const extensions = extensionsInput.filter(chromiumApi.exists);
   const headless = (opts?.headless ?? false) && extensions.length === 0;
+
+  // No bundled/explicit Chromium -> use Playwright's registry build for the
+  // installed package. `deno install` doesn't download browsers, so download
+  // (once) via that package's own CLI instead of failing with
+  // "Executable doesn't exist .../ms-playwright/chromium-<rev>".
+  if (!chromiumPath) {
+    const registry = chromium.executablePath();
+    if (registry && !existsPath(registry)) {
+      try {
+        await ensurePlaywrightBrowser("chromium");
+      } catch (error) {
+        return {
+          ok: false,
+          url,
+          chromium: "playwright-registry",
+          error: String(error),
+          hint: "Run in your terminal: npx playwright install chromium",
+        };
+      }
+    }
+  }
 
   let browser: unknown;
   try {

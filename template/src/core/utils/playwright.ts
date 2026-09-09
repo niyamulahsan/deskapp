@@ -1,4 +1,4 @@
-import { dirname, join } from "@std/path";
+import { dirname, fromFileUrl, join } from "@std/path";
 
 /**
  * playwright.ts - shared Chromium resolution for the desktop app.
@@ -111,4 +111,41 @@ export function resolveExtensions(
   overrides?: { execPath?: string; cwd?: string; },
 ): string[] {
   return extensionsCandidates(overrides);
+}
+
+/**
+ * Downloads the Playwright browser binary (`chromium` by default) using the
+ * exact installed playwright package, then (later) launches with it.
+ *
+ * The browser registry lives separately from the npm package: `deno install`
+ * / `npm i` do NOT download it. We always invoke the *installed* package's own
+ * `cli.js` — never the bare `npm:playwright` specifier, which Deno may resolve
+ * to a different cached version and would download the wrong browser build.
+ */
+export async function ensurePlaywrightBrowser(
+  browser = "chromium",
+): Promise<void> {
+  const entry = import.meta.resolve("playwright");
+  if (!entry.startsWith("file:")) {
+    throw new Error(
+      `playwright resolved to a remote specifier (${entry}); install the browser manually with 'npx playwright install ${browser}'.`,
+    );
+  }
+  const cliFile = join(dirname(fromFileUrl(entry)), "cli.js");
+  if (!existsPath(cliFile)) {
+    throw new Error(
+      `playwright CLI not found at ${cliFile}; install the browser manually with 'npx playwright install ${browser}'.`,
+    );
+  }
+  const cmd = new Deno.Command(Deno.execPath(), {
+    args: ["run", "-A", cliFile, "install", browser],
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  const res = await cmd.output();
+  if (!res.success) {
+    throw new Error(
+      `playwright install ${browser} failed (exit ${res.code}); retry with 'npx playwright install ${browser}'.`,
+    );
+  }
 }
