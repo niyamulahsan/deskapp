@@ -73,14 +73,16 @@ The **Play button** and Playwright helper features need a real Chromium binary n
 | `force` | bundle Chromium and **fail the build** if it isn't in the cache |
 | `skip` | build without bundling Chromium (Playwright features only work where a Chromium is installed) |
 
-Install Chromium once per OS — it is a Deno command, no Node needed (`npm:playwright` pins the version your app imports from deno.json); `--chromium=force` then guards against a missing cache:
+Install Chromium once per OS, using the version your app actually installs: the app opts into Playwright by adding `"playwright"` to `deno.json` imports (see [Playwright & Chromium](../guide/playwright)), `deno install` puts it in `node_modules`, and `npx playwright install chromium` uses that exact version. `--chromium=force` then guards against a missing cache:
 
 ```sh
-deno run -A npm:playwright install chromium                  # once, per OS machine
+npx playwright install chromium                  # once, per OS machine (uses the project's installed playwright)
 deno task maker bundle:win --chromium=force               # always ships Chromium
 deno task maker bundle:linux --chromium=force --no-zip
-#   --chromium=force FAILS the build if no Playwright Chromium is cached
+#   --chromium=force FAILS the build if no matching Playwright Chromium is cached
 ```
+
+> Don't run `deno run -A npm:playwright install chromium` instead — that bare specifier can resolve to a *different* cached version and download a browser build the bundle can't find (the registry path for the wrong build won't match). If you must use the `deno run` form, pin the exact version `deno install` resolved, e.g. `deno run -A npm:playwright@1.63.0 install chromium`.
 
 Any `src/extensions/*` folders are copied next to Chromium automatically (`chromium/` / `extensions/` beside the launcher).
 

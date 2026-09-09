@@ -243,7 +243,7 @@ if (flags.chromium === "skip") {
     copyExtensionsInto(realAppOut, os);
     bundled = true;
   } else if (flags.chromium === "force") {
-    console.error("  FAILED: --chromium=force but no Playwright Chromium found. Install: deno run -A npm:playwright install chromium");
+    console.error("  FAILED: --chromium=force but no Playwright Chromium found. Install: npx playwright install chromium");
     Deno.exit(1);
   } else {
     console.log("  no Playwright Chromium found in cache - skipped (Playwright features limited).");

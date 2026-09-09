@@ -77,6 +77,8 @@ export const handlers = { visit };
 ```
 
 > The `as any` casts keep the snippet import-light; Playwright's own types give you real types at compile time.
+>
+> This snippet imports `playwright` directly, which only resolves once you've opted in — `playwright` is **not** in a scaffold's default `deno.json` imports (see [Playwright & Chromium](../guide/playwright)). Add it there and run `deno install` before using browser automation; the first launch auto-downloads the browser binary, or install it manually with `npx playwright install chromium`.
 
 The binding name follows the registry convention `<module>.<controller>.<handler>` — for a module named `"worker"` this becomes `worker.browser.visit`. That is key:
 

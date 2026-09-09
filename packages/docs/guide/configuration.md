@@ -54,7 +54,6 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
     "drizzle-kit": "npm:drizzle-kit@^0.31.10",
     "drizzle-orm": "npm:drizzle-orm@^0.45.2",
     "pinia": "npm:pinia@^4.0.3",
-    "playwright": "npm:playwright@^1.61.1",
     "sass-embedded": "npm:sass-embedded@^1.103.1",
     "socket.io-client": "npm:socket.io-client@^4.8.3",
     "typescript": "npm:typescript@^7.0.2",
@@ -72,7 +71,7 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
 
 ### Key sections
 
-- **`imports`** — the import map: `@/` → `./src/`, `@/ui/` → `./src/ui/src/`, plus every npm/jsr dependency. Add new deps with `deno add npm:something`.
+- **`imports`** — the import map: `@/` → `./src/`, `@/ui/` → `./src/ui/src/`, plus every npm/jsr dependency. Add new deps with `deno add npm:something`. Note what's *not* there: **`playwright`** is deliberately absent — only the `app.playwright` demo uses it, so a scaffold starts without it. Add `"playwright": "npm:playwright@^1.61.1"` here to enable browser automation (see [Playwright & Chromium](./playwright)).
 - **`desktop.app`** — display name, per-OS icon paths, deep-link schemes. This is your app identity; the bundler reads it too. The icons configured here are what **every window** shows in the taskbar/dock — Deno Desktop's `BrowserWindowOptions` has no per-window icon (see [win — Known quirks](../api/win#known-quirks-with-multiple-windows)).
 - **`desktop.backend` / `desktop.output`** — backend flavor (`webview`) and per-OS output paths.
 - **`lint` / `nodeModulesDir`** — what `deno lint` touches and npm node_modules handling (`auto`).
