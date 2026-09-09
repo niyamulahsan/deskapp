@@ -6,6 +6,7 @@
   "exports": {
     "./create": "./src/index.ts"
   },
+  "lock": false,
   "imports": {
     "@/": "./template/src/",
     "@/ui/": "./template/src/ui/src/",
