@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.11] — 2026-09-10
+
+### Fixed
+
+- **Frontend builds with the published template.** The 1.0.10 publish proved `deno publish`'s specifier rewrites now produce *valid* fully-qualified imports (`jsr:@cliffy/command@…`, `npm:vue@^3.5.42`) — so the Deno-side scaffold works — but the **frontend** broke: Vite/Rolldown cannot resolve `npm:` specifiers, it needs bare imports resolved through `node_modules`. The create script now **undoes the `npm:…@version` rewrite for files under `src/ui/`** (restoring `vue`, `bootstrap`, `@vitejs/plugin-vue`, …), so the generated `app.ts`, `pulse.ts`, and `vite.config.ts` build again.
+
 ## [1.0.10] — 2026-09-10
 
 ### Fixed

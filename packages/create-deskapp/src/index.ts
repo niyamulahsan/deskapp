@@ -94,11 +94,36 @@ async function loadTemplateFiles(): Promise<TemplateFiles> {
   return files;
 }
 
+const UI_SCRIPT_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs"]);
+
+// deno publish rewrites import-map shorthand into fully-qualified specifiers
+// (e.g. vue → npm:vue@^3.5.42). Deno consumers are fine with that, but Vite /
+// Rolldown must see plain bare specifiers (resolved via node_modules + the
+// scaffold's deno.json imports map). Frontend files live under src/ui/, so for
+// those we undo the npm: prefix (and version) that publish added.
+function stripNpmSpecifiers(text: string): string {
+  return text.replace(
+    /(from\s*["']|import\s*["']|declare\s+module\s*["'])npm:\/?([^"']+)/g,
+    (_, prefix: string, spec: string) =>
+      prefix + spec.replace(/^(@?[^@/]+(?:\/[^@/]+)?)@[^/]+/, "$1"),
+  );
+}
+
+function transformTemplateFile(rel: string, bytes: Uint8Array): Uint8Array {
+  if (!rel.startsWith("src/ui/")) return bytes;
+  const dot = rel.lastIndexOf(".");
+  const ext = dot === -1 ? "" : rel.slice(dot);
+  if (!UI_SCRIPT_EXTENSIONS.has(ext)) return bytes;
+  const text = new TextDecoder().decode(bytes);
+  const out = stripNpmSpecifiers(text);
+  return out === text ? bytes : new TextEncoder().encode(out);
+}
+
 function writeTemplateFiles(files: TemplateFiles, target: string): void {
   for (const [rel, bytes] of files) {
     const abs = join(target, ...rel.split("/"));
     mkdirSync(dirname(abs), { recursive: true });
-    writeFileSync(abs, bytes);
+    writeFileSync(abs, transformTemplateFile(rel, bytes));
   }
 }
 
