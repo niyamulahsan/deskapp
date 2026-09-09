@@ -13,15 +13,17 @@
 
 `@niyam/deskapp` is a full local-first desktop framework. It scaffolds a
 complete project — not a UI shell — with the backend and frontend wired
-together in-process. Everything lives behind a single `app.*` facade, so your
-window, database, queue, and scheduler are available everywhere.
+together in-process. Everything lives behind **one import** — the facade at
+`@/core/facade.ts` — which exposes a namespace object per capability (`win`,
+`chrome`, `pickers`, `db`, `queue`, `cron`, `storage`, …), so your window,
+database, queue, and scheduler are available everywhere.
 
 ## ✨ Highlights
 
 ### Desktop
 
 - **Windows & native APIs** — window presets, manager, native chrome, dialogs
-  and file pickers via `app.window.*`
+  and file pickers via the `win` / `chrome` / `pickers` facade objects
 - **Bindings** — backend controllers auto-registered and callable from the UI
   in-process as `bindings['<module>.<controller>.<handler>']()`
 
@@ -75,14 +77,15 @@ deno task dev
 ## 🚀 Quick Start
 
 A desktop window opens with the starter dashboard, backed by the full local
-stack. Access every subsystem through one import:
+stack. Access every subsystem through one import — the facade:
 
 ```ts
-import { app } from "./src/core/facade.ts";
+import { win, queue, storage } from "./src/core/facade.ts";
 
-await app.storage.write("data", { hello: "world" });
-await app.queue.push("sum", { a: 1, b: 2 });
-await app.net.fetchJson("https://jsonplaceholder.typicode.com/todos/1");
+win.getWindow()?.setTitle("Hello"); // drive windows
+const q = queue.create({ concurrency: 3 }); // throttle async work
+await q.add(async () => "task done");
+await storage.put("data/hello.json", { hello: "world" });
 ```
 
 Run headless as a tray-only service with `deno run -A src/main.ts`.
