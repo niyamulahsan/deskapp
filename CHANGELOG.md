@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.9] — 2026-09-09
+
+### Fixed
+
+- **1.0.8 accidentally shipped the same relative-import breakage.** The published package included a template whose import statements had been rewritten to `./`-prefixed relative paths (e.g. `from "./@cliffy/command"` instead of `from "@cliffy/command"`), so every scaffold inherited `Module not found "…/src/core/maker/@cliffy/command"`. This release re-publishes the clean source template, and `deno task publish` now runs the template sync first — `scripts/sync-template.mjs` re-copies `template/` into the package (wiping any local drift) and **aborts if any file still contains a `./`-prefixed specifier that matches the template's own imports map**, so a dirty package can never be uploaded again.
+
 ## [1.0.8] — 2026-09-09
 
 ### Fixed
