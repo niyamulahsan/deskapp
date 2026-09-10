@@ -1,5 +1,5 @@
 import { fromFileUrl, toFileUrl } from "@std/path";
-import { GENERATED_CONTROLLERS } from "./bindings.generated.ts";
+import { GENERATED_CONTROLLERS } from "@/core/api/bindings.generated.ts";
 
 /**
  * registry.ts - desktop bindings registry.

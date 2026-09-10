@@ -18,7 +18,7 @@ Imported from the facade: `import { paginate, sql } from "@/core/facade.ts"`.
 
 | You want to… | Use |
 | --- | --- |
-| Paginate the full rows of one table | [`paginate.table`](./paginateTable) (`paginate.table(schema.users, { page: 2 })`) |
+| Paginate the full rows of one table | [`paginate.table`](./paginateTable) (`paginate.table(users, { page: 2 })`) |
 | Paginate eager-loaded relations (`db.query.<table>`) | [`paginate.model`](./paginateModel) (`with: { posts: true }`) |
 | Own the count and data queries completely (joins, aggregates) | [`paginate.query`](./paginateQuery) (you supply `total` + `data`) |
 

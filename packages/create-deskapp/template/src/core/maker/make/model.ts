@@ -1,6 +1,6 @@
 import { join } from "@std/path";
-import type { MakerOptions } from "./helpers.ts";
-import { assertModuleExists, assertName, modelContent, moduleDir, writeFile } from "./helpers.ts";
+import type { MakerOptions } from "@/core/maker/make/helpers.ts";
+import { assertModuleExists, assertName, modelContent, moduleDir, writeFile } from "@/core/maker/make/helpers.ts";
 
 /** make:model - create a model file in an existing module. */
 export function makeModel(module: string, name: string, options: MakerOptions = {}): void {

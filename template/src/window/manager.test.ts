@@ -1,6 +1,6 @@
 import { assertEquals } from "@std/assert";
-import { win } from "./manager.ts";
-import type { BrowserWindowOptions } from "./manager.ts";
+import { win } from "@/window/manager.ts";
+import type { BrowserWindowOptions } from "@/window/manager.ts";
 
 // -- mock Deno.BrowserWindow ----------------------------------------------
 

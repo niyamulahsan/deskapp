@@ -1,6 +1,6 @@
 import { join } from "@std/path";
-import type { MakerOptions } from "./helpers.ts";
-import { assertModuleExists, assertName, moduleDir, seederContent, writeFile } from "./helpers.ts";
+import type { MakerOptions } from "@/core/maker/make/helpers.ts";
+import { assertModuleExists, assertName, moduleDir, seederContent, writeFile } from "@/core/maker/make/helpers.ts";
 
 /** make:seeder - create a seeder file for a module model. */
 export function makeSeeder(module: string, name: string, options: MakerOptions = {}): void {

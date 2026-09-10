@@ -93,7 +93,7 @@ The controller that sends to the whole list:
 
 ```ts
 import { db, queue, sql } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 import { sendEmail } from "@/core/utils/mailer.ts";
 
 export const blast = async (input: { subject: string; body: string }) => {
@@ -110,7 +110,7 @@ export const blast = async (input: { subject: string; body: string }) => {
       mailer.add(async () => {
         await sendEmail(user.email, input.subject, input.body);
         // 3) record who actually got it
-        await db.update(schema.users)
+        await db.update(users)
           .set({ lastNewsletterAt: new Date().toISOString() })
           .where(sql`id = ${user.id}`);
         return user.email;

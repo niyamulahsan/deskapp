@@ -1,12 +1,12 @@
 import type { Command } from "@cliffy/command";
-import { check, push, studio } from "./push.ts";
-import { fresh } from "./fresh.ts";
-import { generate, schema } from "./generate.ts";
-import { migrate, migrateRun } from "./migrate.ts";
-import { migrateModule } from "./module-migrate.ts";
-import { reset } from "./reset.ts";
-import { seed } from "./seed.ts";
-import { status } from "./status.ts";
+import { check, push, studio } from "@/core/maker/db/push.ts";
+import { fresh } from "@/core/maker/db/fresh.ts";
+import { generate, schema } from "@/core/maker/db/generate.ts";
+import { migrate, migrateRun } from "@/core/maker/db/migrate.ts";
+import { migrateModule } from "@/core/maker/db/module-migrate.ts";
+import { reset } from "@/core/maker/db/reset.ts";
+import { seed } from "@/core/maker/db/seed.ts";
+import { status } from "@/core/maker/db/status.ts";
 
 function runSafe(action: () => Promise<void>): void {
   action().catch((error) => {

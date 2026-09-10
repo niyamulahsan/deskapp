@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.13] — 2026-09-11
+
+### Changed
+
+- **Every internal import in the template now uses the `@/` alias instead of relative paths.** `@/` → `./src/` covers core, modules, window, and database alike; `@/ui/` is the only special entry (the UI has its own nested `src/` root, so Vite's `resolve.alias` matches it). The source is now uniform, and the create script inverts deno publish's per-file relative rewrites back to those aliases, so a fresh scaffold's `.ts`/`.vue` files are byte-identical to the template — aliases included. (The one remaining relative specifier, `src/core/database/aggregate.ts`, is a runtime-built string, not an import, and stays relative by design.)
+
+### Fixed
+
+- **The create script now also re-bares dynamic `import("…")` specifiers.** Only static `from`/`import` statements were stripped before, so dynamic imports like `import("npm:/drizzle-orm@^0.45.2/libsql")` still shipped with the `npm:` prefix + version pinned — the last remaining `no-import-prefix` lint pollution and one of the redline sources. They're now restored to bare `import("drizzle-orm/libsql")` like everything else.
+- **Create-time alias restore skips template-literal specifiers** (`${…}`/`*`), so the runtime-generated `export * from "../…"` in `aggregate.ts` is never rewritten.
+- **Fixed a doubled-slash path** in `src/ui/src/app.ts` (`assets/images//favicon` → `assets/images/favicon`); publish normalized it, the source didn't.
+
 ## [1.0.12] — 2026-09-10
 
 ### Fixed

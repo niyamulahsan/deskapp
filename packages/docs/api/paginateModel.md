@@ -18,7 +18,7 @@ Options:
 | `perPage` | `number` | `15` | Items per page. |
 | `maxPerPage` | `number` | `100` | Clamp on `perPage`. |
 | `path` | `string` | `""` | Base path used in generated `*_page_url` links. |
-| `table` | `SQLiteTable` | — | Schema table used for the `count()` (e.g. `schema.posts`). |
+| `table` | `SQLiteTable` | — | Model used for the `count()` (e.g. `posts` from `@/modules/blog/database/models/post.model.ts`). |
 | `query` | `{ findMany: (args) => Promise<T[]> }` | — | The relational query surface, e.g. `db.query.posts`. |
 | `where` | `SQL<unknown>` | — | Applied to both the count and `findMany`. |
 | `with` | `Record<string, unknown>` | — | Eager-load relations (`{ author: true }`). |
@@ -34,11 +34,11 @@ Options:
 
 ```ts
 import { paginate, db, sql } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
 
 const feed = await paginate.model({
   page: 1, perPage: 15, path: "/feed",
-  table: schema.posts,
+  table: posts,
   query: db.query.posts,
   where: sql`published = true`,
   with: { author: true },
@@ -53,9 +53,12 @@ const feed = await paginate.model({
 Select with `columns` to drop sensitive fields on every page.
 
 ```ts
+import { paginate } from "@/core/facade.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
+
 const users = await paginate.model({
   page: 2, perPage: 25,
-  table: schema.users,
+  table: users,
   query: db.query.users,
   columns: { password: false, rememberToken: false },
   orderBy: (t, { desc }) => desc(t.id),
@@ -67,9 +70,13 @@ const users = await paginate.model({
 Supply `total` and/or `data` to override the defaults for weird queries.
 
 ```ts
+import { count } from "drizzle-orm";
+import { db, paginate } from "@/core/facade.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
+
 const page = await paginate.model({
   page: 1, perPage: 10,
-  total: async () => Number((await db.select({ total: count() }).from(schema.posts)).at(0)?.total),
+  total: async () => Number((await db.select({ total: count() }).from(posts)).at(0)?.total),
   data: ({ limit, offset }) =>
     db.query.posts.findMany({ limit, offset, with: { author: true } }),
 });

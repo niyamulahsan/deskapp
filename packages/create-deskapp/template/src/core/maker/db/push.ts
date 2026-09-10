@@ -1,4 +1,4 @@
-import { generateSchema, runDrizzle } from "./helpers.ts";
+import { generateSchema, runDrizzle } from "@/core/maker/db/helpers.ts";
 
 async function withSchema(args: string[]): Promise<void> {
   await generateSchema();

@@ -22,17 +22,17 @@ deno task maker codegen       # schema + bindings
 ```ts
 // src/modules/blog/controllers/post.controller.ts
 import { db, paginate, validate } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
 
 const titleSchema = validate.z.object({ title: validate.z.string().min(3) });
 
 export const list = async (): Promise<Record<string, unknown>> => {
-  return await paginate.model({ table: schema.posts, query: db.query.posts });
+  return await paginate.model({ table: posts, query: db.query.posts });
 };
 
 export const create = async (input: unknown): Promise<Record<string, unknown>> => {
   const data = await validate.run(titleSchema, input);      // throws 422 envelope
-  const [row] = await db.insert(schema.posts).values(data).returning();
+  const [row] = await db.insert(posts).values(data).returning();
   return { ok: true, post: row };
 };
 

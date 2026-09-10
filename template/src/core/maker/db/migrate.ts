@@ -7,7 +7,7 @@ import {
   runDrizzle,
   runScript,
   runSeedScript,
-} from "./helpers.ts";
+} from "@/core/maker/db/helpers.ts";
 
 /** db:migrate - generate+run migrations, apply hooks, seed only with --seed. */
 export async function migrate(seed = false): Promise<void> {

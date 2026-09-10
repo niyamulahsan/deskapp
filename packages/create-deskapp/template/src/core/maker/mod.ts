@@ -1,8 +1,8 @@
 import { Command } from "@cliffy/command";
-import { registerDbCommands } from "./db/mod.ts";
-import { renderGroupedHelp } from "./help.ts";
-import { registerMakeCommands } from "./make/mod.ts";
-import { registerRunCommands } from "./run/mod.ts";
+import { registerDbCommands } from "@/core/maker/db/mod.ts";
+import { renderGroupedHelp } from "@/core/maker/help.ts";
+import { registerMakeCommands } from "@/core/maker/make/mod.ts";
+import { registerRunCommands } from "@/core/maker/run/mod.ts";
 
 const program = new Command()
   .name("maker")

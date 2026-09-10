@@ -19,8 +19,9 @@ Example usage in a controller:
 
 ```ts
 import { db, pass } from "@/core/facade.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 
-const [row] = await db.insert(schema.users).values({
+const [row] = await db.insert(users).values({
   name: data.name,
   email: data.email,
   password: await pass.hashPassword(data.password),

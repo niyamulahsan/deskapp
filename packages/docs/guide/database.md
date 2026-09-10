@@ -8,13 +8,14 @@ Deskapp ships SQLite via [Drizzle ORM](https://orm.drizzle.team), with schema ge
 
 ```ts
 import { db, pass, sql } from "@/core/facade.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 
-await db.insert(schema.users).values({
+await db.insert(users).values({
   name: "Ada",
   email: "ada@example.com",
   password: await pass.hashPassword("secret"),
 });
-const rows = await db.select().from(schema.users);
+const rows = await db.select().from(users);
 ```
 
 ### Driver
@@ -28,12 +29,14 @@ const rows = await db.select().from(schema.users);
 
 ## Schema
 
-- Models are Drizzle table definitions under `modules/*/database/models/*.model.ts` (see [Modules](./modules.md)).
-- `deno task maker db:schema` regenerates `src/database/schema.ts`, re-exporting every model — the single import for all tables:
+Models are the importable units — each `modules/*/database/models/*.model.ts` exports its table(s). App code imports them **directly from their module**:
 
 ```ts
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
 ```
+
+`src/database/schema.ts` is a **generated aggregate** (`deno task maker db:schema`, built by `src/core/database/aggregate.ts`) that re-exports every model via `export * from "../modules/.../models/....model.ts"`. You normally don't import it in app code — the framework's layers use it when they need the whole schema at once: registering all tables on the Drizzle client (`drizzle(client, { schema })`, which powers the relational `db.query.<table>` API), and the pagination/migration tooling. Regenerate it after adding or removing a model.
 
 - Migrations are generated to `src/database/migrations/sqlite/` by `deno task maker db:generate` / `db:migrate`.
 
@@ -75,7 +78,7 @@ type PaginatedResult<T> = {
 
 ```ts
 // table-based
-await paginate.table(schema.users, {
+await paginate.table(users, {
   page: 2, perPage: 15, path: "/users",
   where: sql`active = true`,
 });
@@ -83,7 +86,7 @@ await paginate.table(schema.users, {
 // relational (eager-load via db.query.*.findMany)
 await paginate.model({
   page: 1, perPage: 20,
-  table: schema.users,
+  table: users,
   query: db.query.users,
   where: sql`role_id = 1`,
   with: { posts: true },
@@ -105,9 +108,9 @@ await paginate.query({
 Seeders live at `modules/*/database/seeders/*.seed.ts`. Each exports its `table` (used to auto-derive FK ordering) and a default async runner:
 
 ```ts
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 
-export const table = schema.users;
+export const table = users;
 
 export default async () => {
   // insert roles/users here...

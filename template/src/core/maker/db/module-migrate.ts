@@ -1,6 +1,6 @@
 import { join, relative } from "@std/path";
-import { ensureMigrationMeta, migrationCount, runDrizzle } from "./helpers.ts";
-import { PROJECT_ROOT } from "./helpers.ts";
+import { ensureMigrationMeta, migrationCount, runDrizzle } from "@/core/maker/db/helpers.ts";
+import { PROJECT_ROOT } from "@/core/maker/db/helpers.ts";
 
 const MODULES_PATH = `${PROJECT_ROOT}src/modules`;
 

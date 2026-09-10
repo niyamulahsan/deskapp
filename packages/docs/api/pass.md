@@ -19,9 +19,9 @@ Hash before storing — never keep plaintext.
 
 ```ts
 import { db, pass } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 
-await db.insert(schema.users).values({
+await db.insert(users).values({
   name: input.name,
   email: input.email,
   password: await pass.hashPassword(input.password),
@@ -48,7 +48,10 @@ throw { status: 401, message: "Invalid credentials" };
 Re-hash the new value and update the row.
 
 ```ts
-await db.update(schema.users)
+import { db, sql } from "@/core/facade.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
+
+await db.update(users)
   .set({ password: await pass.hashPassword(input.newPassword) })
   .where(sql`id = ${userId}`);
 ```
@@ -58,8 +61,11 @@ await db.update(schema.users)
 Seeders hash once at seed time so logins work with a documented password.
 
 ```ts
+import { db } from "@/core/facade.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
+
 export default async () => {
-  await db.insert(schema.users).values({
+  await db.insert(users).values({
     name: "Demo User",
     email: "demo@example.com",
     password: await pass.hashPassword("password"),

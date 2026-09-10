@@ -4,6 +4,8 @@ Imported from the facade: `import { paginate } from "@/core/facade.ts"`.
 
 Paginates a full schema table: runs a `count()` query plus the paged select, with optional `where` filter and `orderBy`. The count and the page are always consistent — both queries share the same `where`. See [Database](../guide/database).
 
+> **`table` takes a model object.** App code should import the table directly from its module (`import { users } from "@/modules/auth/database/models/user.model.ts"`) rather than reaching into the generated aggregate; `paginate.table(users, …)` works identically to `schema.users`.
+
 ## Signature
 
 | Function | Signature | Description |
@@ -27,9 +29,9 @@ Options:
 
 ```ts
 import { paginate, sql } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
 
-const page = await paginate.table(schema.users, {
+const page = await paginate.table(users, {
   page: 1, perPage: 20, path: "/users",
   where: sql`active = true`,
   orderBy: [sql`created_at desc`],
@@ -43,7 +45,7 @@ return { rows: page.data, meta: { current: page.current_page, last: page.last_pa
 The `where` you pass is applied to the count too, so `total` reflects only matching rows.
 
 ```ts
-const admins = await paginate.table(schema.users, {
+const admins = await paginate.table(users, {
   where: sql`role = 'admin'`,
   orderBy: [sql`name asc`],
 });
@@ -52,7 +54,7 @@ const admins = await paginate.table(schema.users, {
 
 ## Notes
 
-- `table` must be a **schema table object** — `import * as schema from "@/database/schema.ts"` then `schema.users`, not a string.
+- `table` must be a **model object** — `import { users } from "@/modules/auth/database/models/user.model.ts"`, not a string and not the `schema` aggregate.
 - `where` uses `sql`; combine with `sql` for composed filters (exported from the facade).
 - For eager-loaded relations, use [`paginate.model`](./paginateModel) instead.
 

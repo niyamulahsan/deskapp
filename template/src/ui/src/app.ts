@@ -1,6 +1,6 @@
 import { createApp } from 'vue';
-import App from './App.vue';
-import faviconUrl from '@/ui/assets/images//favicon/favicon.ico';
+import App from '@/ui/App.vue';
+import faviconUrl from '@/ui/assets/images/favicon/favicon.ico';
 import { pulse, PulsePlugin } from '@/ui/plugins/pulse.ts';
 
 import "bootstrap/dist/css/bootstrap.min.css";

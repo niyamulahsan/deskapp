@@ -31,7 +31,7 @@ Run first, use the parsed output — the throw aborts with a 422 shape the front
 
 ```ts
 import { db, validate } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
 
 const postSchema = validate.z.object({
   title: validate.z.string().min(1).max(200),
@@ -40,7 +40,7 @@ const postSchema = validate.z.object({
 
 export const create = async (input: unknown) => {
   const data = await validate.run(postSchema, input); // throws 422-shaped on bad input
-  const [row] = await db.insert(schema.posts).values(data).returning();
+  const [row] = await db.insert(posts).values(data).returning();
   return { ok: true, post: row };
 };
 ```

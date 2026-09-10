@@ -1,5 +1,5 @@
 import { join } from "@std/path";
-import type { MakerOptions } from "./helpers.ts";
+import type { MakerOptions } from "@/core/maker/make/helpers.ts";
 import {
   assertModuleExists,
   assertName,
@@ -7,7 +7,7 @@ import {
   moduleDir,
   schemaContent,
   writeFile,
-} from "./helpers.ts";
+} from "@/core/maker/make/helpers.ts";
 
 /** make:controller - create a controller + schema pair for a module. */
 export function makeController(module: string, name: string, options: MakerOptions = {}): void {

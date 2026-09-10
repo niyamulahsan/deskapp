@@ -28,16 +28,17 @@ Options:
 ```ts
 import { count } from "drizzle-orm";
 import { db, paginate, sql } from "@/core/facade.ts";
-import * as schema from "@/database/schema.ts";
+import { users } from "@/modules/auth/database/models/user.model.ts";
+import { orders } from "@/modules/shop/database/models/order.model.ts";
 
 const report = await paginate.query({
   page: 1, perPage: 50, maxPerPage: 200, path: "/report",
   total: async () =>
-    Number((await db.select({ total: count() }).from(schema.orders)).at(0)?.total),
+    Number((await db.select({ total: count() }).from(orders)).at(0)?.total),
   data: (limit, offset) =>
     db.select()
-      .from(schema.orders)
-      .innerJoin(schema.users, sql`users.id = orders.user_id`)
+      .from(orders)
+      .innerJoin(users, sql`users.id = orders.user_id`)
       .limit(limit).offset(offset),
 });
 ```
@@ -50,9 +51,9 @@ Keep the count and the page consistent by applying the same condition.
 const active = await paginate.query({
   page: 2, perPage: 20,
   total: async () =>
-    Number((await db.select({ total: count() }).from(schema.users).where(sql`active = true`)).at(0)?.total),
+    Number((await db.select({ total: count() }).from(users).where(sql`active = true`)).at(0)?.total),
   data: (limit, offset) =>
-    db.select().from(schema.users).where(sql`active = true`).limit(limit).offset(offset),
+    db.select().from(users).where(sql`active = true`).limit(limit).offset(offset),
 });
 ```
 

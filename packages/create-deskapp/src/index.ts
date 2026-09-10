@@ -117,7 +117,7 @@ function stripVersionedSpec(spec: string): string {
 function stripRegistrySpecifiers(text: string): string {
   return text
     .replace(
-      /(from\s*["']|import\s*["']|declare\s+module\s*["'])(?:jsr|npm):\/?([^"']+)/g,
+      /(from\s*["']|import\s*["']|import\(\s*["']|declare\s+module\s*["'])(?:jsr|npm):\/?([^"']+)/g,
       (_, prefix: string, spec: string) => prefix + stripVersionedSpec(spec),
     )
     .replace(
@@ -126,12 +126,44 @@ function stripRegistrySpecifiers(text: string): string {
     );
 }
 
+// deno publish ALSO rewrites the template's `@/` / `@/ui/` aliases into
+// per-file relative specifiers ("./core/facade.ts", "../../modules/..."), so
+// the published bytes are relative everywhere. The template authors those as
+// aliases and the scaffold ships the same imports map (`@/` → ./src/,
+// `@/ui/` → ./src/ui/src/), so when materializing we recompute the alias from
+// the specifier and the file's location — scaffolds land byte-identical to the
+// template. (Vue files keep aliases through publish untouched, so they pass
+// through as-is.)
+function restoreAliasSpec(rel: string, spec: string): string {
+  if (!spec.startsWith("./") && !spec.startsWith("../")) return spec;
+  if (spec.includes("${") || spec.includes("*")) return spec;
+  const relPath = rel.startsWith("template/") ? rel.slice("template/".length) : rel;
+  const dir = relPath.includes("/") ? relPath.slice(0, relPath.lastIndexOf("/")) : "";
+  const stack: string[] = [];
+  for (const part of `${dir}/${spec}`.replace(/\\/g, "/").split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") stack.pop();
+    else stack.push(part);
+  }
+  const target = stack.join("/");
+  if (target.startsWith("src/ui/src/")) return `@/ui/${target.slice("src/ui/src/".length)}`;
+  if (target.startsWith("src/")) return `@/${target.slice("src/".length)}`;
+  return spec;
+}
+
+function restoreAliasSpecifiers(text: string, rel: string): string {
+  return text.replace(
+    /(from\s*["']|import\s*["']|declare\s+module\s*["'])([^"'\n]+)(["'])/g,
+    (_, head: string, spec: string, tail: string) => head + restoreAliasSpec(rel, spec) + tail,
+  );
+}
+
 function transformTemplateFile(rel: string, bytes: Uint8Array): Uint8Array {
   const dot = rel.lastIndexOf(".");
   const ext = dot === -1 ? "" : rel.slice(dot);
   if (!SCRIPT_EXTENSIONS.has(ext)) return bytes;
   const text = new TextDecoder().decode(bytes);
-  const out = stripRegistrySpecifiers(text);
+  const out = restoreAliasSpecifiers(stripRegistrySpecifiers(text), rel);
   return out === text ? bytes : new TextEncoder().encode(out);
 }
 

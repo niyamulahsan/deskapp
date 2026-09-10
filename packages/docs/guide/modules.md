@@ -51,8 +51,11 @@ Creates `src/modules/blog/controllers/post.controller.ts` (+ a Zod schema stub).
 A controller file exports named handlers plus a `handlers` map. The registry binds each as `bindings['<module>.<controller>.<handler>']`:
 
 ```ts
+import { db, paginate } from "@/core/facade.ts";
+import { posts } from "@/modules/blog/database/models/post.model.ts";
+
 export const list = async (): Promise<Record<string, unknown>> => {
-  return await paginate.model({ table: schema.posts, query: db.query.posts });
+  return await paginate.model({ table: posts, query: db.query.posts });
 };
 export const handlers = { list };
 ```

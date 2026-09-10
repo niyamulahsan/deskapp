@@ -1,5 +1,5 @@
 import { fromFileUrl, join, resolve } from "@std/path";
-import { loadStub } from "../stub.ts";
+import { loadStub } from "@/core/maker/stub.ts";
 
 export interface MakerOptions {
   force?: boolean;

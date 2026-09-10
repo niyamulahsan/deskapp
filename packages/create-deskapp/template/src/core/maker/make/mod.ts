@@ -1,9 +1,9 @@
 import type { Command } from "@cliffy/command";
-import type { MakerOptions } from "./helpers.ts";
-import { makeController } from "./controller.ts";
-import { makeModule } from "./module.ts";
-import { makeModel } from "./model.ts";
-import { makeSeeder } from "./seeder.ts";
+import type { MakerOptions } from "@/core/maker/make/helpers.ts";
+import { makeController } from "@/core/maker/make/controller.ts";
+import { makeModule } from "@/core/maker/make/module.ts";
+import { makeModel } from "@/core/maker/make/model.ts";
+import { makeSeeder } from "@/core/maker/make/seeder.ts";
 
 function run(action: () => void): void {
   try {

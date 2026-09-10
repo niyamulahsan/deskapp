@@ -10,7 +10,7 @@
  * desktop globals directly.
  */
 
-import { win as winApi, type DesktopWindow } from "./manager.ts";
+import { win as winApi, type DesktopWindow } from "@/window/manager.ts";
 
 /** A standard OS role menu item; the OS provides label + behavior. */
 export interface MenuRole {

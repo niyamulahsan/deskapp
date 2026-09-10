@@ -1,5 +1,5 @@
 import { join, resolve } from "@std/path";
-import type { MakerOptions } from "./helpers.ts";
+import type { MakerOptions } from "@/core/maker/make/helpers.ts";
 import {
   assertName,
   controllerContent,
@@ -8,7 +8,7 @@ import {
   schemaContent,
   seederContent,
   writeFile,
-} from "./helpers.ts";
+} from "@/core/maker/make/helpers.ts";
 
 /** make:module - create a module with a sample model, seeder, controller + schema. */
 export function makeModule(name: string, options: MakerOptions = {}): void {
