@@ -63,6 +63,7 @@ export default defineConfig({
             { text: label("database", "Database"), link: "/guide/database" },
             { text: label("device-floppy", "Storage"), link: "/guide/storage" },
             { text: label("photo", "UI (Vue 3)"), link: "/guide/ui" },
+            { text: label("send", "Gum (Requests & Forms)"), link: "/guide/gum" },
           ],
         },
         {

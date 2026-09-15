@@ -198,6 +198,11 @@ function toPascal(name: string): string {
     .replace(/\s+/g, "");
 }
 
+function toKebab(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
 async function main(): Promise<void> {
   const { name, force } = parseArgs(Deno.args);
   const inPlace = !name;
@@ -267,6 +272,17 @@ async function main(): Promise<void> {
     const cfg = JSON.parse(readFileSync(denoJsonPath, "utf-8"));
     if (cfg?.desktop?.app?.name === "Deskapp") {
       cfg.desktop.app.name = toPascal(projectName);
+    }
+    // Mirror the display name into the per-OS bundle output paths so
+    // `deno task build*` / `maker bundle*` emit <name> instead of Deskapp.
+    if (cfg?.desktop) {
+      const appPascal = cfg.desktop.app?.name || toPascal(projectName);
+      const appKebab = toKebab(appPascal);
+      cfg.desktop.output = {
+        macos: `./dist/${appPascal}.app`,
+        windows: `./dist/${appPascal}`,
+        linux: `./dist/${appKebab}`,
+      };
     }
     writeFileSync(denoJsonPath, JSON.stringify(cfg, null, 2) + "\n");
   }

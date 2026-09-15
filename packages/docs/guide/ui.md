@@ -8,12 +8,15 @@ The **default** frontend is a **Vue 3** single-page app built with **Vite**, sty
 - TypeScript SFCs, Vite + `@vitejs/plugin-vue`
 - Bootstrap 5 (CSS + JS bundle) + Bootstrap Icons + custom SCSS at `src/ui/src/assets/scss/custom.scss` (dark dashboard theme by default)
 - Axios, Vue Router, Pinia, socket.io-client and Playwright are declared in the root import map — usable on demand
+- **gum** (`src/ui/src/plugins/gum.ts`) — Inertia-style request/form helpers over the `bindings` global **or** HTTP/axios, plus the `DataTable` component — see [gum (Requests & Forms)](./gum)
 
 ## Entrypoints
 
-- `src/ui/src/app.ts` — createApp, Bootstrap + SCSS imports, sets the favicon from `@/ui/assets/images/favicon/favicon.ico`
+- `src/ui/src/app.ts` — createApp, Bootstrap + SCSS imports, sets the favicon from `@/ui/assets/images/favicon/favicon.ico`, installs Router, Pulse, Gum
 - `src/ui/src/bindings.d.ts` — types the global `bindings`
-- `src/ui/src/components/**` — the components you write for your app
+- `src/ui/src/router/index.ts` — Vue Router (dashboard route at `/`)
+- `src/ui/src/pages/**` — routed pages (the starter dashboard lives in `pages/dashboard/index.vue`)
+- `src/ui/src/components/**` — components for your app (includes `datatable/`, plus `Button`, `Input`, `Checkbox` used by it)
 
 ## The `bindings` global
 
@@ -81,9 +84,10 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 | `src/ui/src/app.ts` | `createApp(App).use(...).mount('#app')` | **Replace** with your framework's mount code. |
 | `src/ui/src/App.vue`, `components/` | Vue demo UI | **Replace** with your components. |
 | `src/ui/src/plugins/pulse.ts` | Realtime socket bridge (a Vue plugin) | **Replace** with your framework's equivalent if you use realtime. |
+| `src/ui/src/plugins/gum.ts` | Requests & forms (bindings or HTTP) + the `DataTable` component | **Replace** with your framework's data-fetching layer, or keep both and call the backend via `bindings` anyway. |
 | `src/ui/.vscode/extensions.json` | Recommends `Vue.volar` | Update to your framework's editor extension. |
 | `src/ui/public/` | Static assets copied verbatim into `dist` | Keep / extend. |
-| `deno.json` → `imports` | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, ... | Add/remove your framework's packages here (`npm:`). |
+| `deno.json` → `imports` | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here (`npm:`). |
 | `deno.json` → `tasks` (`ui`, `build:ui`, `dev`, `build:*`) | Run the Vite build | **Keep** — they just invoke `vite`; only edit if you leave Vite. |
 | `src/main.ts` | `resolveDistPath()` → `serveDir` of `src/ui/dist` | **Keep** — never framework-dependent. |
 | `.env` / `.env.example` | `DESKAPP_UI`, `VITE_SOCKET_URL`, `VITE_API_URL` | Keep; `DESKAPP_UI=false` disables the UI at runtime. |
@@ -95,6 +99,7 @@ Switching frontends replaces the files below. The copy-paste-safe originals are 
 **`src/ui/vite.config.ts`** — as shipped:
 
 ```ts
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 
@@ -107,15 +112,15 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@/ui": new URL("src/", import.meta.url).pathname,
-      "@": new URL("src/", import.meta.url).pathname,
+      "@/ui": fileURLToPath(new URL("src/", import.meta.url)),
+      "@": fileURLToPath(new URL("src/", import.meta.url)),
     },
   },
   server: {
     // Allow serving the shared icon folder at the project root (src/icons)
     // alongside the ui package root.
     fs: {
-      allow: [new URL("../..", import.meta.url).pathname],
+      allow: [fileURLToPath(new URL("../..", import.meta.url))],
     },
     proxy: {
       "/__invoke": "http://localhost:8000",
@@ -130,6 +135,8 @@ export default defineConfig({
 ```
 
 Keep the `define` block (realtime flag), both aliases, `server.fs.allow` and `server.proxy`, and `build.outDir: "dist"`. Only `plugins: [vue()]` changes per framework (→ `react()`, `svelte()`, or nothing for vanilla).
+
+> Tip: the aliases and `server.fs.allow` resolve paths with `fileURLToPath`, **not** `new URL(...).pathname`. `.pathname` keeps URL percent-encoding (`%20` for spaces), which breaks Vite on any project path containing a space — `fileURLToPath` returns a real filesystem path.
 
 **`src/ui/tsconfig.json`** — as shipped:
 

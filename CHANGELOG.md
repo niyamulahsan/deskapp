@@ -1,9 +1,29 @@
 # Changelog
 
+## [1.1.0] — 2026-09-15
+
+**First stable release.**
+
+### Changed
+
+- **`db:*` maker tasks pre-generate bindings before touching the database.** `db:migrate`, `db:migrate:run`, `db:migrate:module`, `db:fresh` and `db:seed` now run the manifest/codegen step first (`regenerateBindings`), so a fresh scaffold — which ships pre-generated bindings referencing the sample `demo.controller.ts` — keeps working the moment you replace the sample modules. Previously a copy/replace of the sample code broke the first migration with `Module not found ".../demo.controller.ts"`.
+- **Vite aliases resolve real filesystem paths.** `src/ui/vite.config.ts` aliases (`@`/`@/ui`) and `server.fs.allow` use `fileURLToPath(new URL(...))` instead of `.pathname`, which keeps URL percent-encoding and breaks the build on any project path containing a space (`%20` → rolldown OS error 123).
+
+### Fixed
+
+- **`bundle.ts` copy of packaged extras stopped silently skipping.** `copyPackagedFile` threw on a missing *destination* (`statSync`) and called the removed `Deno.existsSync` (undefined in Deno 2.x → `TypeError`), so bundled `.env.example`/`deno.json` were never emitted next to the exe. Both now go through an lstatSync-based `exists()` helper.
+- **Bundled app boots an empty DB instead of a dev snapshot.** A packaged app now creates its schema on first run: `ensureSchema()` executes the `CREATE TABLE IF NOT EXISTS` DDL after connecting (SQLite and libsql drivers), and the framework template runs Drizzle migrations from the journal embedded in the binary VFS when the DB has zero tables. `--include` directories additionally materialize as empty placeholders next to the exe — real content lives in the binary's virtual filesystem, readable via `import.meta.url` — so no dev data ships.
+- **The bundled-app marker is a file.** `.deno-desktop-app` is created as a *file* beside the compiled exe, not a directory; the base-dir detection accepts either, and a packaged app anchors `DATABASE_URL`/storage/base dirs to the executable directory even when launched from a foreign working directory.
+
+### Added
+
+- **Docs:** `gum.md` now states the HTTP verb is advisory under the `bindings` transport — the URL is the binding name; the method only picks which option slot the handler receives (`query` vs `data`), so `gum.post('...destroyAll', { ids })` and `gum.delete('...destroyAll', { query: { ids } })` call the same handler with the same object. `ui.md`'s reference `vite.config.ts` matches the shipped `fileURLToPath` version and explains the `.pathname` percent-encoding trap.
+
 ## [1.0.13] — 2026-09-11
 
 ### Changed
 
+- **Scaffolds now carry your project name everywhere user-visible.** `create` sets `deno.json` → `desktop.app.name`; window title, tray tooltip, `<title>`, the default SQLite file, and the `dist/` bundle output (via `desktop.output`) all read that key at runtime through `src/core/config.ts` — no more `Deskapp` binaries after you name your app. Rename the app by editing `deno.json` → `desktop.app.name`.
 - **Every internal import in the template now uses the `@/` alias instead of relative paths.** `@/` → `./src/` covers core, modules, window, and database alike; `@/ui/` is the only special entry (the UI has its own nested `src/` root, so Vite's `resolve.alias` matches it). The source is now uniform, and the create script inverts deno publish's per-file relative rewrites back to those aliases, so a fresh scaffold's `.ts`/`.vue` files are byte-identical to the template — aliases included. (The one remaining relative specifier, `src/core/database/aggregate.ts`, is a runtime-built string, not an import, and stays relative by design.)
 
 ### Fixed
@@ -11,6 +31,10 @@
 - **The create script now also re-bares dynamic `import("…")` specifiers.** Only static `from`/`import` statements were stripped before, so dynamic imports like `import("npm:/drizzle-orm@^0.45.2/libsql")` still shipped with the `npm:` prefix + version pinned — the last remaining `no-import-prefix` lint pollution and one of the redline sources. They're now restored to bare `import("drizzle-orm/libsql")` like everything else.
 - **Create-time alias restore skips template-literal specifiers** (`${…}`/`*`), so the runtime-generated `export * from "../…"` in `aggregate.ts` is never rewritten.
 - **Fixed a doubled-slash path** in `src/ui/src/app.ts` (`assets/images//favicon` → `assets/images/favicon`); publish normalized it, the source didn't.
+
+### Added
+
+- **gum plugin + DataTable component ship in the starter UI.** `src/ui/src/plugins/gum.ts` (~550 lines) ports the Inertia-style request/form helpers from the Sarrabot app: `useGum` (get/post/put/patch/delete/reload/visit with `onBefore`/`onStart`/`onSuccess`/`onError`/`onFinish`, `navigate`/`preserveState`/`preserveScroll`, per-call `transport`/`baseURL` overrides), `useGumForm` (data/errors/processing/recentlySuccessful/isDirty + reset/clearErrors/submit), and `useGumRemember` (localStorage refs scoped to a route). Two interchangeable transports: **`"bindings"`** (in-process via the `bindings` global — no HTTP) and **`"http"`** (axios to any REST backend), both returning the `{ data }` envelope and both normalizing zod-flatten 422 errors into per-field maps. The `datatable/` component (index + Pagination + SelectOpption + DataTableSkeleton) plus the small `Button`/`Input`/`Checkbox` controls it needs, and the `nformatter` helper, sit under `src/ui/src/components/` and `src/ui/src/helpers/`; the router is now real (`/` → `pages/dashboard/index.vue`), `app.ts` installs `GumPlugin` + router, and the dashboard gained a **live demo table** against a new `app.demo.table`/`app.demo.destroy` handler pair (in-memory rows, so the starter needs no migration, returning the same envelope `paginate.*` produces). `lodash-es` (debounce) was added to the import map. Docs: new `guide/gum.md` covers transports, every `useGum*` API, error normalization, and both paginate backends (SQLite bindings vs REST) with copy-pasteable code.
 
 ## [1.0.12] — 2026-09-10
 

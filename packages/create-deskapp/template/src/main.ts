@@ -4,6 +4,7 @@ import { db, cron, win, chrome } from "@/core/facade.ts";
 import { storage } from "@/core/utils/storage.ts";
 import { bindAll } from "@/core/api/registry.ts";
 import { config } from "@/core/config.ts";
+import { loadEnv } from "@/core/env.ts";
 import { windows } from "@/window/config.ts";
 
 // In a packaged desktop build the embedded `--include` assets live in the
@@ -54,7 +55,7 @@ export async function handler(req: Request): Promise<Response> {
       });
     } catch {
       return new Response(
-        "<!doctype html><title>Deskapp</title><p>UI not built. Run <code>deno task maker build</code>.</p>",
+        "<!doctype html><title>" + config.appName + "</title><p>UI not built. Run <code>deno task maker build</code>.</p>",
         { headers: { "content-type": "text/html" } },
       );
     }
@@ -65,6 +66,10 @@ export async function handler(req: Request): Promise<Response> {
 
 if (import.meta.main) {
   Deno.serve(handler);
+
+  // Load `.env` before reading any config: dev already has it via --env-file,
+  // bundled binaries do not - find it next to the executable (or APP_BASE_DIR).
+  loadEnv();
 
   const addr = Deno.env.get("DENO_SERVE_ADDRESS");
   if (addr) console.log(`[desktop] http://127.0.0.1:${addr.split(":").pop()}`);

@@ -21,7 +21,7 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
   "nodeModulesDir": "auto",
   "desktop": {
     "app": {
-      "name": "Deskapp",
+      "name": "Deskapp",            // ← what create() sets to your <project-name>
       "icons": {
         "macos": "./src/icons/web-app-manifest-512x512.png",
         "windows": "./src/icons/favicon.ico",
@@ -30,7 +30,7 @@ The scaffolded app ships one `deno.json` (the root `template/deno.json`) that wi
       "deepLinks": ["deskapp"]
     },
     "backend": "webview",
-    "output": {
+    "output": {                      // bundle output names (mirrored to your project name at create)
       "macos": "./dist/Deskapp.app",
       "windows": "./dist/Deskapp",
       "linux": "./dist/deskapp"
@@ -126,6 +126,8 @@ export const windows: Record<string, WindowPreset> = {
   main: { title: "Deskapp", width: 1280, height: 800, resizable: true, route: "/" },
 };
 ```
+
+The window **title**, tray tooltip, `<title>`, sqlite file, and `dist/` output all read `desktop.app.name` at runtime via `src/core/config.ts` (`config.appName`) — rename one key, everything follows.
 
 ```ts
 // From any handler/controller/button click — opens its own independent window:

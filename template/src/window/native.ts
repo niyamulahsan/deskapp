@@ -10,6 +10,7 @@
  * desktop globals directly.
  */
 
+import { config } from "@/core/config.ts";
 import { win as winApi, type DesktopWindow } from "@/window/manager.ts";
 
 /** A standard OS role menu item; the OS provides label + behavior. */
@@ -144,7 +145,7 @@ function createAppTray(): DesktopTray | undefined {
   const tray = createTray();
   if (!tray) return undefined;
 
-  tray.setTooltip("Deskapp");
+  tray.setTooltip(config.appName);
 
   const menu: MenuItem[] = [
     { item: { label: "Show window", id: "show", enabled: true } },
@@ -240,10 +241,10 @@ function createHeadlessTray(): DesktopTray | undefined {
   const tray = createTray();
   if (!tray) return undefined;
 
-  tray.setTooltip("Deskapp (headless)");
+  tray.setTooltip(`${config.appName} (headless)`);
 
   tray.setMenu([
-    { item: { label: "Deskapp is running - no UI", id: "status", enabled: false } },
+    { item: { label: `${config.appName} is running - no UI`, id: "status", enabled: false } },
     "separator",
     { item: { label: "Quit", id: "quit", enabled: true } },
   ]);

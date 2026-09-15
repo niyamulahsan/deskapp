@@ -13,6 +13,7 @@ import type { Client as LibSqlClient } from "@libsql/client";
 import type { DatabaseSync } from "node:sqlite";
 import * as schema from "@/database/schema.ts";
 import { sqliteFile } from "@/core/database/config.ts";
+import { isDesktopRuntime } from "@/core/env.ts";
 
 let databaseInstance: DrizzleDatabase | null = null;
 let databaseClient: LibSqlClient | DatabaseSync | null = null;
@@ -32,8 +33,55 @@ export async function initDatabase(): Promise<DrizzleDatabase> {
   createFolderFor(filePath);
 
   databaseInstance = isDesktopRuntime() ? await connectWithNodeSqlite(filePath) : await connectWithLibSql(filePath);
+  await runBundledMigrations();
 
   return databaseInstance;
+}
+
+/**
+ * On every connect, apply the drizzle migration journal when the database is
+ * fresh (zero tables). The desktop runtime ships migrations read via the
+ * embedded VFS (relative to this module), so a packaged app never opens a
+ * database without its tables. Dev databases already migrated by the maker
+ * have tables and are left untouched - running the journal again would fail
+ * on the ALTER/CREATE statements.
+ */
+async function runBundledMigrations(): Promise<void> {
+  const folder = new URL("../../database/migrations/sqlite/", import.meta.url);
+  let journal: { entries?: { tag: string }[] };
+  try {
+    journal = JSON.parse(await Deno.readTextFile(new URL("meta/_journal.json", folder)));
+  } catch {
+    return;
+  }
+  if (!journal.entries?.length || !databaseClient) return;
+
+  if ((await countTables()) > 0) return;
+
+  const exec = (sql: string): void | Promise<void> => {
+    if (typeof (databaseClient as { exec?: unknown }).exec === "function") {
+      (databaseClient as DatabaseSync).exec(sql);
+      return;
+    }
+    return (databaseClient as LibSqlClient).executeMultiple(sql);
+  };
+
+  for (const entry of journal.entries) {
+    const step = await Deno.readTextFile(new URL(`${entry.tag}.sql`, folder));
+    await exec(step);
+  }
+}
+
+/** Count user tables so we can detect a fresh database. */
+async function countTables(): Promise<number> {
+  const sql = "select count(*) as n from sqlite_master where type='table' and name not like 'sqlite_%' and name not like '__drizzle_%'";
+  if (typeof (databaseClient as { exec?: unknown }).exec === "function") {
+    const row = (databaseClient as DatabaseSync).prepare(sql).get() as { n: number };
+    return Number(row.n);
+  }
+  const result = await (databaseClient as LibSqlClient).execute(sql);
+  const row = result.rows[0] as { n?: bigint | number };
+  return Number(row?.n ?? 0);
 }
 
 /** Connect using Deno's built-in node:sqlite through drizzle's sqlite proxy. */
@@ -128,16 +176,4 @@ function createFolderFor(filePath: string): void {
   const index = Math.max(filePath.lastIndexOf("/"), filePath.lastIndexOf("\\"));
   if (index === -1) return;
   Deno.mkdirSync(filePath.slice(0, index), { recursive: true });
-}
-
-/** True when running inside the Deno desktop runtime. */
-function isDesktopRuntime(): boolean {
-  try {
-    const browserWindow = (Deno as typeof Deno & {
-      BrowserWindow?: () => unknown;
-    }).BrowserWindow;
-    return typeof browserWindow === "function";
-  } catch {
-    return false;
-  }
 }

@@ -20,6 +20,8 @@
  *     transparentTitlebar: creation-only options.
  */
 
+import { config } from "@/core/config.ts";
+
 export interface WindowPreset {
   /** Window title. Falls back to the app name if unset. */
   title: string;
@@ -67,7 +69,7 @@ export interface WindowPreset {
  */
 export const windows: Record<string, WindowPreset> = {
   main: {
-    title: "Deskapp",
+    title: config.appName,
     width: 1280,
     height: 800,
     resizable: true,

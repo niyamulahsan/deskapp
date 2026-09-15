@@ -32,10 +32,12 @@ When the app builds cleanly, bundle it for distribution.
 ### Bundle for one OS
 
 ```sh
-deno task maker bundle:win         # Windows folder app → dist/Deskapp.zip
-deno task maker bundle:mac         # macOS .app → dist/Deskapp.app
-deno task maker bundle:linux       # Linux folder app → dist/deskapp
+deno task maker bundle:win         # Windows folder app → dist/<Name>.zip
+deno task maker bundle:mac         # macOS .app → dist/<Name>.app
+deno task maker bundle:linux       # Linux folder app → dist/<name>
 ```
+
+The output name follows `deno.json` → `desktop.app.name` (what you named the project at `create` time) via the `desktop.output` paths — so a project `myapp` bundles to `dist/Myapp.app`, not `Deskapp`. Change either key in `deno.json` to rename it.
 
 ### Bundle for all three OSes
 
@@ -95,7 +97,7 @@ Any `src/extensions/*` folders are copied next to Chromium automatically (`chrom
 | `--ui` | `auto` (default) / `skip` / `force` | bundle the frontend, or skip/require it (headless server-only build) |
 | `--chromium` | `auto` (default) / `skip` / `force` | bundle Chromium from the Playwright cache, or skip/require it |
 | `--target` | `<rust-triple>` | cross-compile target, e.g. `x86_64-pc-windows-msvc`, `x86_64-apple-darwin`, `x86_64-unknown-linux-gnu`. Host OS when omitted; `bundle:mac` / `bundle:linux` pass it automatically. |
-| `--output` | path | override the app output path (defaults to `dist/Deskapp` / `dist/Deskapp.app` / `dist/deskapp`) |
+| `--output` | path | override the app output path (defaults to `dist/<Name>` per `desktop.output` in `deno.json` — e.g. `dist/Myapp.app` / `dist/deskapp` before renaming) |
 | `--no-zip` | boolean | skip producing the `.zip` archive |
 
 ```sh
@@ -109,7 +111,7 @@ deno task maker bundle:linux --ui=skip --chromium=skip
 - `src/ui/dist` (the built frontend), served from the binary's virtual filesystem
 - Optional Chromium (from the Playwright cache) and, when present, `src/extensions/*` copied next to it
 - An icon set from `src/icons/`
-- Output into `dist/Deskapp` / `dist/Deskapp.app` / `dist/deskapp`
+- Output into `dist/<Name>` / `dist/<Name>.app` (the `desktop.output` paths from `deno.json`)
 - A `.zip` archive unless `--no-zip`
 
 Every bundle run first regenerates the bindings manifest (`deno task maker bindings:gen`).
@@ -126,6 +128,6 @@ Identity comes from `deno.json` → `desktop.app`:
 
 ## Distribution caveats
 
-- Bundles are single-arch; distribute per-OS artifacts (`dist/Deskapp.zip`, `dist/Deskapp.app`).
+- Bundles are single-arch; distribute per-OS artifacts (the `<Name>*.zip` / `.app` files under `dist/`).
 - SQLite is embedded (`node:sqlite`) in packaged builds — no libsql binary shipped.
 - Keep `src/storage/` (DB, app-managed files) out of the bundle; point `APP_DATA_DIR` at the OS user-data folder for packaged builds so state survives updates.

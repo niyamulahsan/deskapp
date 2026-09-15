@@ -1,22 +1,28 @@
 import type { Command } from "@cliffy/command";
 import { fromFileUrl, join } from "@std/path";
+import { config } from "@/core/config.ts";
 
 const ROOT = fromFileUrl(new URL("../../../..", import.meta.url));
 const UI_DIR = join(ROOT, "src", "ui");
 
 /** Run a process from the project root (or another cwd), inheriting output. */
-function spawn(program: string, args: string[], opts: { cwd?: string; label?: string } = {}): void {
+function spawn(
+  program: string,
+  args: string[],
+  opts: { cwd?: string; label?: string; env?: Record<string, string> } = {},
+): void {
   console.log(`== ${opts.label ?? program} ==`);
   const { code } = new Deno.Command(program, {
     args,
     cwd: opts.cwd ?? ROOT,
+    env: opts.env ?? {},
     stdout: "inherit",
     stderr: "inherit",
   }).outputSync();
   if (code !== 0) Deno.exit(code);
 }
 
-function deno(args: string[], opts: { cwd?: string; label?: string } = {}): void {
+function deno(args: string[], opts: { cwd?: string; label?: string; env?: Record<string, string> } = {}): void {
   spawn("deno", args, opts);
 }
 
@@ -32,7 +38,7 @@ function schemaAndBindings(): void {
 }
 
 function viteBuild(): void {
-  deno(["run", "-A", "npm:vite", "build"], { cwd: UI_DIR, label: "build UI" });
+  deno(["run", "-A", "npm:vite", "build"], { cwd: UI_DIR, label: "build UI", env: { VITE_APP_NAME: config.appName } });
 }
 
 /**
@@ -45,6 +51,7 @@ function viteWatchBuild(): Deno.ChildProcess {
   const cmd = new Deno.Command("deno", {
     args: ["run", "-A", "npm:vite", "build", "--watch"],
     cwd: UI_DIR,
+    env: { VITE_APP_NAME: config.appName },
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -133,7 +140,9 @@ export function registerRunCommands(program: Command): void {
       deno(["run", "-A", "--env-file", "src/main.ts"], { label: "serve" });
     })
     .command("ui", "Vite dev server in a browser tab (no bindings)")
-    .action(() => deno(["run", "-A", "npm:vite"], { cwd: UI_DIR, label: "vite dev" }))
+    .action(() =>
+      deno(["run", "-A", "npm:vite"], { cwd: UI_DIR, label: "vite dev", env: { VITE_APP_NAME: config.appName } })
+    )
     .command("bindings:gen", "Regenerate src/core/api/bindings.generated.ts")
     .action(() =>
       deno(["run", "-A", "src/core/api/generate.manifest.ts"], { label: "bindings:gen" })

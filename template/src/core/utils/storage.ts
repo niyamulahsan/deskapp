@@ -28,6 +28,7 @@
 
 import { dirname, fromFileUrl, join, resolve, toFileUrl } from "@std/path";
 import { basename as posixBasename, join as posixJoin } from "@std/path/posix";
+import { appBaseDir } from "@/core/env.ts";
 
 type Disk = "private" | "tmp";
 type FileData = string | Uint8Array | ArrayBuffer | Blob | File;
@@ -348,13 +349,22 @@ export const files = {
 const driver = "local";
 const defaultDisk: Disk = "private";
 
-const appRoot = Deno.env.get("APP_DATA_DIR")
-  ? resolve(Deno.env.get("APP_DATA_DIR")!)
-  : resolve(Deno.cwd(), "src", "storage", "app");
+// Resolved lazily so src/core/env.ts loadEnv() has run before the storage
+// root is pinned. APP_DATA_DIR wins (explicit user pin), otherwise the
+// framework base dir (project root in dev, next to the executable when
+// bundled) - never Deno.cwd().
+let appRootCache: string | null = null;
+function appRoot(): string {
+  if (appRootCache) return appRootCache;
+  appRootCache = Deno.env.get("APP_DATA_DIR")
+    ? resolve(Deno.env.get("APP_DATA_DIR")!)
+    : join(appBaseDir(), "src", "storage", "app");
+  return appRootCache;
+}
 
-const disks: Record<Disk, string> = {
-  private: join(appRoot, "private"),
-  tmp: join(appRoot, "tmp"),
+const disks: Record<Disk, () => string> = {
+  private: () => join(appRoot(), "private"),
+  tmp: () => join(appRoot(), "tmp"),
 };
 
 /** Normalize a relative storage key: forward slashes, no traversal. */
@@ -366,7 +376,7 @@ function clean(input: string): string {
 
 /** Absolute filesystem path for a file on a disk. */
 function diskAbs(disk: Disk, file: string): string {
-  return join(disks[disk], clean(file));
+  return join(disks[disk](), clean(file));
 }
 
 /** Normalize heterogeneous payloads to bytes. */
@@ -633,7 +643,7 @@ export const storage: StorageFacade = {
   /** Create the configured disk directories (called at boot). */
   async init() {
     await Promise.all(
-      ["private", "tmp"].map((d) => Deno.mkdir(disks[d as Disk], { recursive: true })),
+      ["private", "tmp"].map((d) => Deno.mkdir(disks[d as Disk](), { recursive: true })),
     );
   },
 

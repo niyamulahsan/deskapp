@@ -1,4 +1,5 @@
 import { basename, dirname, fromFileUrl, join } from "@std/path";
+import { config } from "@/core/config.ts";
 
 /**
  * bundle.ts - reusable cross-platform build/bundle script for the framework.
@@ -25,6 +26,16 @@ import { basename, dirname, fromFileUrl, join } from "@std/path";
  */
 
 const ROOT = dirname(dirname(fromFileUrl(new URL(".", import.meta.url))));
+
+/** Path existence check (Deno.existsSync does not exist in 2.x). */
+function exists(path: string): boolean {
+  try {
+    Deno.lstatSync(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 interface Flags {
   target?: string;
@@ -55,9 +66,9 @@ function parseFlags(argv: string[]): Flags {
   return flags;
 }
 
-function run(program: string, args: string[], label: string, cwd: string = ROOT): { code: number } {
+function run(program: string, args: string[], label: string, cwd: string = ROOT, env?: Record<string, string>): { code: number } {
   console.log(`== ${label} ==`);
-  const { code } = new Deno.Command(program, { args, cwd, stdout: "inherit", stderr: "inherit" }).outputSync();
+  const { code } = new Deno.Command(program, { args, cwd, env: env ?? {}, stdout: "inherit", stderr: "inherit" }).outputSync();
   if (code !== 0) {
     console.error(`FAILED: ${label} (exit ${code})`);
     Deno.exit(code);
@@ -76,13 +87,11 @@ function targetOs(target?: string): "windows" | "darwin" | "linux" {
   return Deno.build.os as "windows" | "darwin" | "linux";
 }
 
-function outputPathFor(os: "windows" | "darwin" | "linux", target?: string): string {
-  if (!target) {
-    return join(ROOT, "dist", os === "darwin" ? "Deskapp.app" : os === "windows" ? "Deskapp" : "deskapp");
-  }
-  if (os === "darwin") return join(ROOT, "dist", "Deskapp.app");
-  if (os === "windows") return join(ROOT, "dist", "Deskapp");
-  return join(ROOT, "dist", "deskapp");
+function outputPathFor(os: "windows" | "darwin" | "linux"): string {
+  const rel = config.desktopOutput?.[os];
+  if (rel) return join(ROOT, rel.replace(/^\.\//, ""));
+  const base = os === "linux" ? config.appKebab : config.appName;
+  return join(ROOT, "dist", os === "darwin" ? `${base}.app` : base);
 }
 
 function msPlaywrightRoot(os: "windows" | "darwin" | "linux"): string | undefined {
@@ -180,7 +189,7 @@ function copyChromiumInto(cache: string, appOut: string, os: "windows" | "darwin
 }
 
 /** The folder deno desktop actually wrote. On darwin it appends `.app` to the
- * `--output` path (e.g. `--output dist/Deskapp.app` -> `dist/Deskapp.app.app`
+ * `--output` path (e.g. `--output dist/MyApp.app` -> `dist/MyApp.app.app`
  * when cross-compiling from another host), so resolve the real directory. */
 function resolveAppOut(appOut: string, os: "windows" | "darwin" | "linux"): string {
   const exists = (p: string): boolean => {
@@ -196,7 +205,7 @@ function resolveAppOut(appOut: string, os: "windows" | "darwin" | "linux"): stri
 
 const flags = parseFlags(Deno.args);
 const os = targetOs(flags.target);
-const appOut = flags.output ?? outputPathFor(os, flags.target);
+const appOut = flags.output ?? outputPathFor(os);
 const distDir = dirname(appOut);
 
 runDeno(["run", "-A", "src/core/api/generate.manifest.ts"], "1/4 generate bindings manifest");
@@ -219,14 +228,14 @@ if (flags.ui === "skip") {
   console.error("FAILED: --ui=force but no src/ui source found.");
   Deno.exit(1);
 } else if (uiExists) {
-  run("deno", ["run", "-A", "npm:vite", "build"], "2/4 build UI", join(ROOT, "src", "ui"));
+  run("deno", ["run", "-A", "npm:vite", "build"], "2/4 build UI", join(ROOT, "src", "ui"), { VITE_APP_NAME: config.appName });
   includeUi = true;
 } else {
   console.log("== 2/4 build UI ==\n  no src/ui source found - headless build");
 }
 
 console.log("== 3/4 build desktop app ==");
-const desktopArgs = ["desktop", "-A", "--output", appOut, "--include=./src/storage", "--include=./src/icons", "src/main.ts"];
+const desktopArgs = ["desktop", "-A", "--output", appOut, "--include=./src/storage", "--include=./src/icons", "--include=./src/database/migrations", "--include=./deno.json", "src/main.ts"];
 if (includeUi) desktopArgs.splice(desktopArgs.length - 1, 0, "--include=./src/ui/dist");
 if (flags.target) desktopArgs.push("--target", flags.target);
 runDeno(desktopArgs, "deno desktop");
@@ -280,3 +289,34 @@ console.log("== READY ==");
 console.log(`  app folder: ${realAppOut}`);
 console.log(`  ui:         ${flags.ui === "skip" ? "none (skipped - headless)" : includeUi ? "bundled" : "none (no src/ui source)"}`);
 console.log(`  chromium:   ${flags.chromium === "skip" ? "none (skipped)" : bundled ? "bundled" : "not found"}`);
+
+// Ship the .env template next to the app so the runtime env loader (src/core/env.ts
+// loadEnv) can pick it up: copy .env.example -> <app>/.env.example (or .env) to
+// configure DATABASE_URL / APP_BASE_DIR on the end-user machine without rebuilding.
+const envExample = join(ROOT, ".env.example");
+const shippedEnv = join(realAppOut, ".env.example");
+try {
+  if (!exists(shippedEnv)) {
+    Deno.copyFileSync(envExample, shippedEnv);
+    console.log(`  env:        ${shippedEnv}`);
+  }
+} catch {
+  // no .env.example in the project - nothing to ship
+}
+console.log(`  env hint:   to configure the deployed app, place a .env next to the executable`);
+console.log(`              (or set APP_BASE_DIR to an external folder, e.g. %APPDATA%/<AppName>).`);
+
+// `deno desktop` extracts --include FILES into the binary, not next to the exe,
+// so also copy the project's own deno.json to the app folder: core/config.ts
+// reads desktop.app.name from it at startup (bundled apps otherwise fall back
+// to the framework default name).
+try {
+  const srcConfig = join(ROOT, "deno.json");
+  const destConfig = join(realAppOut, "deno.json");
+  if (exists(srcConfig) && !exists(destConfig)) {
+    Deno.copyFileSync(srcConfig, destConfig);
+    console.log(`  config:     ${destConfig}`);
+  }
+} catch {
+  // best-effort - the app still runs with the default name
+}

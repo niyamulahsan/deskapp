@@ -28,6 +28,7 @@
  * All run in-process (no HTTP/IPC): webview -> controller -> facade -> native.
  */
 
+import { config } from "@/core/config.ts";
 import {
   win,
   chrome,
@@ -195,7 +196,7 @@ export const createTray = (): boolean => {
   // Icon bytes must be PNG; load once (e.g. await Deno.readFile) in a real app.
   // tray.setIcon(await Deno.readFile(new URL("../icons/tray.png", import.meta.url)));
 
-  tray.setTooltip("Deskapp");
+  tray.setTooltip(config.appName);
 
   const menu: MenuItem[] = [
     { item: { label: "Show window", id: "show", enabled: true } },
