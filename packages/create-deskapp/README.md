@@ -5,6 +5,8 @@
 > storage, SQLite + Drizzle ORM, queue, scheduler, validation, password
 > hashing, Playwright) behind a Vue 3 + Vite UI.
 
+[![JSR](https://img.shields.io/jsr/v/@niyam/deskapp)](https://jsr.io/@niyam/deskapp) [![JSR](https://jsr.io/badges/@niyam/deskapp/total-downloads)](https://jsr.io/@niyam/deskapp)
+
 [Documentation](https://niyamulahsan.github.io/deskapp) · [GitHub](https://github.com/niyamulahsan/deskapp) · [MIT License](https://github.com/niyamulahsan/deskapp/blob/main/LICENSE)
 
 ---

@@ -9,6 +9,7 @@
 <p align="center">
   <a href="https://niyamulahsan.github.io/deskapp"><img src="https://img.shields.io/badge/docs-deskapp.dev-2c9c8a" alt="Documentation"></a>
   <a href="https://jsr.io/@niyam/deskapp"><img src="https://img.shields.io/jsr/v/@niyam/deskapp" alt="JSR version"></a>
+  <a href="https://jsr.io/@niyam/deskapp"><img src="https://jsr.io/badges/@niyam/deskapp/total-downloads" alt="JSR total downloads"></a>
   <a href="https://github.com/niyamulahsan/deskapp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
   <a href="https://github.com/niyamulahsan/deskapp"><img src="https://img.shields.io/github/stars/niyamulahsan/deskapp?style=social" alt="GitHub Stars"></a>
 </p>
