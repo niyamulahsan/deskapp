@@ -5,6 +5,10 @@
 - **Deno** 2.9+ (or latest stable) — needed for `deno create` and Deno Desktop.
 - A desktop OS: **Windows**, **macOS** or **Linux** (the framework uses each platform's native APIs).
 
+::: warning Windows: Smart App Control
+On **Windows**, the app ships **unsigned**, and **Smart App Control (SAC)** blocks unsigned/new executables. With SAC on, `deno task dev` and packaged apps won't open a window (no error, launches silently fail, or Windows may show "Windows protected your PC"). **Before running, turn SAC off** — Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → **Off**. (SmartScreen shows the same prompt for downloaded builds — choose "Run anyway" / "More info → Run anyway".)
+:::
+
 ## Create a project
 
 Create a folder, step into it, and scaffold:
@@ -18,10 +22,11 @@ deno create jsr:@niyam/deskapp
 This downloads the `@niyam/deskapp` package from JSR and runs its `./create` scaffold script. Your whole framework + starter app is copied into the current folder (named after it), a `.env` is created from `.env.example`, and everything is ready to run.
 
 ::: tip
+
 - The `jsr:` prefix is required — `deno create deskapp` by itself is not supported.
 - Alternatively, scaffold from anywhere with an explicit name:
   `deno run -A jsr:@niyam/deskapp/create my-app` (add `--force` to overwrite an existing folder).
-:::
+  :::
 
 ## Install dependencies
 

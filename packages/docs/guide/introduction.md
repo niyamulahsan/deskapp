@@ -10,6 +10,10 @@
 - A Vue 3 + Vite frontend with Bootstrap, already wired to the `bindings` global
 - A maker CLI for scaffolding modules, models, seeders and controllers, and a bundler that ships a runnable app folder (plus optional bundled Chromium) for each OS
 
+::: warning Windows: Smart App Control
+On **Windows**, the app ships **unsigned**, and **Smart App Control (SAC)** blocks unsigned/new executables. With SAC on, `deno task dev` and packaged apps won't open a window (no error, launches silently fail, or Windows may show "Windows protected your PC"). **Before running, turn SAC off** — Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → **Off**. (SmartScreen shows the same prompt for downloaded builds — choose "Run anyway" / "More info → Run anyway".)
+:::
+
 ## The mental model
 
 ```
