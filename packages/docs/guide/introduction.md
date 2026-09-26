@@ -19,7 +19,7 @@ On **Windows**, the app ships **unsigned**, and **Smart App Control (SAC)** bloc
 ```
 ┌─────────────────────────────┐
 │  Deno backend (src/main.ts) │  windows · db · native · queue · cron
-│          │  bindings (in-process)        │
+│                     bindings (in-process)
 │  Vue 3 webview (src/ui)     │  calls bindings['<module>.<controller>.setTitle']()
 └─────────────────────────────┘
 ```

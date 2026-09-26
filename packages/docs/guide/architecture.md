@@ -6,41 +6,41 @@ Deskapp is a **single-process** desktop app: one Deno runtime hosts the backend,
 
 ```
                      one Deno process (deno desktop)
-┌──────────────────────────────────────────────────────────────────┐
-│  src/main.ts                                                      │
-│   Deno.serve(handler)      → serves src/ui/dist via @std/http     │
-│   db.init()             → opens SQLite (node:sqlite / libsql)  │
-│   storage.init()         → creates private + tmp disks          │
-│   for each presets in windows: win.createWindow(preset)         │
-│     bindAll(window)     → registers every controller handler   │
-│     chrome.setupDesktopChrome(win)→ app menu + tray on main win │
-│                                    │
-│        bindings (in-process, no IPC) │  window.navigate(http://127.0.0.1:PORT/route)
-│                                    ▼                             │
-│  Vue 3 webview in the OS window                                    │
-│   bindings['<module>.<controller>.handler']('...') → backend handler → native call │
-└──────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│ src/main.ts                                                                      │
+│  Deno.serve(handler)      → serves src/ui/dist via @std/http                     │
+│  db.init()             → opens SQLite (node:sqlite / libsql)                     │
+│  storage.init()         → creates private + tmp disks                            │
+│  for each presets in windows: win.createWindow(preset)                           │
+│   bindAll(window)     → registers every controller handler                       │
+│   chrome.setupDesktopChrome(win)→ app menu + tray on main win                    │
+│                                                                                  │
+│    bindings (in-process, no IPC) │ window.navigate(http://127.0.0.1:PORT/route)  |
+│                                  ▼                                               │
+│ Vue 3 webview in the OS window                                                   │
+│  bindings['<module>.<controller>.handler']('...') → backend handler → native call│
+└──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 There is no network boundary between UI and backend. The `bindings` object in the webview is a `Proxy`: every access resolves to a backend handler by name and returns a Promise.
 
 ## File roles
 
-| Path | Role |
-| --- | --- |
-| `src/main.ts` | Backend entrypoint. Serves the UI, boots DB + storage, creates windows, binds handlers. Never edit for new windows — use `src/window/config.ts`. |
-| `src/window/config.ts` | `windows` preset map (add a key = add a window). |
-| `src/window/manager.ts` | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount` / `watchFrontend`), window lifecycle + close-to-quit logic. |
-| `src/window/native.ts` | `chrome` namespace (tray, menus, dialogs, setup). |
-| `src/window/dialogs.ts` | `pickers` namespace (`open` / `save` / `folder`). |
-| `src/core/facade.ts` | **The public API surface.** Everything app code imports it through — one import, no reaching into internals. |
-| `src/core/api/registry.ts` | Reads each controller's `handlers` map and binds every entry as `<module>.<controller>.<handler>`. |
-| `src/core/api/generate.manifest.ts` | Generates `src/core/api/bindings.generated.ts` (the discovery fast-path, `deno task maker bindings:gen`). |
-| `src/core/database/*` | Connection, config, pagination, seed runner, migration hooks, reset, status. |
-| `src/core/utils/*` | Queue, scheduler, storage, password, validation, playwright helpers. |
-| `src/core/maker/*` | The `maker` CLI (scaffolders, database ops, and the dev/build/bundle runner). |
-| `src/core/bundle.ts` | Cross-platform build/bundle script (UI → desktop app → optional Chromium → zip). |
-| `src/modules/*` | Example/host modules. `app` ships demo controllers (storage, network, windows, playwright, queue/cron) wired to the dashboard. |
+| Path                                | Role                                                                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/main.ts`                       | Backend entrypoint. Serves the UI, boots DB + storage, creates windows, binds handlers. Never edit for new windows — use `src/window/config.ts`. |
+| `src/window/config.ts`              | `windows` preset map (add a key = add a window).                                                                                                 |
+| `src/window/manager.ts`             | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount` / `watchFrontend`), window lifecycle + close-to-quit logic.      |
+| `src/window/native.ts`              | `chrome` namespace (tray, menus, dialogs, setup).                                                                                                |
+| `src/window/dialogs.ts`             | `pickers` namespace (`open` / `save` / `folder`).                                                                                                |
+| `src/core/facade.ts`                | **The public API surface.** Everything app code imports it through — one import, no reaching into internals.                                     |
+| `src/core/api/registry.ts`          | Reads each controller's `handlers` map and binds every entry as `<module>.<controller>.<handler>`.                                               |
+| `src/core/api/generate.manifest.ts` | Generates `src/core/api/bindings.generated.ts` (the discovery fast-path, `deno task maker bindings:gen`).                                        |
+| `src/core/database/*`               | Connection, config, pagination, seed runner, migration hooks, reset, status.                                                                     |
+| `src/core/utils/*`                  | Queue, scheduler, storage, password, validation, playwright helpers.                                                                             |
+| `src/core/maker/*`                  | The `maker` CLI (scaffolders, database ops, and the dev/build/bundle runner).                                                                    |
+| `src/core/bundle.ts`                | Cross-platform build/bundle script (UI → desktop app → optional Chromium → zip).                                                                 |
+| `src/modules/*`                     | Example/host modules. `app` ships demo controllers (storage, network, windows, playwright, queue/cron) wired to the dashboard.                   |
 
 ## Headless mode
 
