@@ -14,9 +14,9 @@ On **Windows**, unpackaged/dev builds are typically unsigned. With Smart App Con
 Use `create-deskapp` to scaffold a new project:
 
 ```sh
-npm create deskapp@latest my-app
+npm create @niyamulahsan/deskapp@latest my-app
 # or
-npx create-deskapp my-app
+npx @niyamulahsan/create-deskapp my-app
 ```
 
 Follow the prompts if any, then `cd my-app`.

@@ -54,7 +54,7 @@ async function main() {
     console.log(`create-deskapp v${pkg.version}`);
     console.log();
     console.log("Usage:");
-    console.log("  npm create deskapp@latest <project-name|.> [--force]");
+    console.log("  npm create @niyamulahsan/deskapp@latest <project-name|.> [--force]");
     console.log("  npx create-deskapp <project-name|.> [--force]");
     console.log();
     console.log("Options:");
