@@ -40,3 +40,11 @@ npm run dev
 ## Documentation
 
 See the [main repository](https://github.com/niyamulahsan/deskapp) for full documentation.
+
+## Contributing
+
+Contributions are welcome. Open an issue or pull request on [GitHub](https://github.com/niyamulahsan/deskapp).
+
+## License
+
+[MIT](./LICENSE)
