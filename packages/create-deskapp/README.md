@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/niyamulahsan/deskapp/main/logo-favicon/deskapp.png" alt="Deskapp" width="128" />
+  <a href="https://github.com/niyamulahsan/deskapp">
+    <img alt="deskapp" src="https://raw.githubusercontent.com/niyamulahsan/deskapp/main/logo-favicon/deskapp.png" width="300">
+  </a>
 </p>
 
 <p align="center">
