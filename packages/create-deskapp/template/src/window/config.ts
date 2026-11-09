@@ -1,26 +1,14 @@
 /**
- * window/config.ts - native window configuration (Deno Desktop).
+ * window/config.ts - native window configuration (Electron).
  *
- * This is the FIRST thing a developer sets up. Tune windows here instead of
- * touching src/main.ts. Every documented Deno.BrowserWindow option is
- * supported (see https://docs.deno.com/runtime/desktop/windows/).
+ * Tune windows here instead of touching src/main.ts. Each entry in `windows`
+ * becomes a native BrowserWindow. The first entry is the main window.
  *
- * Each entry in `windows` becomes one native window. The first entry is the
- * main window; subsequent entries open additional (independent) windows. Add
- * or remove entries to add or remove windows — no code changes in main.ts.
- *
- * `route` is the in-app path each window should navigate to on startup (the
- * frontend router serves it). Omit it to stay on the app root "/".
- *
- * Notes:
- *   - width / height    : initial size in logical pixels (default 800x600).
- *   - x / y             : initial position; the window is centered if omitted.
- *   - frameless,
- *     noActivate,
- *     transparentTitlebar: creation-only options.
+ * `route` is the in-app path each window loads on startup (frontend router).
+ * Omit it to stay on "/".
  */
 
-import { config } from "@/core/config.ts";
+import { config } from "@/core/config";
 
 export interface WindowPreset {
   /** Window title. Falls back to the app name if unset. */
@@ -70,13 +58,13 @@ export interface WindowPreset {
 export const windows: Record<string, WindowPreset> = {
   main: {
     title: config.appName,
-    width: 1280,
-    height: 800,
+    width: 900,
+    height: 600,
     resizable: true,
     alwaysOnTop: false,
     route: "/",
-    chrome: true,
-  },
+    chrome: true
+  }
 };
 
 /** The main (first-created) window preset. */

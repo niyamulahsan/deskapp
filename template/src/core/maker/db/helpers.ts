@@ -1,48 +1,49 @@
-import { fromFileUrl, join, resolve } from "@std/path";
-import { sqliteFile } from "@/core/database/config.ts";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import { fileURLToPath } from "node:url";
+import { sqliteFile } from "@/core/database/config";
 
-export const PROJECT_ROOT = fromFileUrl(new URL("../../../..", import.meta.url));
-export const DRIZZLE_KIT = "npm:drizzle-kit@0.31.10";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// src/core/maker/db -> project root
+export const PROJECT_ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 
-export async function runDeno(
-  args: string[],
-  env: Record<string, string> = {},
-): Promise<void> {
-  const p = new Deno.Command(Deno.execPath(), {
-    args: ["run", "-A", ...args],
-    cwd: PROJECT_ROOT,
-    stdout: "inherit",
-    stderr: "inherit",
-    env: { ...Deno.env.toObject(), ...env },
-  });
-  const status = await p.output();
-  if (!status.success) Deno.exit(status.code);
+function envFileArgs(): string[] {
+  const envPath = path.join(PROJECT_ROOT, ".env");
+  return fs.existsSync(envPath) ? ["--env-file=.env"] : [];
 }
 
-/** Run one of the database scripts in src/core/database. */
-export async function runScript(path: string, extra: string[] = []): Promise<void> {
-  await runDeno(["--env-file", path, ...extra]);
+function run(cmd: string, args: string[], env: Record<string, string> = {}): void {
+  const isWin = process.platform === "win32";
+  const r = spawnSync(isWin ? "cmd.exe" : cmd, isWin ? ["/d", "/s", "/c", cmd, ...args] : args, {
+    cwd: PROJECT_ROOT,
+    stdio: "inherit",
+    shell: false,
+    env: { ...process.env, ...env },
+  });
+  if (r.error) throw r.error;
+  if (r.status !== 0) process.exit(r.status ?? 1);
+}
+
+/** Run a TS script via tsx (supports @/ aliases and TS). */
+export async function runScript(scriptPath: string, extra: string[] = []): Promise<void> {
+  run("npx", ["--yes", "tsx", "--tsconfig", "tsconfig.json", ...envFileArgs(), scriptPath, ...extra]);
 }
 
 /** Run drizzle-kit with the given CLI args. */
-export async function runDrizzle(
-  args: string[],
-  env: Record<string, string> = {},
-): Promise<void> {
-  await runDeno(["--env-file", DRIZZLE_KIT, ...args], env);
+export async function runDrizzle(args: string[], env: Record<string, string> = {}): Promise<void> {
+  run("npx", ["--yes", "drizzle-kit", ...args], env);
 }
 
-/** Count existing SQL migration files (to pick the first-migration name). */
 export function migrationCount(): number {
-  const dir = join(PROJECT_ROOT, "src", "database", "migrations", "sqlite");
+  const dir = path.join(PROJECT_ROOT, "src", "database", "migrations", "sqlite");
   let count = 0;
   try {
-    for (const entry of Deno.readDirSync(dir)) {
-      if (entry.isFile && entry.name.endsWith(".sql")) count++;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.isFile() && entry.name.endsWith(".sql")) count++;
     }
-  } catch {
-    // migrations dir does not exist yet
-  }
+  } catch {}
   return count;
 }
 
@@ -52,67 +53,39 @@ export async function generateSchema(): Promise<void> {
 
 export async function generateMigrations(): Promise<void> {
   await generateSchema();
-  await runDrizzle([
-    "generate",
-    ...(migrationCount() === 0 ? ["--name", "init"] : []),
-  ]);
+  await runDrizzle(["generate", ...(migrationCount() === 0 ? ["--name", "init"] : [])]);
 }
 
 export async function runSeedScript(module?: string): Promise<void> {
-  await runScript(
-    "src/core/database/seed.ts",
-    module ? [`--module=${module}`] : [],
-  );
+  await runScript("src/core/database/seed.ts", module ? [`--module=${module}`] : []);
 }
 
-/**
- * Mirror the engine's `ensureMigrationMeta` for SQLite. Creates the
- * migrations/meta/_journal.json (drizzle-kit v7 format) if it is missing so
- * the very first `db:migrate` starts from a clean journal.
- */
 export async function ensureMigrationMeta(): Promise<void> {
-  const metaRoot = join(PROJECT_ROOT, "src", "database", "migrations", "sqlite", "meta");
-  const journalPath = join(metaRoot, "_journal.json");
-  await Deno.mkdir(metaRoot, { recursive: true });
-  try {
-    await Deno.stat(journalPath);
-  } catch {
-    await Deno.writeTextFile(
+  const metaRoot = path.join(PROJECT_ROOT, "src", "database", "migrations", "sqlite", "meta");
+  const journalPath = path.join(metaRoot, "_journal.json");
+  fs.mkdirSync(metaRoot, { recursive: true });
+  if (!fs.existsSync(journalPath)) {
+    fs.writeFileSync(
       journalPath,
-      `{
-  "version": "7",
-  "dialect": "sqlite",
-  "entries": []
-}
-`,
+      `{\n  "version": "7",\n  "dialect": "sqlite",\n  "entries": []\n}\n`,
+      "utf8",
     );
     console.log(`[db:migrate] created migration journal: ${journalPath}`);
   }
 }
 
-/**
- * Mirror the engine's `hasExistingAppTables` for SQLite. Returns true when the
- * local database file already contains app tables (excluding SQLite's system
- * tables and drizzle's own migration bookkeeping table).
- */
 export async function hasExistingAppTables(): Promise<boolean> {
-  const raw = sqliteFile();
-  const file = resolve(PROJECT_ROOT, raw);
-
   try {
-    try {
-      await Deno.stat(file);
-    } catch {
-      return false;
-    }
-    const { DatabaseSync } = await import("node:sqlite");
+    const raw = sqliteFile();
+    const file = path.isAbsolute(raw) ? raw : path.resolve(PROJECT_ROOT, raw);
+    if (!fs.existsSync(file)) return false;
     const instance = new DatabaseSync(file);
     try {
       const rows = instance
         .prepare(
           "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__drizzle_migrations'",
         )
-        .all();
+        .all() as unknown[];
       return rows.length > 0;
     } finally {
       instance.close();

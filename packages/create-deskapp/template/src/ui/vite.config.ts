@@ -1,29 +1,34 @@
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
+
+const rootDir = typeof import.meta.dirname === "string"
+  ? import.meta.dirname
+  : path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  // Use path.resolve for bulletproof Windows support
+  root: path.resolve(rootDir, "."),
   plugins: [vue()],
+  base: "./",
   define: {
-    __SOCKET_ENABLED__: JSON.stringify(
-      !!process.env.VITE_SOCKET_URL || !!process.env.VITE_API_URL
-    ),
+    __SOCKET_ENABLED__: JSON.stringify(!!process.env.VITE_SOCKET_URL || !!process.env.VITE_API_URL),
   },
   resolve: {
     alias: {
-      "@/ui": fileURLToPath(new URL("src/", import.meta.url)),
-      "@": fileURLToPath(new URL("src/", import.meta.url)),
+      "@/ui": path.resolve(rootDir, "./src"),
+      "@": path.resolve(rootDir, "../../src"),
     },
   },
   server: {
-    // Allow serving the shared icon folder at the project root (src/icons)
-    // alongside the ui package root.
+    port: 5173,
+    strictPort: true,
     fs: {
-      allow: [fileURLToPath(new URL("../..", import.meta.url))],
+      allow: [path.resolve(rootDir, "../..")],
     },
     proxy: {
       "/__invoke": "http://localhost:8000",
-      "/__bindings": "http://localhost:8000",
     },
   },
   build: {

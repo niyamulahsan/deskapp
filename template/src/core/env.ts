@@ -1,71 +1,70 @@
 /**
  * env.ts - runtime environment bootstrapping.
  *
- * Development (`deno task dev` / `serve`) loads `.env` through the maker's
- * `--env-file` flag before main.ts even starts. A packaged build runs the
- * compiled binary with no such flag, so the framework loads `.env` itself
- * from a stable location so `DATABASE_URL`/`APP_*` behave identically after
- * bundling.
- *
- * Runtime topology (Deno 2.9 `deno desktop`, engine "laufey"):
- *   - dev (`deno desktop --hmr` spawned by the maker from the repo root):
- *     Deno.cwd() is the REAL project root, but `Deno.execPath()` is the
- *     laufey webview runtime under %LOCALAPPDATA% and import.meta points at a
- *     temp mount. Base must be Deno.cwd().
- *   - bundled app: the executable sits next to the shipped project folder,
- *     which always includes `deno.json` (bundle.ts passes `--include` +
- *     `--include=./src/storage`). Base is the executable's directory.
- *
- * Base directory resolution order:
- *   1. `APP_BASE_DIR` - explicit override (e.g. an OS user-data path).
- *   2. bundled desktop app - the executable's own directory.
- *   3. development - the project root (Deno.cwd(), or import.meta in a plain
- *      `deno run`).
- *
- * Relative `DATABASE_URL` / storage paths are anchored to this base, so a
- * `.env` written for dev (`sqlite:./src/storage/...`) works unchanged next
- * to a packaged executable.
+ * Migrated from Deno to Node.js/Electron.
+ * Uses `dotenv` to load `.env` files from stable locations.
  */
 
-import { loadSync } from "@std/dotenv";
-import { basename, dirname, fromFileUrl, join, resolve } from "@std/path";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join, resolve } from "node:path";
+import { config as loadDotenv } from "dotenv";
 
-/** True when running inside the Deno desktop runtime (bundled OR `deno desktop`). */
+function getElectronApp(): any {
+  try {
+    const req = typeof require !== "undefined" ? require : createRequire(process.cwd() + "/");
+    const e = req("electron");
+    if (e && typeof e === "object" && typeof e.app?.getPath === "function") return e.app;
+  } catch {}
+  return undefined;
+}
+
+/** True when running inside the Electron runtime. */
 export function isDesktopRuntime(): boolean {
-  try {
-    const desktop = (Deno as typeof Deno & {
-      BrowserWindow?: () => unknown;
-    }).BrowserWindow;
-    return typeof desktop === "function";
-  } catch {
-    return false;
-  }
+  return !!getElectronApp();
 }
 
-/** True only for a real packaged app: `deno desktop` writes a `.deno-desktop-app`
- * marker into the app folder next to the executable. In dev the app runs from
- * the laufey runtime dir, which has no such marker (even though a stray
- * `src/storage` may exist there from earlier broken runs). */
+/** True only for a real packaged app. */
 function bundledDesktopApp(): boolean {
-  if (!isDesktopRuntime()) return false;
-  try {
-    if (basename(Deno.execPath()) === "laufey_webview.exe") return false;
-    const s = Deno.statSync(join(dirname(Deno.execPath()), ".deno-desktop-app"));
-    return s.isFile || s.isDirectory;
-  } catch {
-    return false;
-  }
+  const app = getElectronApp();
+  return !!app?.isPackaged;
 }
 
-/** The executable dir in a packaged build, the project root in development. */
-export function appBaseDir(): string {
-  const override = Deno.env.get("APP_BASE_DIR")?.trim();
-  if (override) return resolve(override);
-  if (isDesktopRuntime()) {
-    if (bundledDesktopApp()) return dirname(Deno.execPath());
-    return resolve(Deno.cwd());
+function findProjectRoot(start: string): string | undefined {
+  let dir = resolve(start);
+  for (let i = 0; i < 8; i++) {
+    try {
+      if (fs.statSync(join(dir, "package.json")).isFile()) return dir;
+    } catch {}
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
-  return resolve(fromFileUrl(new URL("../../", import.meta.url)));
+  return undefined;
+}
+
+/** The app/project root in development, executable/resources dir when packaged. */
+export function appBaseDir(): string {
+  const override = process.env.APP_BASE_DIR?.trim();
+  if (override) return resolve(override);
+
+  const electronApp = getElectronApp();
+  if (electronApp?.isPackaged) {
+    return dirname(electronApp.getPath("exe"));
+  }
+
+  // Dev: prefer cwd (npm scripts run from project root), then locate package.json.
+  const cwd = resolve(process.cwd());
+  if (fs.existsSync(join(cwd, "package.json"))) return cwd;
+
+  try {
+    if (electronApp) {
+      const found = findProjectRoot(electronApp.getAppPath());
+      if (found) return found;
+    }
+  } catch {}
+
+  return cwd;
 }
 
 const envState: { path: string | null; tried: boolean } = { path: null, tried: false };
@@ -79,26 +78,24 @@ export function loadEnv(): string | null {
   if (envState.tried) return envState.path;
   envState.tried = true;
 
+  const electronApp = getElectronApp();
+  const base = appBaseDir();
   const candidates = [
-    Deno.env.get("APP_BASE_DIR")?.trim(),
-    bundledDesktopApp() ? dirname(Deno.execPath()) : undefined,
-    resolve(Deno.cwd()),
-    resolve(fromFileUrl(new URL("../../", import.meta.url))),
+    process.env.APP_BASE_DIR?.trim(),
+    electronApp?.isPackaged ? dirname(electronApp.getPath("exe")) : undefined,
+    base,
+    electronApp?.getAppPath ? electronApp.getAppPath() : undefined,
+    resolve(process.cwd()),
   ].filter((dir): dir is string => Boolean(dir) && dir.length > 0);
 
   for (const dir of [...new Set(candidates)]) {
     const envPath = join(dir, ".env");
     try {
-      if (!Deno.statSync(envPath).isFile) continue;
-      // export: true writes parsed vars into Deno.env (loadSync alone just
-      // returns them); never overrides vars already present in the env.
-      loadSync({ envPath, export: true });
+      if (!fs.statSync(envPath).isFile()) continue;
+      loadDotenv({ path: envPath });
       envState.path = envPath;
       return envPath;
-    } catch {
-      // unreadable .env - try the next candidate
-      continue;
-    }
+    } catch {}
   }
   return null;
 }

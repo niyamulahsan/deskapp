@@ -1,22 +1,8 @@
-/**
- * migrate-hooks.ts - runs model migration hooks (db:migrate / db:migrate:run).
- *
- * Ported from the engine's migrate-hooks.ts, SQLite-only. Any model file in a
- * module's database/models folder can export a "hook map":
- *
- *   export const __migrationHooks = {
- *     __migrationSql: true,
- *     sqlite: ["ALTER TABLE ...", "CREATE INDEX ..."]
- *   };
- *
- * Every exported value with `__migrationSql === true` is collected; its
- * `.sqlite` strings are executed in order after the migration runs. This is
- * how you wire relation / index SQL that drizzle-kit cannot express.
- */
-
-import { fromFileUrl, toFileUrl } from "@std/path";
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { sql } from "drizzle-orm";
-import { db } from "@/core/facade.ts";
+import { db } from "@/core/database/connection";
 
 interface HookMap {
   __migrationSql: true;
@@ -40,37 +26,37 @@ function collectStatements(exportsObj: Record<string, unknown>): string[] {
   return statements;
 }
 
-const PROJECT_ROOT = fromFileUrl(new URL("../../..", import.meta.url));
-const SRC_PATH = `${PROJECT_ROOT}src`;
-
-function joinPath(base: string, name: string): string {
-  return `${base.replace(/[\\/]+$/, "")}/${name}`;
-}
+const SRC_PATH = path.resolve(process.cwd(), "src");
 
 function walkTs(dir: string, out: string[]): void {
   try {
-    for (const entry of Deno.readDirSync(dir)) {
-      const full = joinPath(dir, entry.name);
-      if (entry.isDirectory) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
         walkTs(full, out);
-      } else if (entry.isFile && entry.name.endsWith(".ts")) {
+      } else if (entry.isFile() && entry.name.endsWith(".ts")) {
         out.push(full);
       }
     }
-  } catch {
-    // directory does not exist - skip
-  }
+  } catch {}
 }
 
 function discoverModelFiles(): string[] {
   const files: string[] = [];
-  for (const moduleDir of Deno.readDirSync(`${SRC_PATH}/modules`)) {
-    if (!moduleDir.isDirectory) continue;
-    walkTs(`${SRC_PATH}/modules/${moduleDir.name}/database/models`, files);
+  const modulesDir = path.join(SRC_PATH, "modules");
+  const coreDir = path.join(SRC_PATH, "core");
+
+  if (fs.existsSync(modulesDir)) {
+    for (const moduleDir of fs.readdirSync(modulesDir, { withFileTypes: true })) {
+      if (!moduleDir.isDirectory()) continue;
+      walkTs(path.join(modulesDir, moduleDir.name, "database", "models"), files);
+    }
   }
-  for (const areaDir of Deno.readDirSync(`${SRC_PATH}/core`)) {
-    if (!areaDir.isDirectory) continue;
-    walkTs(`${SRC_PATH}/core/${areaDir.name}/database/models`, files);
+  if (fs.existsSync(coreDir)) {
+    for (const areaDir of fs.readdirSync(coreDir, { withFileTypes: true })) {
+      if (!areaDir.isDirectory()) continue;
+      walkTs(path.join(coreDir, areaDir.name, "database", "models"), files);
+    }
   }
   return files.sort();
 }
@@ -81,7 +67,7 @@ await db.init();
 let applied = 0;
 try {
   for (const file of modelFiles) {
-    const mod = await import(toFileUrl(file).href);
+    const mod = await import(pathToFileURL(file).href);
     const statements = collectStatements(mod as Record<string, unknown>);
     if (!statements.length) continue;
     for (const statement of statements) {

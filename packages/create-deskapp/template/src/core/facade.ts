@@ -1,5 +1,5 @@
 /**
- * facade.ts - central public API surface for framework consumers.
+ * facade - central public API surface for framework consumers.
  *
  * App-layer code (module controllers, jobs, schedules, models) should import
  * its framework utilities from here in one place instead of reaching into core
@@ -9,13 +9,45 @@
 
 // Configuration
 
+// Database (query client + lifecycle: `db.init()` / `db.close()`)
+export { type DrizzleDatabase, db } from "@/core/database/connection";
+// Pagination (nexgen-style envelope); `sql` for where filters
+export {
+  type PaginatedResult,
+  type PaginateInput,
+  type PaginateModelOptions,
+  type PaginateQueryOptions,
+  type PaginateTableOptions,
+  paginate,
+  sql
+} from "@/core/database/paginate";
+// Security / hashing utilities
+export { pass } from "@/core/utils/password";
+// Browser automation (Playwright): locate the bundled Chromium + extensions
+export { chromium } from "@/core/utils/playwright";
+// Concurrency / job queue
+export { type Queue, type QueueTask, queue } from "@/core/utils/queue";
+// Cron scheduling (backed by croner)
+export { type CronHandle, cron } from "@/core/utils/scheduler";
+// File / storage utilities
+// 1) User-file layer: operate on ANY path the user picks
+// 2) App-managed layer: the app's own internal state (private + tmp)
+export { type Disk, type FileData, files, storage } from "@/core/utils/storage";
+// Validation (zod schemas + runner: `validate.z`, `validate.run`)
+export { validate } from "@/core/utils/validation";
+// Native Windows file/folder pickers (Explorer-style Open / Save As / folder)
+export {
+  type PickFolderOptions,
+  type PickOpenOptions,
+  type PickSaveOptions,
+  pickers
+} from "@/window/dialogs";
 // Desktop window control
 export {
   type BrowserWindowOptions,
   type DesktopWindow,
-  win,
-} from "@/window/manager.ts";
-
+  win
+} from "@/window/manager";
 // Desktop-native APIs: menu item types, tray, dialogs, and chrome setup
 export {
   chrome,
@@ -23,49 +55,5 @@ export {
   type MenuActionItem,
   type MenuItem,
   type MenuRole,
-  type MenuSubmenu,
-} from "@/window/native.ts";
-
-// Native Windows file/folder pickers (Explorer-style Open / Save As / folder)
-export {
-  pickers,
-  type PickFolderOptions,
-  type PickOpenOptions,
-  type PickSaveOptions,
-} from "@/window/dialogs.ts";
-
-// Database (query client + lifecycle: `db.init()` / `db.close()`)
-export { db, type DrizzleDatabase } from "@/core/database/connection.ts";
-
-// Pagination (nexgen-style envelope); `sql` for where filters
-export {
-  paginate,
-  type PaginatedResult,
-  type PaginateInput,
-  type PaginateModelOptions,
-  type PaginateQueryOptions,
-  type PaginateTableOptions,
-  sql,
-} from "@/core/database/paginate.ts";
-
-// Concurrency / job queue
-export { type Queue, queue, type QueueTask } from "@/core/utils/queue.ts";
-
-// Cron scheduling (backed by croner)
-export { cron, type CronHandle } from "@/core/utils/scheduler.ts";
-
-// Browser automation (Playwright): locate the bundled Chromium + extensions
-export { chromium } from "@/core/utils/playwright.ts";
-
-// Security / hashing utilities
-export { pass } from "@/core/utils/password.ts";
-
-// Validation (zod schemas + runner: `validate.z`, `validate.run`)
-export { validate } from "@/core/utils/validation.ts";
-
-// File / storage utilities
-// 1) User-file layer: operate on ANY path the user picks
-export { files } from "@/core/utils/storage.ts";
-
-// 2) App-managed layer: the app's own internal state (private + tmp)
-export { type Disk, type FileData, storage } from "@/core/utils/storage.ts";
+  type MenuSubmenu
+} from "@/window/native";

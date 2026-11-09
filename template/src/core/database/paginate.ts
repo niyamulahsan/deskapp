@@ -15,7 +15,7 @@
 
 import { count, getTableColumns, sql, type SQL } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
-import { db } from "@/core/facade.ts";
+import { db } from "@/core/facade";
 
 export type PaginateInput = {
   page?: number;

@@ -1,14 +1,16 @@
+import fs from "node:fs";
 import { defineConfig } from "drizzle-kit";
 
 // Mirror the runtime default (src/core/database/config.ts) so drizzle-kit and
 // the app agree on the sqlite file, including the create-time project name.
 function appKebab(): string {
   try {
-    const cfg: { desktop?: { app?: { name?: string } } } = JSON.parse(
-      Deno.readTextFileSync("./deno.json"),
-    );
-    const name = cfg?.desktop?.app?.name?.trim() || "Deskapp";
-    return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const pkg: { name?: string; build?: { productName?: string } } = JSON.parse(fs.readFileSync("./package.json", "utf-8"));
+    const name = pkg?.build?.productName?.trim() || pkg?.name?.trim() || "Deskapp";
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   } catch {
     return "deskapp";
   }
@@ -26,5 +28,5 @@ export default defineConfig({
   schema: process.env.DRIZZLE_SCHEMA || "./src/database/schema.ts",
   out: "./src/database/migrations/sqlite",
   dialect: "sqlite",
-  dbCredentials: { url: `file:${sqlitePathFromUrl(databaseUrl)}` },
+  dbCredentials: { url: `file:${sqlitePathFromUrl(databaseUrl)}` }
 });

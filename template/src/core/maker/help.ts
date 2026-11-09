@@ -1,100 +1,66 @@
-import type { Command } from "@cliffy/command";
-
-interface CommandRow {
+export interface CommandDef {
   name: string;
-  usage: string;
-  desc: string;
+  usage?: string;
+  description: string;
+  group: string;
+  action: (flags: Record<string, string | boolean>, args: string[]) => void | Promise<void>;
 }
 
-interface Group {
-  title: string;
-  include: (name: string) => boolean;
-  rows: CommandRow[];
-}
-
-const GROUP_DEFINITIONS: Array<{ title: string; include: (name: string) => boolean }> = [
-  {
-    title: "Scaffolding (make:*)",
-    include: (name) => name.startsWith("make:"),
-  },
-  {
-    title: "Database (db:*)",
-    include: (name) => name.startsWith("db:"),
-  },
-  {
-    title: "Run / Build / Bundle (dev, serve, ui, codegen, bindings:gen, build*, bundle*)",
-    include: (name) =>
-      name === "dev" || name === "serve" || name === "ui" ||
-      name === "codegen" || name === "bindings:gen" ||
-      name.startsWith("build") || name.startsWith("bundle"),
-  },
+const WORDMARK = [
+  "  ____  _____ ____  _  __    _    ____  ____  ",
+  " |  _ \\| ____/ ___|| |/ /   / \\  |  _ \\|  _ \\ ",
+  " | | | |  _| \\___ \\| ' /   / _ \\ | |_) | |_) |",
+  " | |_| | |___ ___) | . \\  / ___ \\|  __/|  __/ ",
+  " |____/|_____|____/|_|\\_\\/_/   \\_\\_|   |_|    ",
 ];
 
-function rowsOf(program: Command, include: (name: string) => boolean): CommandRow[] {
-  const rows: CommandRow[] = [];
-  for (const cmd of program.getCommands()) {
-    const name = cmd.getName();
-    if (!include(name)) continue;
-    let usage = "";
-    try {
-      usage = cmd.getUsage();
-    } catch {
-      // commands without arguments still work - usage stays empty
-    }
-    rows.push({ name, usage, desc: cmd.getDescription() ?? "" });
-  }
-  return rows;
+const LOGO = "\n" + WORDMARK.join("\n") + "\n";
+
+const GROUP_ORDER = [
+  "Getting started",
+  "Generators - modules",
+  "Database",
+  "Build & codegen",
+  "Testing",
+];
+
+function padRows(rows: Array<{ left: string; desc: string }>): string[] {
+  if (!rows.length) return [];
+  const w = Math.max(...rows.map((r) => r.left.length));
+  return rows.map((r) => `  ${r.left.padEnd(w)}  ${r.desc}`);
 }
 
-function renderGroup(group: Group): string[] {
-  if (group.rows.length === 0) return [];
-  const nameWidth = Math.max(...group.rows.map((r) => r.name.length));
-  const usageWidth = Math.max(...group.rows.map((r) => r.usage.length));
-  const lines: string[] = [];
-  lines.push(group.title + ":");
-  for (const row of group.rows) {
-    lines.push(
-      row.usage === ""
-        ? `  ${row.name.padEnd(nameWidth)}  - ${row.desc}`
-        : `  ${row.name.padEnd(nameWidth)}  ${row.usage.padEnd(usageWidth)}  - ${row.desc}`,
-    );
-  }
-  lines.push("");
-  return lines;
+export function printCommandHelp(cmd: CommandDef): void {
+  console.log(LOGO);
+  console.log(`Usage: npm run maker -- ${cmd.name}${cmd.usage ? " " + cmd.usage : ""} [options]\n`);
+  console.log(cmd.description + "\n");
 }
 
-/** Render the maker help with the command families separated into groups. */
-export function renderGroupedHelp(program: Command): string {
-  const groups: Group[] = GROUP_DEFINITIONS.map((definition) => ({
-    ...definition,
-    rows: rowsOf(program, definition.include),
-  }));
-  const leftover = groupUpLeftovers(program, groups);
+export function printHelp(commands: Map<string, CommandDef>): void {
+  console.log(LOGO);
+  console.log("Usage: npm run maker -- [options] [command]\n");
+  console.log("Options:");
+  console.log("  -h, --help  display help for command\n");
 
-  const output: string[] = [];
-  output.push(`Usage:   ${program.getName()}${program.getVersion() ? `\nVersion: ${program.getVersion()}` : ""}`);
-  output.push("");
-  output.push("Description:");
-  output.push("");
-  output.push(`  ${program.getDescription() ?? ""}`);
-  output.push("");
-  output.push("Options:");
-  output.push("");
-  output.push("  -h, --help        Show this help.");
-  output.push("");
-  output.push("Commands:");
-  output.push("");
-  for (const group of [...groups, leftover]) {
-    output.push(...renderGroup(group));
+  const byGroup = new Map<string, CommandDef[]>();
+  for (const cmd of commands.values()) {
+    const g = cmd.group || "Other";
+    if (!byGroup.has(g)) byGroup.set(g, []);
+    byGroup.get(g)!.push(cmd);
   }
-  return output.join("\n") + "\n";
-}
+  for (const arr of byGroup.values()) arr.sort((a, b) => a.name.localeCompare(b.name));
 
-function groupUpLeftovers(program: Command, groups: Group[]): Group {
-  const known = new Set(groups.flatMap((g) => g.rows.map((r) => r.name)));
-  return {
-    title: "Other",
-    include: () => true,
-    rows: rowsOf(program, (name) => !known.has(name)),
-  };
+  const groups = [
+    ...GROUP_ORDER.filter((g) => byGroup.has(g)),
+    ...[...byGroup.keys()].filter((g) => !GROUP_ORDER.includes(g)),
+  ];
+  for (const group of groups) {
+    const rows = (byGroup.get(group) || []).map((c) => ({ left: c.name, desc: c.description }));
+    if (!rows.length) continue;
+    console.log(`${group}:`);
+    for (const line of padRows(rows)) console.log(line);
+    console.log("");
+  }
+
+  console.log("Run `npm run maker -- <command> --help` for command details.");
 }

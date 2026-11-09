@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "deskapp"
   text: "Desktop Application Framework"
-  tagline: Deno Desktop windows + native APIs + Vue 3 UI + SQLite/Drizzle + Queue &amp; Cron
+  tagline: Electron + Vue 3 UI + SQLite/Drizzle + Queue &amp; Cron with native APIs
   image:
     src: /deskapp.png
     alt: deskapp
@@ -19,13 +19,13 @@ hero:
 features:
   - icon: 🖥️
     title: Native desktop
-    details: Windows with presets, system tray, menus, dialogs and native file pickers on Windows, macOS and Linux.
+    details: Windows with presets, system tray, menus, dialogs and native file pickers on Windows, macOS and Linux powered by Electron.
   - icon: 🔌
     title: Bindings
-    details: Backend controllers are auto-registered and callable from the UI in-process as <code>bindings['&lt;module&gt;.&lt;controller&gt;.&lt;handler&gt;']()</code>.
+    details: Backend controllers are auto-registered and callable from the UI in-process via secure IPC as <code>bindings['&lt;module&gt;.&lt;controller&gt;.&lt;handler&gt;']()</code>.
   - icon: 🗄️
     title: Drizzle + SQLite
-    details: Type-safe database access, auto-generated schema and migrations, [nexgen](https://niyamulahsan.github.io/nexgen/)-style pagination.
+    details: Type-safe database access with Drizzle ORM, auto-generated schema and migrations, [nexgen](https://niyamulahsan.github.io/nexgen/)-style pagination.
   - icon: 💾
     title: Two-layer storage
     details: Unlimited user-file operations plus an app-managed private/tmp area with atomic writes.
@@ -34,7 +34,7 @@ features:
     details: Bounded in-process queue and croner-backed scheduling built into the facade.
   - icon: 🚀
     title: Scaffold &amp; build
-    details: <code>deno create jsr:@niyam/deskapp</code> gets you running, and <code>deno task maker bundle:win</code> ships a package.
+    details: <code>npx create-deskapp</code> gets you running, and <code>npm run package</code> ships your app with electron-builder.
 ---
 
 <style>

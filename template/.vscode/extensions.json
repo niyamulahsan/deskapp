@@ -1,6 +1,6 @@
 {
   "recommendations": [
-    "Vue.volar",
-    "denoland.vscode-deno"
+    "biomejs.biome",
+    "editorconfig.editorconfig"
   ]
 }

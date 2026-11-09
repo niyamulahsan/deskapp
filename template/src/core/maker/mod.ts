@@ -1,21 +1,83 @@
-import { Command } from "@cliffy/command";
-import { registerDbCommands } from "@/core/maker/db/mod.ts";
-import { renderGroupedHelp } from "@/core/maker/help.ts";
-import { registerMakeCommands } from "@/core/maker/make/mod.ts";
-import { registerRunCommands } from "@/core/maker/run/mod.ts";
+import { registerDbCommands } from "./db/mod";
+import { printCommandHelp, printHelp, type CommandDef } from "./help";
+import { registerMakeCommands } from "./make/mod";
+import { registerRunCommands } from "./run/mod";
 
-const program = new Command()
-  .name("maker")
-  .description(
-    "Scaffold modules and models, run database operations, and drive the dev/build/bundle workflow.",
-  )
-  .version("1.0.0");
+const commands = new Map<string, CommandDef>();
 
-registerMakeCommands(program);
-registerDbCommands(program);
-registerRunCommands(program);
+function register(cmd: CommandDef) {
+  commands.set(cmd.name, cmd);
+}
 
-// Replace the flat command list with a grouped one (Scaffolding / Database / Run-Build-Bundle).
-program.getHelp = () => renderGroupedHelp(program);
+registerMakeCommands(register);
+registerDbCommands(register);
+registerRunCommands(register);
 
-await program.parse(Deno.args);
+function parseFlags(argv: string[]): { flags: Record<string, string | boolean>; positionals: string[] } {
+  const flags: Record<string, string | boolean> = {};
+  const positionals: string[] = [];
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === "--") {
+      positionals.push(...argv.slice(i + 1));
+      break;
+    }
+    if (arg.startsWith("--")) {
+      const eq = arg.indexOf("=");
+      if (eq !== -1) {
+        flags[arg.slice(2, eq)] = arg.slice(eq + 1);
+      } else {
+        const key = arg.slice(2);
+        const next = argv[i + 1];
+        if (key === "no-zip") {
+          flags.zip = false;
+        } else if (next !== undefined && !next.startsWith("--")) {
+          flags[key] = next;
+          i++;
+        } else {
+          flags[key] = true;
+        }
+      }
+    } else {
+      positionals.push(arg);
+    }
+  }
+  return { flags, positionals };
+}
+
+async function main() {
+  const argv = process.argv.slice(2);
+  if (argv.length === 0 || argv[0] === "-h" || argv[0] === "--help") {
+    printHelp(commands);
+    return;
+  }
+  if (argv[0] === "help") {
+    const target = argv[1];
+    if (target && commands.has(target)) printCommandHelp(commands.get(target)!);
+    else printHelp(commands);
+    return;
+  }
+
+  const name = argv[0];
+  const cmd = commands.get(name);
+  if (!cmd) {
+    console.error(`\n  Unknown command: ${name}\n`);
+    printHelp(commands);
+    process.exit(1);
+  }
+
+  const { flags, positionals } = parseFlags(argv.slice(1));
+  if (flags.help || flags.h) {
+    printCommandHelp(cmd);
+    return;
+  }
+
+  try {
+    await cmd.action(flags, positionals);
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+}
+
+main();

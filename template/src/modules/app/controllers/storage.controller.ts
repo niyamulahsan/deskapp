@@ -20,11 +20,29 @@
  *   appDelete       -> storage.delete
  */
 
-import { files, storage, pickers } from "@/core/facade.ts";
+import { files, pickers, storage } from "@/core/facade";
 
 const TEXT_EXTS = new Set([
-  "txt", "md", "json", "csv", "ts", "tsx", "js", "jsx", "html", "css",
-  "log", "xml", "yml", "yaml", "toml", "ini", "env", "vue", "sql", "deno",
+  "txt",
+  "md",
+  "json",
+  "csv",
+  "ts",
+  "tsx",
+  "js",
+  "jsx",
+  "html",
+  "css",
+  "log",
+  "xml",
+  "yml",
+  "yaml",
+  "toml",
+  "ini",
+  "env",
+  "vue",
+  "sql",
+  "deno"
 ]);
 
 function isTextLike(path: string): boolean {
@@ -50,7 +68,7 @@ export const open = async (): Promise<Record<string, unknown>> => {
   if (!path) return { ok: false, error: "cancelled", action: "open" };
   try {
     const meta = await files.fileMeta(path);
-    if (!meta || !meta.isFile) return { ok: false, action: "open", path, error: "not a file" };
+    if (!meta?.isFile) return { ok: false, action: "open", path, error: "not a file" };
     const bytes = await files.readBinaryFile(path);
     const preview = isTextLike(path) ? new TextDecoder().decode(bytes).slice(0, 2000) : null;
     return {
@@ -59,7 +77,7 @@ export const open = async (): Promise<Record<string, unknown>> => {
       path,
       size: meta.size,
       modifiedAt: meta.modifiedAt.toISOString(),
-      preview,
+      preview
     };
   } catch (error) {
     return { ok: false, action: "open", path, error: String(error) };
@@ -71,7 +89,7 @@ export const save = async (): Promise<Record<string, unknown>> => {
   const path = await pickers.save({
     title: "Save file as",
     defaultName: `deskapp-note-${Date.now()}.txt`,
-    filter: "Text files (*.txt)|*.txt|All files (*.*)|*.*",
+    filter: "Text files (*.txt)|*.txt|All files (*.*)|*.*"
   });
   if (!path) return { ok: false, error: "cancelled", action: "save" };
   const content = `deskapp real save - ${new Date().toISOString()}\n`;
@@ -104,7 +122,7 @@ export const download = async (url: string | undefined): Promise<Record<string, 
   if (!clean) return { ok: false, error: "enter a URL first", action: "download" };
   const dest = await pickers.save({
     title: "Save downloaded file as",
-    defaultName: nameFromUrl(clean),
+    defaultName: nameFromUrl(clean)
   });
   if (!dest) return { ok: false, error: "cancelled", action: "download" };
   try {
@@ -169,7 +187,7 @@ export const appList = async (): Promise<Record<string, unknown>> => {
     action: "list (app state)",
     disk: storage.disk("private").path("."),
     files: await storage.files(),
-    directories: await storage.directories(),
+    directories: await storage.directories()
   };
 };
 
@@ -178,14 +196,14 @@ export const appExport = async (): Promise<Record<string, unknown>> => {
   const file = await storage.generateForDownload({
     prefix: "report",
     extension: "csv",
-    data: "name,value\nrows,2\n",
+    data: "name,value\nrows,2\n"
   });
   const bytes = await storage.consumeGenerated(file);
   return {
     ok: true,
     action: "generate + consume (tmp)",
     file,
-    content: new TextDecoder().decode(bytes).trim(),
+    content: new TextDecoder().decode(bytes).trim()
   };
 };
 
@@ -207,5 +225,5 @@ export const handlers = {
   appLoad,
   appList,
   appExport,
-  appDelete,
+  appDelete
 };

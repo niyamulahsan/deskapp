@@ -1,4 +1,4 @@
-import { queue as queueApi, cron } from "@/core/facade.ts";
+import { cron, queue as queueApi } from "@/core/facade";
 
 /**
  * demo.controller.ts (app module) - queue & cron sample handlers.
@@ -13,9 +13,7 @@ import { queue as queueApi, cron } from "@/core/facade.ts";
 
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const queue = async (
-  opts?: { items?: string[]; concurrency?: number; delayMs?: number; },
-): Promise<Record<string, unknown>> => {
+export const queue = async (opts?: { items?: string[]; concurrency?: number; delayMs?: number }): Promise<Record<string, unknown>> => {
   const items = opts?.items && opts.items.length > 0 ? opts.items : ["a", "b", "c"];
   const concurrency = Math.min(Math.max(opts?.concurrency ?? 2, 1), 8);
   const delayMs = Math.min(Math.max(opts?.delayMs ?? 50, 0), 1000);
@@ -28,13 +26,13 @@ export const queue = async (
         await sleep(delayMs);
         return `processed ${name}`;
       })
-    ),
+    )
   );
 
   return { ok: true, results, concurrency, durationMs: Date.now() - started };
 };
 
-export const schedule = async (opts?: { seconds?: number; }): Promise<Record<string, unknown>> => {
+export const schedule = async (opts?: { seconds?: number }): Promise<Record<string, unknown>> => {
   const seconds = Math.min(Math.max(opts?.seconds ?? 2, 1), 10);
   let ticks = 0;
 
@@ -70,7 +68,7 @@ const demoSeed = Array.from({ length: 137 }, (_, i) => ({
   name: ["Ava", "Leo", "Mia", "Noah", "Zara", "Ivan", "Eli", "Ruth", "Omar", "Nia"][i % 10] + ` ${i + 1}`,
   email: `user${i + 1}@example.com`,
   role: ["admin", "editor", "viewer"][i % 3],
-  created: `2026-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`,
+  created: `2026-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`
 }));
 
 let demoRows: DemoRow[] = structuredClone(demoSeed);
@@ -81,16 +79,15 @@ function toPositiveInt(value: unknown, fallback: number): number {
   return Math.floor(parsed);
 }
 
-export const table = (
-  opts?: { page?: number; size?: number; search?: string; },
-): Record<string, unknown> => {
+export const table = (opts?: { page?: number; size?: number; search?: string }): Record<string, unknown> => {
   const perPage = Math.min(toPositiveInt(opts?.size, 15), 100);
   const page = toPositiveInt(opts?.page, 1);
-  const search = String(opts?.search ?? "").trim().toLowerCase();
+  const search = String(opts?.search ?? "")
+    .trim()
+    .toLowerCase();
 
   const all = search
-    ? demoRows.filter((row) =>
-        [row.name, row.email, row.role].some((value) => value.toLowerCase().includes(search)))
+    ? demoRows.filter((row) => [row.name, row.email, row.role].some((value) => value.toLowerCase().includes(search)))
     : demoRows;
 
   const total = all.length;
@@ -107,13 +104,11 @@ export const table = (
     total,
     from: total === 0 ? null : offset + 1,
     to: total === 0 ? null : offset + data.length,
-    path: "app.demo.table",
+    path: "app.demo.table"
   };
 };
 
-export const destroy = (
-  opts?: { ids?: Array<string | number>; },
-): Record<string, unknown> => {
+export const destroy = (opts?: { ids?: Array<string | number> }): Record<string, unknown> => {
   const ids = new Set((opts?.ids ?? []).map((id) => String(id)));
   const before = demoRows.length;
   demoRows = demoRows.filter((row) => !ids.has(String(row.id)));

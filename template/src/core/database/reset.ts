@@ -1,28 +1,19 @@
-/**
- * reset.ts - db:reset / db:wipe / db:fresh helper.
- *
- * SQLite-only: deletes the local .sqlite file so the next migrate rebuilds
- * from scratch. Mirrors the engine's `resetDatabase` for the sqlite dialect
- * (remove the file, then recreate the parent folder).
- */
-
-import { fromFileUrl, resolve } from "@std/path";
-import { sqliteFile } from "@/core/database/config.ts";
-
-const PROJECT_ROOT = fromFileUrl(new URL("../../..", import.meta.url));
+import { sqliteFile } from "@/core/database/config";
+import fs from "node:fs";
+import path from "node:path";
 
 const raw = sqliteFile();
-const file = resolve(PROJECT_ROOT, raw);
+const file = path.resolve(process.cwd(), raw);
 
 try {
-  Deno.removeSync(file);
+  fs.unlinkSync(file);
   console.log(`[db:reset] removed database file: ${file}`);
-} catch (error) {
-  if (error instanceof Deno.errors.NotFound) {
+} catch (error: any) {
+  if (error.code === "ENOENT") {
     console.log(`[db:reset] no database file to remove: ${file}`);
   } else {
     console.error(`[db:reset] failed to remove database file: ${file}`);
     console.error(error);
-    Deno.exit(1);
+    process.exit(1);
   }
 }

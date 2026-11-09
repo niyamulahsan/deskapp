@@ -1,175 +1,112 @@
-import type { Command } from "@cliffy/command";
-import { fromFileUrl, join } from "@std/path";
-import { config } from "@/core/config.ts";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { CommandDef } from "../help";
 
-const ROOT = fromFileUrl(new URL("../../../..", import.meta.url));
-const UI_DIR = join(ROOT, "src", "ui");
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 
-/** Run a process from the project root (or another cwd), inheriting output. */
-function spawn(
-  program: string,
-  args: string[],
-  opts: { cwd?: string; label?: string; env?: Record<string, string> } = {},
-): void {
-  console.log(`== ${opts.label ?? program} ==`);
-  const { code } = new Deno.Command(program, {
-    args,
+function run(cmd: string, args: string[], opts: { cwd?: string; label?: string } = {}): void {
+  console.log(`== ${opts.label ?? cmd} ==`);
+  const isWin = process.platform === "win32";
+  const r = spawnSync(isWin ? "cmd.exe" : cmd, isWin ? ["/d", "/s", "/c", cmd, ...args] : args, {
     cwd: opts.cwd ?? ROOT,
-    env: opts.env ?? {},
-    stdout: "inherit",
-    stderr: "inherit",
-  }).outputSync();
-  if (code !== 0) Deno.exit(code);
+    stdio: "inherit",
+    shell: false,
+    env: process.env,
+  });
+  if (r.error) throw r.error;
+  if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
-function deno(args: string[], opts: { cwd?: string; label?: string; env?: Record<string, string> } = {}): void {
-  spawn("deno", args, opts);
+function tsxScript(script: string, label: string): void {
+  run("npx", ["--yes", "tsx", "--tsconfig", "tsconfig.json", script], { label });
 }
 
-const INCLUDES = [
-  "--include=./src/ui/dist",
-  "--include=./src/storage",
-  "--include=./src/icons",
-];
+function configSync(): void {
+  tsxScript("src/core/maker/sync-config.ts", "config:sync");
+}
 
 function schemaAndBindings(): void {
-  deno(["run", "-A", "src/core/database/aggregate.ts"], { label: "schema (db:schema)" });
-  deno(["run", "-A", "src/core/api/generate.manifest.ts"], { label: "bindings (bindings:gen)" });
+  configSync();
+  tsxScript("src/core/database/aggregate.ts", "schema (db:schema)");
+  tsxScript("src/core/api/generate.manifest.ts", "bindings (bindings:gen)");
 }
 
-function viteBuild(): void {
-  deno(["run", "-A", "npm:vite", "build"], { cwd: UI_DIR, label: "build UI", env: { VITE_APP_NAME: config.appName } });
-}
-
-/**
- * Start Vite in watch mode as a detached background process so the built
- * frontend (`src/ui/dist`) is rebuilt whenever SCSS/Vue sources change. The
- * desktop shell picks up the fresh build and reloads its window (see the dist
- * watcher in src/main.ts). Returns the child process handle.
- */
-function viteWatchBuild(): Deno.ChildProcess {
-  const cmd = new Deno.Command("deno", {
-    args: ["run", "-A", "npm:vite", "build", "--watch"],
-    cwd: UI_DIR,
-    env: { VITE_APP_NAME: config.appName },
-    stdout: "inherit",
-    stderr: "inherit",
+export function registerRunCommands(register: (cmd: CommandDef) => void): void {
+  register({
+    name: "dev",
+    group: "Getting started",
+    description: "Start Electron + Vite UI (HMR) + esbuild watch for main/preload",
+    action: () => {
+      schemaAndBindings();
+      run("npm", ["run", "dev"], { label: "dev" });
+    },
   });
-  return cmd.spawn();
-}
 
-function desktopForBuild(target?: string): void {
-  const args = ["desktop", "-A"];
-  if (target) args.push("--target", target);
-  args.push(...INCLUDES, "src/main.ts");
-  deno(args, { label: "deno desktop" });
-}
+  register({
+    name: "ui",
+    group: "Getting started",
+    description: "Start Vite dev server for the renderer only (no Electron bindings)",
+    action: () => run("npx", ["vite", "--config", "src/ui/vite.config.ts"], { label: "vite dev", cwd: ROOT }),
+  });
 
-interface BundleFlags {
-  ui?: string;
-  chromium?: string;
-  output?: string;
-  noZip?: boolean;
-}
+  register({
+    name: "start",
+    group: "Getting started",
+    description: "Run the built Electron app (loads src/ui/dist; requires build)",
+    action: () => run("npm", ["run", "start"], { label: "start" }),
+  });
 
-function bundleFlags(options: Record<string, unknown>): BundleFlags {
-  const str = (v: unknown): string | undefined =>
-    [v].flat().find((entry) => typeof entry === "string") as string | undefined;
-  return {
-    ui: str(options.ui),
-    chromium: str(options.chromium),
-    output: str(options.output),
-    noZip: [options.zip].flat().find((entry) => typeof entry === "boolean") === false,
-  };
-}
+  register({
+    name: "config:sync",
+    group: "Build & codegen",
+    description: "Sync src/config/app.ts -> package.json build/identity + scripts/installer.nsh",
+    action: () => configSync(),
+  });
 
-function runBundle(env: string, target: string | undefined, flags: BundleFlags): void {
-  const args = ["run", "-A", "src/core/bundle.ts"];
-  if (target) args.push("--target", target);
-  if (flags.ui) args.push(`--ui=${flags.ui}`);
-  if (flags.chromium) args.push(`--chromium=${flags.chromium}`);
-  if (flags.output) args.push("--output", flags.output);
-  if (flags.noZip) args.push("--no-zip");
-  deno(args, { label: `bundle (${env})` });
-}
+  register({
+    name: "codegen",
+    group: "Build & codegen",
+    description: "Sync config + regenerate database schema + bindings manifest",
+    action: () => schemaAndBindings(),
+  });
 
-function registerBundleCommand(
-  program: Command,
-  name: string,
-  env: string,
-  target: string | undefined,
-  desc: string,
-): void {
-  program
-    .command(name, desc)
-    .option("--ui <mode:string>", "auto (default) | skip | force")
-    .option("--chromium <mode:string>", "auto (default) | skip | force")
-    .option("--output <path:string>", "override the app output path")
-    .option("--no-zip", "skip producing the zip archive")
-    .action((options) => runBundle(env, target, bundleFlags(options)));
-}
+  register({
+    name: "bindings:gen",
+    group: "Build & codegen",
+    description: "Regenerate src/core/api/bindings.generated.ts from controllers",
+    action: () => tsxScript("src/core/api/generate.manifest.ts", "bindings:gen"),
+  });
 
-/** Register the dev/serve/build/bundle command family on the maker CLI. */
-export function registerRunCommands(program: Command): void {
-  program
-    .command("dev", "codegen + build UI (watch) + open the desktop app with HMR")
-    .action(() => {
+  register({
+    name: "build",
+    group: "Build & codegen",
+    description: "Build renderer UI + Electron main/preload bundles",
+    action: () => {
       schemaAndBindings();
-      viteBuild();
-      const ui = viteWatchBuild();
-      try {
-        const desktop = new Deno.Command("deno", {
-          args: ["desktop", "--env-file", "--hmr", "-A", "src/main.ts"],
-          env: { FRONTEND_WATCH: "1" },
-          stdout: "inherit",
-          stderr: "inherit",
-        });
-        const status = desktop.outputSync();
-        if (!status.success) Deno.exit(status.code);
-      } finally {
-        try {
-          ui.kill();
-        } catch {
-          // already exited
-        }
-      }
-    })
-    .command("serve", "codegen + run the server (headless-aware)")
-    .action(() => {
+      run("npm", ["run", "build"], { label: "build", cwd: ROOT });
+    },
+  });
+
+  register({
+    name: "package",
+    group: "Build & codegen",
+    description: "Build and package installers with electron-builder",
+    action: (flags) => {
       schemaAndBindings();
-      deno(["run", "-A", "--env-file", "src/main.ts"], { label: "serve" });
-    })
-    .command("ui", "Vite dev server in a browser tab (no bindings)")
-    .action(() =>
-      deno(["run", "-A", "npm:vite"], { cwd: UI_DIR, label: "vite dev", env: { VITE_APP_NAME: config.appName } })
-    )
-    .command("bindings:gen", "Regenerate src/core/api/bindings.generated.ts")
-    .action(() =>
-      deno(["run", "-A", "src/core/api/generate.manifest.ts"], { label: "bindings:gen" })
-    )
-    .command("codegen", "Regenerate database schema + bindings manifest")
-    .action(schemaAndBindings)
-    .command("build", "Build UI + desktop app for the host OS")
-    .action(() => {
-      viteBuild();
-      desktopForBuild();
-    });
+      run("npm", ["run", "build"], { label: "build" });
+      const ebArgs = ["--yes", "electron-builder"];
+      if (typeof flags.platform === "string") ebArgs.push(`--${flags.platform}`);
+      if (typeof flags.target === "string") ebArgs.push(`--${flags.target}`);
+      run("npx", ebArgs, { label: "electron-builder" });
+    },
+  });
 
-  for (const [name, target] of [
-    ["build:win", "x86_64-pc-windows-msvc"],
-    ["build:mac", "x86_64-apple-darwin"],
-    ["build:linux", "x86_64-unknown-linux-gnu"],
-  ] as const) {
-    program
-      .command(name, `Cross-compile UI + desktop app for ${name.replace("build:", "")}`)
-      .action(() => {
-        viteBuild();
-        desktopForBuild(target);
-      });
-  }
+  register({ name: "serve", group: "Getting started", description: "Alias for dev (Electron)", action: () => run("npm", ["run", "dev"], { label: "dev" }) });
 
-  registerBundleCommand(program, "bundle", "host", undefined, "Bundle the desktop app for the host OS");
-  registerBundleCommand(program, "bundle:win", "win", undefined, "Bundle the desktop app for Windows");
-  registerBundleCommand(program, "bundle:mac", "mac", "x86_64-apple-darwin", "Bundle the desktop app for macOS");
-  registerBundleCommand(program, "bundle:linux", "linux", "x86_64-unknown-linux-gnu", "Bundle the desktop app for Linux");
+  register({ name: "test", group: "Testing", description: "Run Vitest unit tests (node environment)", action: () => run("npx", ["vitest", "run"], { label: "test" }) });
+  register({ name: "test:watch", group: "Testing", description: "Run Vitest in watch mode", action: () => run("npx", ["vitest"], { label: "test:watch" }) });
+  register({ name: "test:coverage", group: "Testing", description: "Run Vitest with V8 coverage", action: () => run("npx", ["vitest", "run", "--coverage"], { label: "test:coverage" }) });
 }

@@ -1,136 +1,73 @@
-/**
- * window/manager.ts - Deno Desktop window manager (internal plumbing).
- *
- * Wraps the desktop-only `Deno.BrowserWindow` API behind a structural surface
- * so src/main.ts stays clean and app-level code can drive the window without
- * touching the framework entrypoint.
- *
- * Surfaced to app code through the `win` namespace on the facade:
- *   import { win } from "@/core/facade.ts";
- *   const w = await win.openWindow("settings");
- *   win.getWindow()?.focus();
- *
- * This is the low-level manager — config.ts defines window presets, native.ts
- * owns menu/tray/context-menu/dialog chrome, and facade.ts re-exports this.
- * Most code only needs config + native (via the facade), not this file.
- *
- * NOTE: The window type only exists under `deno desktop` (not the base Deno
- * lib), so it is resolved structurally at runtime and surfaced through the
- * typed `DesktopWindow` facade below.
- */
+import path from "node:path";
+import { app, BrowserWindow } from "electron";
+import { type WindowPreset, windowConfig, windows as windowPresets } from "@/window/config";
+import { closeDatabase } from "@/core/database/connection";
 
-import { windowConfig, windows as windowPresets, type WindowPreset } from "@/window/config.ts";
-import { bindAll } from "@/core/api/registry.ts";
-import { db } from "@/core/facade.ts";
-import { join } from "@std/path";
+// We map your custom options to Electron's expected options
+export interface BrowserWindowOptions extends WindowPreset {}
 
-/** Subset of the documented Deno.BrowserWindow options used by the app. */
-export interface BrowserWindowOptions {
-  title?: string;
-  width?: number;
-  height?: number;
-  x?: number;
-  y?: number;
-  resizable?: boolean;
-  alwaysOnTop?: boolean;
-  frameless?: boolean;
-  noActivate?: boolean;
-  transparentTitlebar?: boolean;
-}
+// We alias Electron's BrowserWindow so the rest of your app thinks it's DesktopWindow
+export type DesktopWindow = BrowserWindow;
 
-/**
- * The window surface app-level code may use. A structural subset of the real
- * `Deno.BrowserWindow` (https://docs.deno.com/runtime/desktop/windows/),
- * plus the `bind` used by the bindings registry.
- */
-export interface DesktopWindow {
-  bind(name: string, handler: (...args: unknown[]) => unknown): void;
-  windowId: number;
-
-  // Events (Deno Desktop windows are EventTargets)
-  addEventListener(type: string, listener: (event: { detail?: unknown; }) => void): void;
-  removeEventListener(type: string, listener: (event: { detail?: unknown; }) => void): void;
-
-  // Lifecycle
-  show(): void;
-  hide(): void;
-  focus(): void;
-  close(): void;
-  reload(): void;
-  isClosed(): boolean;
-  isVisible(): boolean;
-
-  // Size and position
-  getSize(): [number, number];
-  setSize(width: number, height: number): void;
-  getPosition(): [number, number];
-  setPosition(x: number, y: number): void;
-  isResizable(): boolean;
-  setResizable(resizable: boolean): void;
-  isAlwaysOnTop(): boolean;
-  setAlwaysOnTop(alwaysOnTop: boolean): void;
-
-  // Title
-  setTitle(title: string): void;
-
-  // Navigation
-  navigate(url: string): void;
-
-  // Menus (application menu bar / context menu)
-  setApplicationMenu(items: unknown[]): void;
-  showContextMenu(x: number, y: number, items: unknown[]): void;
-
-  // Run JavaScript in the webview
-  executeJs(code: string): Promise<unknown>;
-
-  // DevTools
-  openDevtools(opts?: { deno?: boolean; renderer?: boolean; }): void;
-}
-
-type BrowserWindowCtor = new (options?: BrowserWindowOptions) => DesktopWindow;
-
-/** `Deno` as seen by the desktop runtime (which adds `BrowserWindow`). */
-const desktopDeno = Deno as typeof Deno & { BrowserWindow?: BrowserWindowCtor; };
-
-/** Track every open window by its numeric `windowId` (multi-window support). */
-const windows = new Map<number, DesktopWindow>();
-
-/** Track open windows by their preset name (for `openWindow` reuse). */
-const namedWindows = new Map<string, DesktopWindow>();
-
+const windows = new Map<number, BrowserWindow>();
+const namedWindows = new Map<string, BrowserWindow>();
 let mainWindowId: number | undefined;
+let defaultPreloadPath: string | undefined;
 
-/**
- * Create (or adopt) a window, configured from src/window/config.ts by default
- * or from the provided options for additional windows.
- *
- * Per Deno Desktop, the FIRST construction adopts the implicit startup window;
- * every subsequent construction opens a real new window. All windows share one
- * Deno runtime.
- *
- * Returns the `DesktopWindow` instance, or undefined when not running under
- * `deno desktop` (plain `deno serve` / tests), so callers can skip window work.
- */
-function createWindow(options?: BrowserWindowOptions, name?: string): DesktopWindow | undefined {
-  if (typeof desktopDeno.BrowserWindow !== "function") return undefined;
+function resolvePreloadPath(explicit?: string): string | undefined {
+  if (explicit) return explicit;
+  if (defaultPreloadPath) return defaultPreloadPath;
+  // Bundle-safe default: out/main -> ../preload/index.cjs
+  return path.join(__dirname, "../preload/index.cjs");
+}
 
-  const win = new desktopDeno.BrowserWindow(options ?? windowConfig);
-  windows.set(win.windowId, win);
-  if (mainWindowId === undefined) mainWindowId = win.windowId;
+function resolveRendererIndex(): string {
+  return path.join(app.getAppPath(), "src", "ui", "dist", "index.html");
+}
+
+function isDevServer(): string | undefined {
+  if (!app.isPackaged && process.env.NODE_ENV === "development") {
+    return "http://localhost:5173";
+  }
+  return undefined;
+}
+
+function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath?: string): DesktopWindow | undefined {
+  const preset = options ?? windowConfig;
+  const resolvedPreload = resolvePreloadPath(preloadPath);
+  if (resolvedPreload && !defaultPreloadPath) defaultPreloadPath = resolvedPreload;
+
+  const win = new BrowserWindow({
+    title: preset.title,
+    width: preset.width,
+    height: preset.height,
+    x: preset.x,
+    y: preset.y,
+    resizable: preset.resizable ?? true,
+    alwaysOnTop: preset.alwaysOnTop ?? false,
+    frame: !preset.frameless,
+    transparent: preset.transparentTitlebar ?? false,
+    show: false,
+    webPreferences: {
+      preload: resolvedPreload,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+    },
+  });
+
+  const winId = win.id;
+  windows.set(winId, win);
+  if (mainWindowId === undefined) mainWindowId = winId;
   if (name) namedWindows.set(name, win);
 
-  // A closed window does not stop the Deno runtime on its own. Drop the
-  // window from tracking. Each window is independent: clicking its close
-  // button closes only that window, and the app keeps running while at least
-  // one window (or the tray) is alive. The process exits only when the LAST
-  // window closes.
-  win.addEventListener("close", () => {
-    windows.delete(win.windowId);
+  win.on("closed", () => {
+    windows.delete(winId);
     for (const [n, w] of namedWindows) {
       if (w === win) namedWindows.delete(n);
     }
-    if (mainWindowId === win.windowId) {
-      mainWindowId = undefined;
+    if (mainWindowId === winId) {
+      mainWindowId = windows.keys().next().value;
     }
     if (windows.size === 0) {
       shutdownApp("all windows closed");
@@ -140,31 +77,13 @@ function createWindow(options?: BrowserWindowOptions, name?: string): DesktopWin
   return win;
 }
 
-/**
- * Open a window on demand — the reusable "show another window" API.
- *
- * Pass a named preset from src/window/config.ts, or an inline `WindowPreset`:
- *
- *   await openWindow("settings");                    // named preset (optional)
- *   await openWindow({ title: "Help", width: 760, height: 600, route: "/help" });
- *
- * The window is created, has the framework handlers bound onto it, and
- * navigates to its configured route. Reopening the same preset name shows the
- * already-open window instead of duplicating it.
- *
- * Returns the `DesktopWindow`, or undefined when the app isn't running under
- * `deno desktop`.
- */
 async function openWindow(presetOrName: string | WindowPreset): Promise<DesktopWindow | undefined> {
   const preset = typeof presetOrName === "string" ? windowPresets[presetOrName] : presetOrName;
-  if (!preset) {
-    console.warn(`[desktop] no window preset named "${presetOrName}"`);
-    return undefined;
-  }
+  if (!preset) return undefined;
 
   const key = typeof presetOrName === "string" ? presetOrName : preset.title;
   const existing = namedWindows.get(key);
-  if (existing && !existing.isClosed()) {
+  if (existing && !existing.isDestroyed()) {
     existing.show();
     existing.focus();
     return existing;
@@ -172,33 +91,30 @@ async function openWindow(presetOrName: string | WindowPreset): Promise<DesktopW
 
   const win = createWindow(preset, key);
   if (!win) return undefined;
-  try {
-    await bindAll(win);
-  } catch (error) {
-    console.error(`[desktop] failed to bind handlers (${key})`, error);
+
+  win.once("ready-to-show", () => {
+    if (!win.isDestroyed()) win.show();
+  });
+
+  const devUrl = isDevServer();
+  if (devUrl) {
+    await win.loadURL(`${devUrl}${preset.route || "/"}`);
+  } else {
+    await win.loadFile(resolveRendererIndex());
   }
-  if (preset.route) {
-    const port = Deno.env.get("DENO_SERVE_ADDRESS")?.split(":").pop();
-    if (port) win.navigate(`http://127.0.0.1:${port}${preset.route}`);
-  }
+
   return win;
 }
 
-/** Close resources and exit the desktop process cleanly. */
 function shutdownApp(reason: string): void {
   console.log(`[desktop] shutting down (${reason})`);
   try {
-    db.close();
+    closeDatabase();
   } finally {
-    Deno.exit(0);
+    app.quit();
   }
 }
 
-/**
- * Look up a window by its numeric `windowId`. Call with no argument to get the
- * main (first-created) window. Returns undefined when not running under
- * `deno desktop`, the id is unknown, or the window is not tracked.
- */
 function getWindow(id?: number): DesktopWindow | undefined {
   if (id === undefined) {
     return mainWindowId === undefined ? undefined : windows.get(mainWindowId);
@@ -206,64 +122,14 @@ function getWindow(id?: number): DesktopWindow | undefined {
   return windows.get(id);
 }
 
-/** The number of currently tracked (open) windows. */
 function getWindowCount(): number {
   return windows.size;
 }
 
-/**
- * Frontend dev watcher. When the maker `dev` command runs (`FRONTEND_WATCH=1`),
- * Vite rebuilds the UI output dir in watch mode; this polls that dir and calls
- * `onChange` whenever a rebuild lands so the open window(s) can be reloaded and
- * SCSS/Vue edits appear without a manual refresh.
- *
- * The rebuild only changes files under `dist/assets/` (Vite content-hashes
- * them) — top-level entry names stay constant — so the signature must cover
- * the whole tree plus `index.html` (which Vite rewrites to point at the new
- * hashes on every build). `onChange` fires only after the rebuilt state has
- * been observed for a full tick, so a reload is never triggered mid-write.
- */
-function watchFrontend(distPath: string, onChange: () => void): void {
-  const stamp = (): string => {
-    try {
-      const parts: string[] = [];
-      const walk = (dir: string): void => {
-        for (const entry of Deno.readDirSync(dir)) {
-          const full = `${dir}/${entry.name}`;
-          if (entry.isDirectory) walk(full);
-          else parts.push(full.slice(distPath.length));
-        }
-      };
-      walk(distPath);
-      parts.push(Deno.readTextFileSync(join(distPath, "index.html")));
-      return parts.sort().join("|");
-    } catch {
-      return "";
-    }
-  };
-  let previous = stamp();
-  let fired = previous;
-  // Deno Desktop's --hmr loads this module in the same runtime as the UI, so
-  // a setInterval is kept alive by that process.
-  setInterval(() => {
-    const now = stamp();
-    if (now === fired) {
-      previous = now;
-      return;
-    }
-    if (now !== previous) {
-      previous = now; // still writing - wait for the state to settle
-      return;
-    }
-    fired = now;
-    onChange();
-  }, 250);
+function watchFrontend(_distPath: string, _onChange: () => void): void {
+  // Vite handles HMR natively in Electron dev mode. No need to manually poll.
 }
 
-/**
- * win - window manager facade. Access through the facade:
- *   import { win } from "@/core/facade.ts";
- */
 export const win = {
   createWindow,
   getWindow,

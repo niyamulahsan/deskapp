@@ -1,0 +1,111 @@
+{
+  "name": "deskapp",
+  "version": "0.1.0",
+  "description": "Deskapp - Electron desktop app framework",
+  "main": "out/main/index.cjs",
+  "type": "module",
+  "scripts": {
+    "prepare": "npm run config:sync && npm run db:schema && npm run bindings:gen",
+    "config:sync": "tsx --tsconfig tsconfig.json src/core/maker/sync-config.ts",
+    "dev": "npm run config:sync && npm run db:schema && npm run bindings:gen && concurrently -k -n ui,main,electron \"npm run dev:ui\" \"npm run dev:main\" \"npm run dev:electron\"",
+    "dev:ui": "vite --config src/ui/vite.config.ts",
+    "dev:main": "node scripts/build-electron.mjs --watch",
+    "dev:electron": "wait-on tcp:5173 out/main/index.cjs && cross-env NODE_ENV=development electron out/main/index.cjs",
+    "build": "npm run config:sync && npm run db:schema && npm run bindings:gen && npm run build:ui && npm run build:electron",
+    "build:ui": "vite build --config src/ui/vite.config.ts",
+    "build:electron": "node scripts/build-electron.mjs",
+    "start": "electron out/main/index.cjs",
+    "package": "npm run build && electron-builder",
+    "maker": "tsx --tsconfig tsconfig.json src/core/maker/mod.ts",
+    "db:schema": "tsx --tsconfig tsconfig.json src/core/database/aggregate.ts",
+    "bindings:gen": "tsx --tsconfig tsconfig.json src/core/api/generate.manifest.ts",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0",
+    "axios": "^1.20.0",
+    "bcryptjs": "^3.0.3",
+    "croner": "^10.0.1",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.45.2",
+    "lodash-es": "^4.17.21",
+    "socket.io-client": "^4.8.4",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.7",
+    "@types/node": "^22.20.5",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^5.1.0",
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1",
+    "concurrently": "^9.1.0",
+    "cross-env": "^10.1.0",
+    "drizzle-kit": "^0.31.10",
+    "electron": "^45.2.3",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.28.2",
+    "pinia": "^4.0.3",
+    "sass": "^1.103.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "vitest": "^5.1.0",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1",
+    "wait-on": "^9.5.1"
+  },
+  "build": {
+    "appId": "com.deskapp.app",
+    "productName": "Deskapp",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "src/ui/dist/**/*",
+      "src/icons/**/*",
+      "src/database/migrations/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "src/icons/web-app-manifest-512x512.png",
+      "target": "dmg"
+    },
+    "win": {
+      "icon": "src/icons/web-app-manifest-512x512.png",
+      "target": "nsis",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Deskapp",
+      "uninstallDisplayName": "Deskapp",
+      "include": "scripts/installer.nsh",
+      "deleteAppDataOnUninstall": false
+    },
+    "linux": {
+      "icon": "src/icons/web-app-manifest-512x512.png",
+      "target": "AppImage"
+    },
+    "protocols": [
+      {
+        "name": "Deskapp",
+        "schemes": [
+          "deskapp"
+        ]
+      }
+    ]
+  }
+}

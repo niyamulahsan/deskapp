@@ -1,6 +1,6 @@
 # Introduction
 
-**Deskapp** is a desktop application framework for TypeScript on [Deno Desktop](https://docs.deno.com/runtime/desktop/). It gives you a complete, opinionated starting point for building a real cross-platform desktop app:
+**Deskapp** is a desktop application framework for TypeScript built on [Electron](https://www.electronjs.org/). It gives you a complete, opinionated starting point for building a real cross-platform desktop app:
 
 - Native windows with presets, plus system tray, application menus, context menus and dialogs
 - A **bindings** system that auto-registers every backend controller handler on the window, so the UI calls the backend in-process — no HTTP, no IPC plumbing
@@ -11,20 +11,20 @@
 - A maker CLI for scaffolding modules, models, seeders and controllers, and a bundler that ships a runnable app folder (plus optional bundled Chromium) for each OS
 
 ::: warning Windows: Smart App Control
-On **Windows**, the app ships **unsigned**, and **Smart App Control (SAC)** blocks unsigned/new executables. With SAC on, `deno task dev` and packaged apps won't open a window (no error, launches silently fail, or Windows may show "Windows protected your PC"). **Before running, turn SAC off** — Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → **Off**. (SmartScreen shows the same prompt for downloaded builds — choose "Run anyway" / "More info → Run anyway".)
+On **Windows**, unpackaged/dev builds are typically unsigned. With Smart App Control (SAC) or SmartScreen enabled, Windows may warn about unsigned executables. If blocked, you can disable SAC (Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → Off) or use "More info → Run anyway" when prompted. For distribution, consider code signing your builds.
 :::
 
 ## The mental model
 
 ```
-┌─────────────────────────────┐
-│  Deno backend (src/main.ts) │  windows · db · native · queue · cron
-│                     bindings (in-process)
-│  Vue 3 webview (src/ui)     │  calls bindings['<module>.<controller>.setTitle']()
-└─────────────────────────────┘
+┌─────────────────────────────────────────┐
+│  Electron main process (src/main.ts)    │  windows · db · native · queue · cron
+│                     bindings (IPC)      │
+│  Vue 3 renderer (src/ui)                │  calls bindings['<module>.<controller>.setTitle']()
+└─────────────────────────────────────────┘
 ```
 
-Everything runs in one Deno process. `src/main.ts` is the backend entrypoint, `src/ui` is the frontend, and the two communicate through auto-registered bindings rather than a network layer.
+Everything runs in the Electron main process. `src/main.ts` is the backend entrypoint, `src/ui` is the frontend (renderer), and the two communicate through secure IPC with auto-registered bindings exposed via a preload script.
 
 ```ts
 // In a controller (backend):
@@ -44,28 +44,31 @@ await bindings["<module>.<controller>.setTitle"]("New Title");
 
 ## Directory layout
 
-A scaffolded project is a complete, self-contained folder (it IS the `template/` of the package, copied as-is):
+A scaffolded project is a complete, self-contained Electron app (based on the template):
 
 ```
-.vscode/               editor settings for Deno
+.vscode/               editor settings
+scripts/               build scripts (esbuild for main/preload)
 src/
   window/              window presets, manager, native chrome, dialogs
-  core/                framework: factory, bindings registry, database,
+  core/                framework: bindings registry, database,
                        queue, scheduler, storage, validation, password,
-                       playwright, maker CLI, bundle script
+                       playwright, maker CLI
   database/            generated schema + SQLite migrations
   extensions/          holds extensions
   icons/               shared app icons (favicon, tray, png sets)
   modules/             your app's modules (controllers, models, seeders)
   storage/             app-managed data (private, tmp) - gitignored
   ui/                  Vue 3 + Vite frontend
-  main.ts              backend entrypoint (Deno.serve + window boot)
+  main.ts              Electron main process entrypoint
+  preload.ts           preload script exposing bindings to renderer
 .env / .env.example    environment
-deno.json              tasks, desktop config, imports
+package.json           scripts, dependencies, electron-builder config
+tsconfig.json          TypeScript config
 drizzle.config.ts      Drizzle Kit configuration (SQLite)
 ```
 
-The `@niyam/deskapp` JSR package is the _scaffold_: it ships this template plus a small `./create` script that copies it into your project. This docs site is separate and never part of a scaffolded app.
+The `create-deskapp` package scaffolds this template. This docs site is separate and never part of a scaffolded app.
 
 ## Next steps
 

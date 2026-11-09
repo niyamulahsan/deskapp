@@ -1,34 +1,32 @@
-/**
- * status.ts - db:status script.
- *
- * Lists the generated SQL migration files for SQLite, mirroring the engine's
- * `migrationFiles()` (glob `src/database/migrations/sqlite/*.sql`).
- */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { fromFileUrl, join } from "@std/path";
+const MIGRATION_DIR = path.join(process.cwd(), "src", "database", "migrations", "sqlite");
 
-const PROJECT_ROOT = fromFileUrl(new URL("../../..", import.meta.url));
-const MIGRATION_DIR = join(PROJECT_ROOT, "src", "database", "migrations", "sqlite");
-
-const files: string[] = [];
-try {
-  for (const entry of Deno.readDirSync(MIGRATION_DIR)) {
-    if (entry.isFile && entry.name.endsWith(".sql")) {
-      files.push(entry.name);
-    }
+export function listMigrations(dir = MIGRATION_DIR): string[] {
+  try {
+    return fs.readdirSync(dir).filter((name) => name.endsWith(".sql")).sort();
+  } catch {
+    return [];
   }
-} catch {
-  // migrations dir does not exist yet
 }
 
-files.sort();
-
-if (files.length === 0) {
-  console.log("No generated migration files found.");
-  Deno.exit(0);
+function isMain(): boolean {
+  try {
+    const arg = process.argv[1];
+    if (!arg) return false;
+    return path.resolve(arg) === path.resolve(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
 }
 
-console.log("Generated migrations:");
-for (const file of files) {
-  console.log(`  - ${file}`);
+if (isMain()) {
+  const found = listMigrations();
+  if (found.length === 0) console.log("No generated migration files found.");
+  else {
+    console.log("Generated migrations:");
+    for (const file of found) console.log(`  - ${file}`);
+  }
 }

@@ -1,117 +1,25 @@
 # Changelog
 
-## [1.1.0] — 2026-09-15
-
-**First stable release.**
+## [1.2.0] - 2026-11-10
 
 ### Changed
+- **Migrated to Electron + npm** - Replaced Deno Desktop with Electron. Build system now uses esbuild, Vite, and electron-builder.
+- **Switched scaffolding to npm-only** - `create-deskapp` is now an npm package. Use `npm create deskapp@latest` or `npx create-deskapp`. Deno/JSR publishing deprecated.
+- **Maker CLI updated for Node.js** - CLI and stubs adapted for Node/Electron environment.
+- **Documentation rewritten for Electron** - All docs updated with Electron/npm workflows and comprehensive examples.
 
-- **`db:*` maker tasks pre-generate bindings before touching the database.** `db:migrate`, `db:migrate:run`, `db:migrate:module`, `db:fresh` and `db:seed` now run the manifest/codegen step first (`regenerateBindings`), so a fresh scaffold — which ships pre-generated bindings referencing the sample `demo.controller.ts` — keeps working the moment you replace the sample modules. Previously a copy/replace of the sample code broke the first migration with `Module not found ".../demo.controller.ts"`.
-- **Vite aliases resolve real filesystem paths.** `src/ui/vite.config.ts` aliases (`@`/`@/ui`) and `server.fs.allow` use `fileURLToPath(new URL(...))` instead of `.pathname`, which keeps URL percent-encoding and breaks the build on any project path containing a space (`%20` → rolldown OS error 123).
+### Added
+- **New `md` bindings API** - Call bindings as `md.module.controller.handler()` alongside `bindings[]` form.
+- **Comprehensive recipes & guides** - Added detailed examples for dialogs/pickers, windows/menus/tray, queue/scheduler, Playwright automation, file operations, Excel/CSV/PDF, audio/video streaming.
+- **Improved sync tooling** - Enhanced template sync with env pinning, sanitization, and better filtering.
+
+### Deprecated
+- **Deno/JSR distribution** - No longer maintained. Migrate to npm/Electron version.
+
+## [1.0.13] - 2026-09-11
 
 ### Fixed
-
-- **`bundle.ts` copy of packaged extras stopped silently skipping.** `copyPackagedFile` threw on a missing *destination* (`statSync`) and called the removed `Deno.existsSync` (undefined in Deno 2.x → `TypeError`), so bundled `.env.example`/`deno.json` were never emitted next to the exe. Both now go through an lstatSync-based `exists()` helper.
-- **Bundled app boots an empty DB instead of a dev snapshot.** A packaged app now creates its schema on first run: `ensureSchema()` executes the `CREATE TABLE IF NOT EXISTS` DDL after connecting (SQLite and libsql drivers), and the framework template runs Drizzle migrations from the journal embedded in the binary VFS when the DB has zero tables. `--include` directories additionally materialize as empty placeholders next to the exe — real content lives in the binary's virtual filesystem, readable via `import.meta.url` — so no dev data ships.
 - **The bundled-app marker is a file.** `.deno-desktop-app` is created as a *file* beside the compiled exe, not a directory; the base-dir detection accepts either, and a packaged app anchors `DATABASE_URL`/storage/base dirs to the executable directory even when launched from a foreign working directory.
 
 ### Added
-
-- **Docs:** `gum.md` now states the HTTP verb is advisory under the `bindings` transport — the URL is the binding name; the method only picks which option slot the handler receives (`query` vs `data`), so `gum.post('...destroyAll', { ids })` and `gum.delete('...destroyAll', { query: { ids } })` call the same handler with the same object. `ui.md`'s reference `vite.config.ts` matches the shipped `fileURLToPath` version and explains the `.pathname` percent-encoding trap.
-
-## [1.0.13] — 2026-09-11
-
-### Changed
-
-- **Scaffolds now carry your project name everywhere user-visible.** `create` sets `deno.json` → `desktop.app.name`; window title, tray tooltip, `<title>`, the default SQLite file, and the `dist/` bundle output (via `desktop.output`) all read that key at runtime through `src/core/config.ts` — no more `Deskapp` binaries after you name your app. Rename the app by editing `deno.json` → `desktop.app.name`.
-- **Every internal import in the template now uses the `@/` alias instead of relative paths.** `@/` → `./src/` covers core, modules, window, and database alike; `@/ui/` is the only special entry (the UI has its own nested `src/` root, so Vite's `resolve.alias` matches it). The source is now uniform, and the create script inverts deno publish's per-file relative rewrites back to those aliases, so a fresh scaffold's `.ts`/`.vue` files are byte-identical to the template — aliases included. (The one remaining relative specifier, `src/core/database/aggregate.ts`, is a runtime-built string, not an import, and stays relative by design.)
-
-### Fixed
-
-- **The create script now also re-bares dynamic `import("…")` specifiers.** Only static `from`/`import` statements were stripped before, so dynamic imports like `import("npm:/drizzle-orm@^0.45.2/libsql")` still shipped with the `npm:` prefix + version pinned — the last remaining `no-import-prefix` lint pollution and one of the redline sources. They're now restored to bare `import("drizzle-orm/libsql")` like everything else.
-- **Create-time alias restore skips template-literal specifiers** (`${…}`/`*`), so the runtime-generated `export * from "../…"` in `aggregate.ts` is never rewritten.
-- **Fixed a doubled-slash path** in `src/ui/src/app.ts` (`assets/images//favicon` → `assets/images/favicon`); publish normalized it, the source didn't.
-
-### Added
-
-- **gum plugin + DataTable component ship in the starter UI.** `src/ui/src/plugins/gum.ts` (~550 lines) ports the Inertia-style request/form helpers from the Sarrabot app: `useGum` (get/post/put/patch/delete/reload/visit with `onBefore`/`onStart`/`onSuccess`/`onError`/`onFinish`, `navigate`/`preserveState`/`preserveScroll`, per-call `transport`/`baseURL` overrides), `useGumForm` (data/errors/processing/recentlySuccessful/isDirty + reset/clearErrors/submit), and `useGumRemember` (localStorage refs scoped to a route). Two interchangeable transports: **`"bindings"`** (in-process via the `bindings` global — no HTTP) and **`"http"`** (axios to any REST backend), both returning the `{ data }` envelope and both normalizing zod-flatten 422 errors into per-field maps. The `datatable/` component (index + Pagination + SelectOpption + DataTableSkeleton) plus the small `Button`/`Input`/`Checkbox` controls it needs, and the `nformatter` helper, sit under `src/ui/src/components/` and `src/ui/src/helpers/`; the router is now real (`/` → `pages/dashboard/index.vue`), `app.ts` installs `GumPlugin` + router, and the dashboard gained a **live demo table** against a new `app.demo.table`/`app.demo.destroy` handler pair (in-memory rows, so the starter needs no migration, returning the same envelope `paginate.*` produces). `lodash-es` (debounce) was added to the import map. Docs: new `guide/gum.md` covers transports, every `useGum*` API, error normalization, and both paginate backends (SQLite bindings vs REST) with copy-pasteable code.
-
-## [1.0.12] — 2026-09-10
-
-### Fixed
-
-- **The scaffold's source now matches the template exactly.** 1.0.11 only re-bared frontend `npm:` imports, but `deno publish` rewrites every specifier across the whole package — `@std/path` → `jsr:@std/path@^1.1.6`, `@std/http/file-server` → `jsr:/@std/http@^1.1.3/file-server`, and `vite-env.d.ts` got `/// <reference types="npm:/vite@^8.2.2/client" />`. The create script now strips the `jsr:`/`npm:` prefix _and_ the version from every `from`/`import`/`declare module`/`/// <reference types>` across **all** scaffold files (the scaffold ships its own `deno.json` imports map, so bare names resolve everywhere), restoring the original source bytes.
-
-### Added
-
-- **Playwright is now an optional dependency instead of a default one.** The `app.playwright` module was the only consumer of the `playwright` npm package, and it's a lab/demo — shipping it in the default `deno.json` imports makes every scaffold install and bundle carry the package (plus its browser binaries) for a feature most apps never use. Removed `playwright` from the template's imports map; the demo loads it lazily at runtime (`import.meta.resolve("play" + "wright")`, deliberately non-literal so the registry rewrite never hard-maps it). If it's missing, `app.playwright.play` returns instructions — add `"playwright": "npm:playwright@^1.61.1"` to `deno.json` imports, run `deno install`, then retry. If you don't need browser automation at all, just delete the controller. When enabled, missing browser binaries auto-install on first play through the _installed_ package's own `cli.js` — fixing `Executable doesn't exist …/ms-playwright/chromium-<rev>` without the trap of the bare `npm:playwright` specifier downloading a different (wrong-build) cached version.
-
-## [1.0.11] — 2026-09-10
-
-### Fixed
-
-- **Frontend builds with the published template.** The 1.0.10 publish proved `deno publish`'s specifier rewrites now produce _valid_ fully-qualified imports (`jsr:@cliffy/command@…`, `npm:vue@^3.5.42`) — so the Deno-side scaffold works — but the **frontend** broke: Vite/Rolldown cannot resolve `npm:` specifiers, it needs bare imports resolved through `node_modules`. The create script now **undoes the `npm:…@version` rewrite for files under `src/ui/`** (restoring `vue`, `bootstrap`, `@vitejs/plugin-vue`, …), so the generated `app.ts`, `pulse.ts`, and `vite.config.ts` build again.
-
-## [1.0.10] — 2026-09-10
-
-### Fixed
-
-- **The real root cause of the relative-import breakage.** `deno publish` automatically rewrites import-map shortcut specifiers into fully-qualified ones ("specifier unfurling"). The package config (`packages/create-deskapp/deno.json`) had no `imports` map — the map only lived in `template/deno.json` — so every bare import in the shipped template (`@cliffy/command`, `@std/…`, `@/…`, `vue`, …) was rewritten from a missing-shortcut state into a broken `./`-prefixed path (e.g. `./@cliffy/command`). The 1.0.7→1.0.9 publications were all re-publishing clean files that _Deno re-broke at publish time_, which is why syncing/scanning the working tree could never catch it. The package now shares the same `imports` map as the template (`@/`/`@/ui/` point into `./template/src/` so the rewrite stays layout-correct), so published specifiers come out fully-qualified (`jsr:@cliffy/command@…`, `npm:vue@…`) or as valid relative paths — and scaffolds work off the registry.
-
-## [1.0.9] — 2026-09-09
-
-### Fixed
-
-- **1.0.8 accidentally shipped the same relative-import breakage.** The published package included a template whose import statements had been rewritten to `./`-prefixed relative paths (e.g. `from "./@cliffy/command"` instead of `from "@cliffy/command"`), so every scaffold inherited `Module not found "…/src/core/maker/@cliffy/command"`. This release re-publishes the clean source template, and `deno task publish` now runs the template sync first — `scripts/sync-template.mjs` re-copies `template/` into the package (wiping any local drift) and **aborts if any file still contains a `./`-prefixed specifier that matches the template's own imports map**, so a dirty package can never be uploaded again.
-
-## [1.0.8] — 2026-09-09
-
-### Fixed
-
-- **Scaffolded projects are runnable again.** The 1.0.7 published template had been rewritten (by an editor "convert to relative imports" pass) so every `@/…`, `@std/…`, `@libsql/client`, and bare npm import (`vue`, `bootstrap`, `bcryptjs`, `socket.io-client`, …) became a broken relative `./…` path — e.g. `import { Command } from "./@cliffy/command"` — which made `deno task dev` fail with `Module not found "…/src/core/maker/@cliffy/command"`. Bare specifiers resolve through the `deno.json` imports map; `./`-prefixed ones never do. 1.0.8 re-publishes the clean source template. `scripts/sync-template.mjs` now **fails the sync** if any packaged file contains a `./`-prefixed specifier that matches the template's own imports map, so a dirty publish cannot happen again.
-
-## [1.0.7] — 2026-09-09
-
-### Fixed
-
-- **`deno create jsr:@niyam/deskapp` works again.** The scaffold script built the JSR base URL with `../../` from the entry module, which strips the version segment — JSR only serves package files (`template.manifest.json`, `template/**`) at the _versioned_ package root, so the fetch 404'd with "Could not load template manifest". The base now stays at the versioned root (`../`), so the manifest and every template file download correctly over the registry CDN. This regression was present since the CDN-loading change in 1.0.3.
-
-## [1.0.6] — 2026-09-09
-
-### Added
-
-- **Live UI reload in `deno task dev`.** Dev now builds the frontend in watch mode (`vite build --watch`) and sets `FRONTEND_WATCH=1`; the backend polls `src/ui/dist` via the new `win.watchFrontend(dist, onChange)` on the `win` facade and reloads the open window when a rebuild lands. SCSS, Vue template, and SFC `<style>` edits all appear without a manual refresh.
-
-### Changed
-
-- **Frontend entry renamed** `src/ui/src/main.ts` → `src/ui/src/app.ts`. **Bootstrap 5** (CSS + JS bundle) and **Bootstrap Icons** are now imported by default in `app.ts`, and the webview favicon lives in the UI (`src/ui/src/assets/images/favicon/favicon.ico`) instead of the project-root icon folder.
-
-### Fixed
-
-- **`win.watchFrontend` only watched top-level `dist` entry names**, which never change during a Vite rebuild (hashed assets live under `dist/assets/`) — so it could never fire. It now signs the whole `dist` tree plus `index.html` and fires once the rebuilt state settles.
-
-## [1.0.4] — 2026-09-09
-
-### Fixed
-
-- **README no longer presents `app.*` as the framework API.** The facade (`@/core/facade.ts`) exposes per-capability namespace objects — `win`, `chrome`, `pickers`, `db`, `queue`, `cron`, `storage`, … — while `app.*` is only the prefix of the _sample_ module's UI bindings (`bindings['<module>.<controller>.<handler>']()`), which developers replace with their own modules. Quick Start now shows real facade usage instead of invented `app.*` examples.
-
-## [1.0.3] — 2026-09-08
-
-### Fixed
-
-- **`deno create` now actually scaffolds.** `deno create` executes `./create` from the JSR registry (the module runs from an `https://jsr.io/...` URL, not a local path), so the old template loading from disk crashed with `The URL must be of scheme file`. The template is now shipped with a file manifest (`template.manifest.json`) and downloaded over the JSR CDN when running remotely; local repo checkouts still read `template/` from disk.
-
-## [1.0.0] — 2026-09-08
-
-Initial release.
-
-### Added
-
-- **deskapp framework** — batteries-included desktop framework on Deno: facade namespaces (`win`, `chrome`, `pickers`, `db`, `queue`, `cron`, `storage`), window manager with native chrome, window-bound controller bindings, private/public/tmp storage, SQLite + Drizzle ORM, queue, cron scheduler, Zod validation, password hashing, Playwright automation, and a Vue 3 + Vite UI.
-- **`deno create` scaffolding** — `deno create jsr:@niyam/deskapp` scaffolds the full starter project into the current folder, materializes `.gitignore` and `.env`, and prints next steps.
-- **Maker CLI** — code generation for modules, controllers, models, and seeds; schema/migration/seed management, UI dev server, and per-OS binary bundling.
-- **Dark dashboard starter UI** — topbar, hero, subsystem cards, and a live action console; a lean custom SCSS theme (Public Sans + `--dk-*` design tokens) replaces the compiled Bootstrap bundle.
-- **Monorepo layout** — `packages/create-deskapp` (published template + `./create` script), `packages/docs` (VitePress site), `scripts/sync-template.mjs` (syncs the live `template/` into the package), `logo-favicon/`, CI for docs deployment.
-- **Third-party documentation** — guide (architecture, modules, controllers, windows, database, storage, UI, queue, scheduler, validation, password, Playwright, testing), CLI reference, and a distribution/deploy guide.
-- **Brand assets in docs** — the full `logo-favicon` set is wired into the VitePress site: favicon (svg/ico/png), web manifest, apple-touch icon, navbar logo, and an index-hero image styled like the nexgen docs.
+- **Docs:** `gum.md` now states the HTTP verb is advisory under the `bindings` transport ??? the URL is the binding name; the method only picks which option slot the handler receives (`query` vs `data`), so `gum.post('...destroyAll', { ids })` and `gum.delete('...destroyAll', { query: { ids } })` call the same handler with the same object. `ui.md`'s reference `vite.config.ts` matches the shipped `fileURLToPath` version and explains the `.pathname` percent-encoding trap.

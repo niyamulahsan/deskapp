@@ -16,7 +16,7 @@ function label(name, text) {
 export default defineConfig({
   base: "/deskapp/",
   title: "Deskapp",
-  description: "Desktop application framework on Deno: windows, native APIs, SQLite, Queue, Cron",
+  description: "Desktop application framework on Electron: windows, native APIs, SQLite, Queue, Cron",
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/deskapp/favicon.svg" }],
     ["link", { rel: "icon", type: "image/png", sizes: "96x96", href: "/deskapp/favicon-96x96.png" }],
@@ -64,6 +64,7 @@ export default defineConfig({
             { text: label("device-floppy", "Storage"), link: "/guide/storage" },
             { text: label("photo", "UI (Vue 3)"), link: "/guide/ui" },
             { text: label("send", "Gum (Requests & Forms)"), link: "/guide/gum" },
+            { text: label("code", "Recipes & Examples"), link: "/guide/recipes" },
           ],
         },
         {

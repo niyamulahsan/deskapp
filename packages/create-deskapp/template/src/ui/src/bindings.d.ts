@@ -1,12 +1,10 @@
 /**
- * bindings.d.ts - types the Deno Desktop `bindings` global in the webview.
+ * bindings.d.ts - types the Electron `bindings` global exposed by preload.
  *
  * `bindings` is a Proxy: any `bindings.<name>` access yields a function that
- * calls into the Deno backend in-process and returns a Promise. Backend
- * controllers register handlers under `<module>.<controller>.<handler>` (see
- * src/core/api/registry.ts). Because names are dynamic and auto-discovered,
- * every access is typed with a single callable signature - no per-binding
- * entries need to be maintained here.
+ * invokes `deskapp:<name>` in the main process via IPC and returns a Promise.
+ * Backend controllers register handlers under `<module>.<controller>.<handler>`
+ * (see src/core/api/registry.ts).
  */
 
 export interface Bindings {
@@ -16,5 +14,3 @@ export interface Bindings {
 declare global {
   const bindings: Bindings;
 }
-
-export {};

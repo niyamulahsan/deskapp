@@ -8,29 +8,29 @@ Creates, looks up, and counts windows. Presets live in `src/window/config.ts`. S
 
 Before using the functions, understand the three names you'll meet. There is one **input shape**, one **output shape**, and one **input-or-output** shape:
 
-| Type | What it is | Where it appears |
-| --- | --- | --- |
-| `BrowserWindowOptions` | The **build options**: title, size, position, flags. Pure input. | Passed to `createWindow`. |
-| `WindowPreset` | A `BrowserWindowOptions` **plus a `route`** (which app page to load). Also an input. | Passed to `openWindow`, and stored in `src/window/config.ts`. |
-| `DesktopWindow` | The **actual open window** you get back. It's the return value — you call methods on it (`setTitle`, `focus`, `navigate`, ...). It is *never* a parameter. | Returned by `createWindow`, `openWindow`, `getWindow`. |
+| Type                   | What it is                                                                                                                                                 | Where it appears                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `BrowserWindowOptions` | The **build options**: title, size, position, flags. Pure input.                                                                                           | Passed to `createWindow`.                                     |
+| `WindowPreset`         | A `BrowserWindowOptions` **plus a `route`** (which app page to load). Also an input.                                                                       | Passed to `openWindow`, and stored in `src/window/config.ts`. |
+| `DesktopWindow`        | The **actual open window** you get back. It's the return value — you call methods on it (`setTitle`, `focus`, `navigate`, ...). It is *never* a parameter. | Returned by `createWindow`, `openWindow`, `getWindow`.        |
 
 Reading a signature: **everything inside the parenthesis is what you hand in; the type after `=>` is the window you receive.**
 
 ```
 win.createWindow(options?, name?)          =>      DesktopWindow | undefined
        └───── you pass options ─────┘              └── you get a window ──┘
-win.openWindow(presetOrName)              => Promise<DesktopWindow | undefined>
+win.openWindow(presetOrName)               => Promise<DesktopWindow | undefined>
 ```
 
 ## Signature
 
-| Function | Signature | Returns |
-| --- | --- | --- |
-| `createWindow` | `(options?: BrowserWindowOptions, name?: string)` | `DesktopWindow \| undefined` |
-| `getWindow` | `(id?: number)` | `DesktopWindow \| undefined` |
-| `getWindowCount` | `()` | `number` |
-| `openWindow` | `(presetOrName: string \| WindowPreset)` | `Promise<DesktopWindow \| undefined>` |
-| `watchFrontend` | `(distPath: string, onChange: () => void)` | `void` |
+| Function         | Signature                                         | Returns                               |
+| ---------------- | ------------------------------------------------- | ------------------------------------- |
+| `createWindow`   | `(options?: BrowserWindowOptions, name?: string)` | `DesktopWindow \| undefined`          |
+| `getWindow`      | `(id?: number)`                                   | `DesktopWindow \| undefined`          |
+| `getWindowCount` | `()`                                              | `number`                              |
+| `openWindow`     | `(presetOrName: string \| WindowPreset)`          | `Promise<DesktopWindow \| undefined>` |
+| `watchFrontend`  | `(distPath: string, onChange: () => void)`        | `void`                                |
 
 **Inputs:**
 
@@ -61,12 +61,12 @@ win.openWindow(presetOrName)              => Promise<DesktopWindow | undefined>
 >
 > Only reach for `createWindow` when you need a raw, hand-managed bare window (e.g. an off-app window you'll `navigate` to an external URL) and `openWindow`'s preset/binding/routing convenience doesn't fit.
 
-| | `createWindow` | `openWindow` |
-| --- | --- | --- |
-| **What it does** | Opens a bare window from raw options. | Opens the preset, **binds your controller handlers** onto it, and **navigates it to its `route`**. |
-| **Input** | `BrowserWindowOptions` (no routing) | Preset name **or** `WindowPreset` (has `route`) |
-| **Reuse** | Always opens a new window. | Reopening the same preset name focuses the already-open window instead of duplicating. |
-| **When to use** | A plain/off-app window you'll drive manually — e.g. load an external website with `navigate`. | A normal **in-app** window with a router route and working bindings — settings, about, reports. |
+|                  | `createWindow`                                                                                | `openWindow`                                                                                       |
+| ---------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **What it does** | Opens a bare window from raw options.                                                         | Opens the preset, **binds your controller handlers** onto it, and **navigates it to its `route`**. |
+| **Input**        | `BrowserWindowOptions` (no routing)                                                           | Preset name **or** `WindowPreset` (has `route`)                                                    |
+| **Reuse**        | Always opens a new window.                                                                    | Reopening the same preset name focuses the already-open window instead of duplicating.             |
+| **When to use**  | A plain/off-app window you'll drive manually — e.g. load an external website with `navigate`. | A normal **in-app** window with a router route and working bindings — settings, about, reports.    |
 
 > Rule of thumb: use `openWindow` for anything that loads an app page; use `createWindow` only for a bare window you manage by hand — and remember the framework already used `createWindow` for the main window at startup.
 

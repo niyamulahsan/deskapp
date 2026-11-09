@@ -1,97 +1,100 @@
-/**
- * window/native.ts - desktop-native APIs beyond windows: tray, menu item
- * types, dialog helpers, and one-shot "desktop chrome" setup.
- *
- * These are desktop-only globals on `Deno` / the global scope (available under
- * `deno desktop` but not base Deno or tests), so they are resolved
- * structurally at runtime, mirroring how `manager.ts` wraps `Deno.BrowserWindow`.
- *
- * Developers import these from the facade; app code never touches `Deno.*`
- * desktop globals directly.
- */
+import path from "node:path";
+import { app, dialog, Menu, nativeImage, Tray } from "electron";
+import { config } from "@/core/config";
+import { type DesktopWindow, win as winApi } from "@/window/manager";
 
-import { config } from "@/core/config.ts";
-import { win as winApi, type DesktopWindow } from "@/window/manager.ts";
-
-/** A standard OS role menu item; the OS provides label + behavior. */
+export interface DesktopTray extends Tray {}
 export interface MenuRole {
   role: string;
 }
-
-/** A clickable menu item (fires `menuclick` / `contextmenuclick`). */
 export interface MenuActionItem {
-  item: {
-    label: string;
-    id?: string;
-    accelerator?: string;
-    enabled?: boolean;
-  };
+  item: { label: string; id?: string; accelerator?: string; enabled?: boolean };
 }
-
-/** A nested submenu. */
 export interface MenuSubmenu {
-  submenu: {
-    label: string;
-    items: MenuItem[];
-  };
+  submenu: { label: string; items: MenuItem[] };
 }
-
-/** The tagged-union shape accepted by menu APIs (see Menus docs). */
 export type MenuItem = MenuActionItem | MenuSubmenu | "separator" | { role: MenuRole };
 
-/** The `Deno.Tray` surface used by the app (structural subset). */
-export interface DesktopTray {
-  setIcon(pngBytes: Uint8Array): void;
-  setIconDark(pngBytes: Uint8Array | null): void;
-  setTooltip(text: string | null): void;
-  setMenu(items: unknown[] | null): void;
-  destroy(): void;
-  trayId: number;
-  addEventListener(type: string, listener: (event: { detail?: unknown }) => void): void;
-  removeEventListener(type: string, listener: (event: { detail?: unknown }) => void): void;
+// Map our custom MenuItem types to Electron's MenuItemConstructorOptions
+function toElectronMenu(items: MenuItem[]): Electron.MenuItemConstructorOptions[] {
+  return items.map((item) => {
+    if (item === "separator") return { type: "separator" };
+    if ("role" in item) return { role: item.role.role as any };
+    if ("item" in item) {
+      return {
+        label: item.item.label,
+        id: item.item.id,
+        accelerator: item.item.accelerator,
+        enabled: item.item.enabled,
+        click: () => {
+          // Forward clicks to the window's custom event if needed,
+          // or handle globally
+          const mainWin = winApi.getWindow();
+          if (mainWin && item.item.id) {
+            // Emulate Deno's event by executing custom JS or sending IPC
+            mainWin.webContents.send("menu-click", item.item.id);
+          }
+        }
+      };
+    }
+    if ("submenu" in item) {
+      return {
+        label: item.submenu.label,
+        submenu: toElectronMenu(item.submenu.items)
+      };
+    }
+    return {};
+  });
 }
 
-type TrayCtor = new () => DesktopTray;
+let tray: Tray | null = null;
 
-/** `Deno` as seen by the desktop runtime (adds `Tray`). */
-const desktopDeno = Deno as typeof Deno & { Tray?: TrayCtor };
-
-/**
- * Create a system-tray icon. Returns a `DesktopTray` or undefined when not
- * running under `deno desktop`. Construction sets the icon/menu; this helper
- * only creates it (set icon bytes yourself via `tray.setIcon`).
- */
-function createTray(): DesktopTray | undefined {
-  if (typeof desktopDeno.Tray !== "function") return undefined;
-  return new desktopDeno.Tray();
+function getTrayIconPath(): string {
+  // Bundle-safe: resolve from the app root (works in dev and packaged builds).
+  return path.join(app.getAppPath(), "src", "icons", "tray.png");
 }
 
-/** Whether the tray API is available (running under `deno desktop`). */
+function createTray(): Tray | undefined {
+  try {
+    const iconPath = getTrayIconPath();
+    const icon = nativeImage.createFromPath(iconPath);
+    if (icon.isEmpty()) return undefined;
+    tray = new Tray(icon);
+    return tray;
+  } catch {
+    return undefined;
+  }
+}
+
 function isTrayAvailable(): boolean {
-  return typeof desktopDeno.Tray === "function";
+  return true;
 }
 
-/** Show a native confirmation dialog. Returns OK/Cancel as a boolean. */
-function confirmDialog(message: string): boolean {
-  return confirm(message);
+async function confirmDialog(message: string): Promise<boolean> {
+  const result = await dialog.showMessageBox({
+    type: "question",
+    buttons: ["Cancel", "OK"],
+    title: "Confirm",
+    message: message
+  });
+  return result.response === 1;
 }
 
-/** Show a native alert dialog. */
-function alertDialog(message: string): void {
-  alert(message);
+async function alertDialog(message: string): Promise<void> {
+  await dialog.showMessageBox({
+    type: "info",
+    title: "Alert",
+    message: message
+  });
 }
 
-/** Show a native prompt dialog; returns the entered string or null. */
-function promptDialog(message: string, defaultValue?: string): string | null {
-  return prompt(message, defaultValue);
+async function promptDialog(message: string, defaultValue?: string): Promise<string | null> {
+  // Electron doesn't have a native prompt dialog, so we'd need a custom HTML modal.
+  // For now, we fallback to confirm as a stub.
+  console.warn("promptDialog not natively supported in Electron");
+  return null;
 }
 
-/* ---------------------------------------------------------------------------
- * Default desktop chrome: application menu + tray, ready as soon as the main
- * window opens. Kept in core so startup (main.ts) and any controller share it.
- * ------------------------------------------------------------------------ */
-
-/** The default application menu items for the main window. */
 function defaultMenuItems(): MenuItem[] {
   return [
     {
@@ -101,9 +104,9 @@ function defaultMenuItems(): MenuItem[] {
           { item: { label: "New", id: "new", accelerator: "CmdOrCtrl+N", enabled: true } },
           { item: { label: "Open Settings", id: "openSettings", accelerator: "CmdOrCtrl+,", enabled: true } },
           "separator",
-          { role: { role: "quit" } },
-        ],
-      },
+          { role: { role: "quit" } }
+        ]
+      }
     },
     {
       submenu: {
@@ -114,175 +117,88 @@ function defaultMenuItems(): MenuItem[] {
           "separator",
           { role: { role: "cut" } },
           { role: { role: "copy" } },
-          { role: { role: "paste" } },
-        ],
-      },
-    },
+          { role: { role: "paste" } }
+        ]
+      }
+    }
   ];
 }
 
-/**
- * Install the default application menu on a window and wire its `menuclick`
- * events. Safe to call more than once (rebuilds the menu in place).
- */
 function installAppMenu(win: DesktopWindow): void {
-  win.setApplicationMenu(defaultMenuItems());
-  win.addEventListener("menuclick", (e) => {
-    const detail = e.detail as { id?: string } | undefined;
-    if (detail?.id === "openSettings") {
-      void winApi.openWindow({ title: "Settings", width: 420, height: 320 });
-    }
-  });
+  // Set menu for the main window (also sets application menu on Windows/Linux).
+  const menu = Menu.buildFromTemplate(toElectronMenu(defaultMenuItems()));
+  win.setMenu(menu);
+  Menu.setApplicationMenu(menu);
 }
 
-/**
- * Create the default tray icon + menu. Icon bytes are loaded from
- * `src/icons/tray.png` (include `--include=./src/icons` at build time) when
- * present; otherwise the tray is created without an icon (platforms may or
- * may not show it). No-op when tray is unavailable.
- */
-function createAppTray(): DesktopTray | undefined {
-  const tray = createTray();
-  if (!tray) return undefined;
+function createAppTray(): Tray | undefined {
+  const t = createTray();
+  if (!t) return undefined;
 
-  tray.setTooltip(config.appName);
+  t.setToolTip(config.appName);
 
-  const menu: MenuItem[] = [
-    { item: { label: "Show window", id: "show", enabled: true } },
-    { item: { label: "Open Settings", id: "settings", enabled: true } },
-    "separator",
-    { item: { label: "Quit", id: "quit", enabled: true } },
-  ];
-  tray.setMenu(menu);
-
-  tray.addEventListener("click", () => {
-    winApi.getWindow()?.show();
-    winApi.getWindow()?.focus();
-  });
-  tray.addEventListener("menuclick", (e) => {
-    const detail = e.detail as { id?: string } | undefined;
-    switch (detail?.id) {
-      case "show":
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show window",
+      click: () => {
         winApi.getWindow()?.show();
-        break;
-      case "settings":
+        winApi.getWindow()?.focus();
+      }
+    },
+    {
+      label: "Open Settings",
+      click: () => {
         void winApi.openWindow({ title: "Settings", width: 420, height: 320 });
-        break;
-      case "quit":
-        Deno.exit(0);
-        break;
-      default:
-        break;
-    }
-  });
+      }
+    },
+    { type: "separator" },
+    { label: "Quit", click: () => app.quit() }
+  ]);
 
-  // Optional icon (PNG bytes, not a path).
-  try {
-    const icon = Deno.readFileSync(new URL("../icons/tray.png", import.meta.url));
-    tray.setIcon(icon);
-  } catch {
-    // no bundled tray icon - leave the tray icon unset
-  }
-
-  return tray;
+  t.setContextMenu(contextMenu);
+  return t;
 }
 
-/** The default right-click context menu items. */
-function defaultContextMenuItems(): MenuItem[] {
-  return [
-    { item: { label: "Copy", id: "copy", accelerator: "CmdOrCtrl+C", enabled: true } },
-    { item: { label: "Paste", id: "paste", accelerator: "CmdOrCtrl+V", enabled: true } },
-    "separator",
-    { item: { label: "Reload", id: "reload", accelerator: "CmdOrCtrl+R", enabled: true } },
-  ];
-}
-
-/**
- * Install a default right-click context menu on a window. Handles the
- * secondary-mouse-button `mousedown` itself (the webview may not forward the
- * browser `contextmenu` event) and wires `contextmenuclick` events.
- */
 function installContextMenu(win: DesktopWindow): void {
-  win.addEventListener("mousedown", (e) => {
-    const detail = e.detail as { button?: number; x?: number; y?: number } | undefined;
-    if (detail?.button === 2) {
-      win.showContextMenu(Number(detail.x), Number(detail.y), defaultContextMenuItems());
-    }
-  });
-
-  win.addEventListener("contextmenuclick", (e) => {
-    const detail = e.detail as { id?: string } | undefined;
-    switch (detail?.id) {
-      case "reload":
-        win.reload();
-        break;
-      default:
-        break;
-    }
+  win.webContents.on("context-menu", (event, params) => {
+    const menu = Menu.buildFromTemplate([
+      { role: "copy" },
+      { role: "paste" },
+      { type: "separator" },
+      { label: "Reload", click: () => win.reload() }
+    ]);
+    menu.popup({ window: win });
   });
 }
 
-/**
- * One-shot setup: install the app menu, context menu, and tray for the main
- * window. Call once at startup after the main window is created.
- */
 function setupDesktopChrome(win: DesktopWindow): void {
   installAppMenu(win);
   installContextMenu(win);
   createAppTray();
 }
 
-/**
- * Headless (no-window) tray: for builds shipped without the frontend
- * (`--ui=skip`, DESKAPP_UI=false). Keeps the process alive as a background
- * app with a Quit action only - no window references.
- */
-function createHeadlessTray(): DesktopTray | undefined {
-  const tray = createTray();
-  if (!tray) return undefined;
+function createHeadlessTray(): Tray | undefined {
+  const t = createTray();
+  if (!t) return undefined;
 
-  tray.setTooltip(`${config.appName} (headless)`);
+  t.setToolTip(`${config.appName} (headless)`);
+  t.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: `${config.appName} is running - no UI`, enabled: false },
+      { type: "separator" },
+      { label: "Quit", click: () => app.quit() }
+    ])
+  );
 
-  tray.setMenu([
-    { item: { label: `${config.appName} is running - no UI`, id: "status", enabled: false } },
-    "separator",
-    { item: { label: "Quit", id: "quit", enabled: true } },
-  ]);
-
-  tray.addEventListener("menuclick", (e) => {
-    const detail = e.detail as { id?: string } | undefined;
-    if (detail?.id === "quit") Deno.exit(0);
-  });
-
-  // Optional icon (PNG bytes, not a path).
-  try {
-    const icon = Deno.readFileSync(new URL("../icons/tray.png", import.meta.url));
-    tray.setIcon(icon);
-  } catch {
-    // no bundled tray icon - leave the tray icon unset
-  }
-
-  return tray;
+  return t;
 }
 
-/**
- * Remove the app from the macOS dock (part of the tray-only background app
- * pattern). No-op on Windows/Linux and when the runtimetime lacks `Deno.dock`.
- */
 function hideDock(): void {
-  const dockDeno = Deno as typeof Deno & { dock?: { setVisible?: (visible: boolean) => void } };
-  try {
-    dockDeno.dock?.setVisible?.(false);
-  } catch {
-    // dock API unavailable - ignore
+  if (process.platform === "darwin" && app.dock) {
+    app.dock.hide();
   }
 }
 
-/**
- * chrome - desktop-native APIs: tray, dialogs, application/context menus, and
- * one-shot desktop chrome setup. Access through the facade:
- *   import { chrome } from "@/core/facade.ts";
- */
 export const chrome = {
   createTray,
   isTrayAvailable,
@@ -292,9 +208,8 @@ export const chrome = {
   defaultMenuItems,
   installAppMenu,
   createAppTray,
-  defaultContextMenuItems,
   installContextMenu,
   setupDesktopChrome,
   createHeadlessTray,
-  hideDock,
+  hideDock
 };

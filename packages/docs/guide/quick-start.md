@@ -2,105 +2,98 @@
 
 ## Prerequisites
 
-- **Deno** 2.9+ (or latest stable) — needed for `deno create` and Deno Desktop.
-- A desktop OS: **Windows**, **macOS** or **Linux** (the framework uses each platform's native APIs).
+- **Node.js** 18+ and npm
+- A desktop OS: **Windows**, **macOS** or **Linux**
 
 ::: warning Windows: Smart App Control
-On **Windows**, the app ships **unsigned**, and **Smart App Control (SAC)** blocks unsigned/new executables. With SAC on, `deno task dev` and packaged apps won't open a window (no error, launches silently fail, or Windows may show "Windows protected your PC"). **Before running, turn SAC off** — Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → **Off**. (SmartScreen shows the same prompt for downloaded builds — choose "Run anyway" / "More info → Run anyway".)
+On **Windows**, unpackaged/dev builds are typically unsigned. With Smart App Control (SAC) or SmartScreen enabled, Windows may warn about unsigned executables. If blocked, use "More info → Run anyway" or disable SAC if needed for development.
 :::
 
 ## Create a project
 
-Create a folder, step into it, and scaffold:
+Use `create-deskapp` to scaffold a new project:
 
 ```sh
-mkdir my-app
-cd my-app
-deno create jsr:@niyam/deskapp
+npm create deskapp@latest my-app
+# or
+npx create-deskapp my-app
 ```
 
-This downloads the `@niyam/deskapp` package from JSR and runs its `./create` scaffold script. Your whole framework + starter app is copied into the current folder (named after it), a `.env` is created from `.env.example`, and everything is ready to run.
+Follow the prompts if any, then `cd my-app`.
 
-::: tip
-
-- The `jsr:` prefix is required — `deno create deskapp` by itself is not supported.
-- Alternatively, scaffold from anywhere with an explicit name:
-  `deno run -A jsr:@niyam/deskapp/create my-app` (add `--force` to overwrite an existing folder).
-  :::
+This copies the full Electron-based template into your project, creates a `.env` from `.env.example`, and installs dependencies.
 
 ## Install dependencies
 
-The project resolves npm packages (Vite, Sass, Drizzle, Vue, ...) through Deno:
+If dependencies weren't installed automatically, run:
 
 ```sh
-cd my-app
-deno install
+npm install
 ```
 
 ## Run it
 
 ```sh
-deno task dev
+npm run dev
 ```
 
-`dev` runs codegen (schema + bindings), builds the UI, then opens the desktop app with HMR while Vite rebuilds the UI in watch mode — edited SCSS/Vue files refresh the open window automatically. You should see the main window with the demo dashboard — file operations, API proxy, Playwright button, queue and cron demos — all working against the real backend.
+`dev` runs the UI dev server, builds the Electron main/preload in watch mode, and launches Electron. With hot reload for the UI, you can develop your app quickly. You should see the main window with the demo dashboard.
 
 ### Headless (no window)
 
-Set `DESKAPP_UI=false` in `.env` to disable the frontend, then:
+Set `DESKAPP_UI=false` in `.env`, then run:
 
 ```sh
-deno task serve        # codegen, then: deno run -A --env-file src/main.ts
+npm run dev
 ```
 
-The app boots as a tray-only background service: no UI, no window. The HTTP server serves a small JSON status at `http://127.0.0.1:8000` and the tray keeps the process alive. (Note `DESKAPP_UI` defaults to `true` — without `.env` a plain `deno run -A src/main.ts` opens the window.)
+The app boots in headless/tray mode with no window. The process stays alive via the system tray.
 
 ## What you get
 
 ```
 my-app/
-  .vscode/             editor settings for Deno
+  .vscode/             editor settings
+  scripts/             build scripts
   src/
-    core/              framework internals (edit freely — it's your framework)
+    core/              framework internals
     database/          generated schema + migrations
     icons/             favicon, tray, app icons
     modules/           your modules (app by default)
     storage/           live database and files folder
-    ui/                Vue 3 frontend
+    ui/                Vue 3 frontend (Vite)
     window/            window presets / manager / native chrome / dialogs
-    main.ts            backend entrypoint
+    main.ts            Electron main process entrypoint
+    preload.ts         preload script exposing bindings
   .env                 created from .env.example
-  deno.json            app name, tasks, desktop config, dependencies
+  package.json         scripts, dependencies, electron-builder config
+  tsconfig.json        TypeScript config
   drizzle.config.ts    database setup
 ```
 
-## Rename your app
-
-The app display name and deep-link scheme come from `deno.json`:
-
-```json
-"desktop": {
-  "app": {
-    "name": "MyApp",
-    "deepLinks": ["myapp"]
-  }
-}
-```
-
-Change those (and the icon files in `src/icons/`), and you're done.
-
 ## Try the CLI
 
+The template includes a maker CLI for scaffolding:
+
 ```sh
-deno task maker                    # list all commands
-deno task maker make:module blog   # create a new module with a model + seeder
-deno task maker db:migrate         # generate + run migrations
+npx deskapp maker                    # list all commands
+npx deskapp maker make:module blog   # create a new module with a model + seeder
+npx deskapp maker db:migrate         # generate + run migrations
 ```
 
-See [Maker Commands](../cli/maker.md) and [Database Commands](../cli/database.md).
+Or add scripts to `package.json` as needed. See [Maker Commands](../cli/maker.md) and [Database Commands](../cli/database.md).
+
+## Build & Package
+
+```sh
+npm run build      # Build UI and Electron main/preload
+npm run package    # Build and package with electron-builder
+```
+
+Packaged apps will be in the `release/` directory.
 
 ## Next
 
 - [Architecture](./architecture.md)
 - [Environment](./environment.md) — env variables
-- [Configuration](./configuration.md) — windows, tasks, deno.json
+- [Configuration](./configuration.md) — windows, config

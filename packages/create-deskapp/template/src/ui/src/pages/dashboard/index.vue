@@ -1,88 +1,214 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useGum } from '@/ui/plugins/gum.ts';
-import DataTable from '@/ui/components/datatable/index.vue';
-import deskapp from '@/ui/assets/images/deskapp.png';
+import { ref } from "vue";
+import deskapp from "@/ui/assets/images/deskapp.png";
+import DataTable from "@/ui/components/datatable/index.vue";
+import { useGum } from "@/ui/plugins/gum";
 
 interface LogEntry {
-  kind: 'info' | 'ok' | 'warn' | 'err';
+  kind: "info" | "ok" | "warn" | "err";
   text: string;
 }
 
 const log = ref<LogEntry[]>([]);
-const downloadUrl = ref('');
-const apiUrl = ref('');
-const siteUrl = ref('');
+const downloadUrl = ref("https://jsonplaceholder.typicode.com/todos/1");
+const apiUrl = ref("https://jsonplaceholder.typicode.com/todos/1");
+const siteUrl = ref("https://vuejs.org");
+const windowTitle = ref("Deskapp · Recipe Demo");
 
 const gum = useGum();
 const table = ref<InstanceType<typeof DataTable> | null>(null);
 
-function push(entry: LogEntry) {
-  log.value.unshift(entry);
+function push(kind: LogEntry["kind"], text: string) {
+  log.value.unshift({ kind, text });
   if (log.value.length > 200) log.value.length = 200;
 }
 
-function bindOr(name: string): ((...args: unknown[]) => Promise<unknown>) | null {
-  if (typeof bindings === 'undefined') {
-    push({
-      kind: 'warn',
-      text: `${name} — bindings unavailable. Run via \`deno task dev\`.`,
-    });
-    return null;
-  }
-  return bindings[name];
-}
+// Nested form (works for any module): md.<module>.<controller>.<handler>()
+// Flat form also works: bindings['app.window.focus']()
 
-async function invoke(name: string, ...args: unknown[]) {
-  const fn = bindOr(name);
-  if (!fn) return;
+/* app.window.* */
+async function openUrlWindow() {
   try {
-    const res = await fn(...args);
-    push({ kind: 'ok', text: `${name} → ${JSON.stringify(res)}` });
+    push("ok", `app.window.openUrl → ${JSON.stringify(await md.app.window.openUrl(siteUrl.value || "https://vite.dev"))}`);
   } catch (e) {
-    push({ kind: 'err', text: `${name} ERROR → ${String(e)}` });
+    push("err", `app.window.openUrl → ${String(e)}`);
   }
 }
-
-async function runStorage(fn: string) {
-  await invoke(
-    `app.storage.${fn}`,
-    ...(fn === 'download' ? [downloadUrl.value.trim()] : []),
-  );
-}
-
-async function apiRun(name: string, ...args: unknown[]) {
-  await invoke(name, ...args);
-}
-
-async function openWebWindow() {
-  const target = siteUrl.value.trim() || 'https://vite.dev';
-  const fn = bindOr('app.window.openUrl');
-  if (!fn) return;
+async function setWindowTitle() {
   try {
-    const opened = await fn(target);
-    push({
-      kind: opened ? 'ok' : 'warn',
-      text: opened ? `Opened ${target} in a second window` : `Could not open ${target}`,
-    });
+    push("ok", `app.window.setTitle → ${JSON.stringify(await md.app.window.setTitle(windowTitle.value))}`);
   } catch (e) {
-    push({ kind: 'err', text: `app.window.openUrl ERROR → ${String(e)}` });
+    push("err", `app.window.setTitle → ${String(e)}`);
+  }
+}
+async function focusWindow() {
+  try {
+    push("ok", `app.window.focus → ${JSON.stringify(await md.app.window.focus())}`);
+  } catch (e) {
+    push("err", `app.window.focus → ${String(e)}`);
+  }
+}
+async function toggleAlwaysOnTop() {
+  try {
+    push("ok", `app.window.toggleAlwaysOnTop → ${JSON.stringify(await md.app.window.toggleAlwaysOnTop())}`);
+  } catch (e) {
+    push("err", `app.window.toggleAlwaysOnTop → ${String(e)}`);
+  }
+}
+async function createTray() {
+  try {
+    push("ok", `app.window.createTray → ${JSON.stringify(await md.app.window.createTray())}`);
+  } catch (e) {
+    push("err", `app.window.createTray → ${String(e)}`);
+  }
+}
+async function confirmSomething() {
+  try {
+    push("ok", `app.window.confirmSomething → ${JSON.stringify(await md.app.window.confirmSomething("Continue?"))}`);
+  } catch (e) {
+    push("err", `app.window.confirmSomething → ${String(e)}`);
+  }
+}
+async function alertSomething() {
+  try {
+    push("ok", `app.window.alertSomething → ${JSON.stringify(await md.app.window.alertSomething("Hello from Deskapp"))}`);
+  } catch (e) {
+    push("err", `app.window.alertSomething → ${String(e)}`);
   }
 }
 
-/*
- * gum demo - row deletion. The DataTable emits the selected ids, gum issues
- * an in-process `delete` binding call (`app.demo.destroy`), then the table
- * reloads page 1. Same code works against a REST API by passing
- * `transport="http"` + `baseURL` (see docs/guide/gum.md).
- */
+/* app.storage.* */
+async function openFile() {
+  try {
+    push("ok", `app.storage.open → ${JSON.stringify(await md.app.storage.open())}`);
+  } catch (e) {
+    push("err", `app.storage.open → ${String(e)}`);
+  }
+}
+async function saveFile() {
+  try {
+    push("ok", `app.storage.save → ${JSON.stringify(await md.app.storage.save())}`);
+  } catch (e) {
+    push("err", `app.storage.save → ${String(e)}`);
+  }
+}
+async function uploadFile() {
+  try {
+    push("ok", `app.storage.upload → ${JSON.stringify(await md.app.storage.upload())}`);
+  } catch (e) {
+    push("err", `app.storage.upload → ${String(e)}`);
+  }
+}
+async function removeFile() {
+  try {
+    push("ok", `app.storage.remove → ${JSON.stringify(await md.app.storage.remove())}`);
+  } catch (e) {
+    push("err", `app.storage.remove → ${String(e)}`);
+  }
+}
+async function listDir() {
+  try {
+    push("ok", `app.storage.list → ${JSON.stringify(await md.app.storage.list())}`);
+  } catch (e) {
+    push("err", `app.storage.list → ${String(e)}`);
+  }
+}
+async function downloadFile() {
+  try {
+    push("ok", `app.storage.download → ${JSON.stringify(await md.app.storage.download(downloadUrl.value))}`);
+  } catch (e) {
+    push("err", `app.storage.download → ${String(e)}`);
+  }
+}
+async function appSave() {
+  try {
+    push("ok", `app.storage.appSave → ${JSON.stringify(await md.app.storage.appSave())}`);
+  } catch (e) {
+    push("err", `app.storage.appSave → ${String(e)}`);
+  }
+}
+async function appLoad() {
+  try {
+    push("ok", `app.storage.appLoad → ${JSON.stringify(await md.app.storage.appLoad())}`);
+  } catch (e) {
+    push("err", `app.storage.appLoad → ${String(e)}`);
+  }
+}
+async function appList() {
+  try {
+    push("ok", `app.storage.appList → ${JSON.stringify(await md.app.storage.appList())}`);
+  } catch (e) {
+    push("err", `app.storage.appList → ${String(e)}`);
+  }
+}
+async function appExport() {
+  try {
+    push("ok", `app.storage.appExport → ${JSON.stringify(await md.app.storage.appExport())}`);
+  } catch (e) {
+    push("err", `app.storage.appExport → ${String(e)}`);
+  }
+}
+async function appDelete() {
+  try {
+    push("ok", `app.storage.appDelete → ${JSON.stringify(await md.app.storage.appDelete())}`);
+  } catch (e) {
+    push("err", `app.storage.appDelete → ${String(e)}`);
+  }
+}
+
+/* app.net.* */
+async function fetchPlaceholder() {
+  try {
+    push("ok", `app.net.placeholder → ${JSON.stringify(await md.app.net.placeholder())}`);
+  } catch (e) {
+    push("err", `app.net.placeholder → ${String(e)}`);
+  }
+}
+async function fetchJson() {
+  try {
+    push("ok", `app.net.fetchJson → ${JSON.stringify(await md.app.net.fetchJson(apiUrl.value))}`);
+  } catch (e) {
+    push("err", `app.net.fetchJson → ${String(e)}`);
+  }
+}
+
+/* app.playwright.* */
+async function play() {
+  push("info", "Starting Playwright…");
+  try {
+    push("ok", `app.playwright.play → ${JSON.stringify(await md.app.playwright.play({ seconds: 3, headless: false }))}`);
+  } catch (e) {
+    push("err", `app.playwright.play → ${String(e)}`);
+  }
+}
+
+/* app.demo.* */
+async function runQueue() {
+  try {
+    push(
+      "ok",
+      `app.demo.queue → ${JSON.stringify(await md.app.demo.queue({ items: ["alpha", "beta", "gamma"], concurrency: 2, delayMs: 150 }))}`
+    );
+  } catch (e) {
+    push("err", `app.demo.queue → ${String(e)}`);
+  }
+}
+async function runSchedule() {
+  push("info", "Running cron demo (2s)…");
+  try {
+    push("ok", `app.demo.schedule → ${JSON.stringify(await md.app.demo.schedule({ seconds: 2 }))}`);
+  } catch (e) {
+    push("err", `app.demo.schedule → ${String(e)}`);
+  }
+}
+
+/* Data table (gum / app.demo.table + destroy) */
 async function removeRows(ids: Array<string | number>) {
   try {
-    const res = await gum.delete('app.demo.destroy', { query: { ids } });
-    const result = res?.data ?? {};
-    push({ kind: 'ok', text: `app.demo.destroy → ${JSON.stringify(result)}` });
+    const res = await gum.delete("app.demo.destroy", { query: { ids } });
+    push("ok", `app.demo.destroy → ${JSON.stringify(res?.data ?? res)}`);
   } catch (e) {
-    push({ kind: 'err', text: `app.demo.destroy ERROR → ${String(e)}` });
+    push("err", `app.demo.destroy → ${String(e)}`);
   }
   await table.value?.load(1);
 }
@@ -92,126 +218,92 @@ async function removeRows(ids: Array<string | number>) {
   <div class="app">
     <header class="top">
       <div class="brand">
-        <img :src="deskapp" class="logo" alt="deskapp" />
+        <img :src="deskapp" class="logo" alt="deskapp">
+        <span class="brand-sub">recipes</span>
       </div>
-      <div class="chip"><span class="dot"></span> local stack · running</div>
+      <div class="chip"><span class="dot"></span> Electron · Vue 3 · SQLite</div>
     </header>
 
     <section class="hero">
-      <p class="eyebrow">Deno Desktop · Vue 3 · SQLite</p>
-      <h1>Your desktop app, <span class="grad">batteries included.</span></h1>
+      <p class="eyebrow">Simple calls (module → controller → handler)</p>
+      <h1>Call the backend with <span class="grad">bindings</span></h1>
       <p class="sub">
-        Windows, storage, database, queue, cron and Playwright all run behind this window.
-        Press a button — the backend answers in the console.
+        Logical form: <code>await md.app.window.focus()</code> — <b>bindings</b> → <b>module</b> (<code>app</code>) →
+        <b>controller</b> (<code>window</code>) → <b>handler</b> (<code>focus</code>). Works for any module you create.
       </p>
-      <div class="quick">
-        <button class="q-btn" @click="runStorage('open')">
-          <i class="bi bi-folder2-open"></i> Open file
-        </button>
-        <button class="q-btn accent" @click="apiRun('app.playwright.play')">
-          <i class="bi bi-play-circle"></i> Play Chromium
-        </button>
-        <button class="q-btn" @click="apiRun('app.demo.queue')">
-          <i class="bi bi-list-check"></i> Run queue
-        </button>
-        <button class="q-btn" @click="apiRun('app.demo.schedule', 2)">
-          <i class="bi bi-alarm"></i> Run cron
-        </button>
-        <button class="q-btn" @click="openWebWindow">
-          <i class="bi bi-window"></i> New window
-        </button>
-      </div>
+      <pre class="snippet">// controller: src/modules/app/controllers/hello.controller.ts
+export const greet = async (name: string) => ({ message: `Hello, ${name}!` });
+export const handlers = { greet };
+
+// UI
+const res = await md.app.hello.greet('World');</pre>
     </section>
 
     <section class="grid">
       <article class="card">
         <header>
-          <i class="bi bi-folder2-open"></i>
+          <i class="bi bi-window-stack"></i>
           <div>
-            <h2>Native files</h2>
-            <p>Real dialogs on every OS</p>
+            <h2>Windows</h2>
+            <p><code>md.app.window.*</code></p>
           </div>
         </header>
         <div class="actions">
-          <button class="act" @click="runStorage('open')">Open</button>
-          <button class="act" @click="runStorage('save')">Save</button>
-          <button class="act" @click="runStorage('upload')">Upload</button>
-          <button class="act" @click="runStorage('remove')">Remove</button>
-          <button class="act" @click="runStorage('list')">List</button>
+          <button class="act" @click="openUrlWindow">Open URL window</button>
+          <button class="act" @click="focusWindow">Focus</button>
+          <button class="act" @click="toggleAlwaysOnTop">Always on top</button>
+          <button class="act" @click="setWindowTitle">Set title</button>
         </div>
-        <div class="row">
-          <input
-            v-model="downloadUrl"
-            type="url"
-            placeholder="https://example.com/file.zip"
-            @keyup.enter="runStorage('download')" />
-          <button class="act slim" title="Download" @click="runStorage('download')">
-            <i class="bi bi-download"></i>
-          </button>
+        <div class="row"><input v-model="siteUrl" type="url" placeholder="https://vite.dev"></div>
+        <div class="row"><input v-model="windowTitle" type="text" placeholder="Window title"></div>
+        <div class="actions">
+          <button class="act" @click="createTray">Create tray</button>
+          <button class="act" @click="confirmSomething">Confirm</button>
+          <button class="act" @click="alertSomething">Alert</button>
         </div>
       </article>
 
       <article class="card">
         <header>
-          <i class="bi bi-hdd"></i>
+          <i class="bi bi-folder2-open"></i>
           <div>
-            <h2>App-managed state</h2>
-            <p>Private + tmp storage</p>
+            <h2>Files &amp; storage</h2>
+            <p><code>md.app.storage.*</code></p>
           </div>
         </header>
         <div class="actions">
-          <button class="act" @click="runStorage('appSave')">Save</button>
-          <button class="act" @click="runStorage('appLoad')">Load</button>
-          <button class="act" @click="runStorage('appList')">List</button>
-          <button class="act" @click="runStorage('appExport')">Export</button>
-          <button class="act danger" @click="runStorage('appDelete')">Delete</button>
+          <button class="act" @click="openFile">Open</button>
+          <button class="act" @click="saveFile">Save</button>
+          <button class="act" @click="uploadFile">Upload</button>
+          <button class="act" @click="removeFile">Remove</button>
+          <button class="act" @click="listDir">List dir</button>
         </div>
-        <p class="hint">JSON kept under <code>src/storage/app/</code> — safe to save anything.</p>
+        <div class="row">
+          <input v-model="downloadUrl" type="url" placeholder="https://example.com/file.zip">
+          <button class="act slim" title="Download" @click="downloadFile"><i class="bi bi-download"></i></button>
+        </div>
+        <div class="actions">
+          <button class="act" @click="appSave">App save</button>
+          <button class="act" @click="appLoad">App load</button>
+          <button class="act" @click="appList">App list</button>
+          <button class="act" @click="appExport">Export tmp</button>
+          <button class="act danger" @click="appDelete">Delete state</button>
+        </div>
       </article>
 
       <article class="card">
         <header>
           <i class="bi bi-globe2"></i>
           <div>
-            <h2>Network proxy</h2>
-            <p>From the backend, no CORS</p>
+            <h2>Network (no CORS)</h2>
+            <p><code>md.app.net.*</code></p>
           </div>
         </header>
         <div class="actions">
-          <button class="act" @click="apiRun('app.net.placeholder')">Placeholder</button>
-          <button class="act" @click="apiRun('app.net.fetchJson', apiUrl)">Fetch JSON</button>
+          <button class="act" @click="fetchPlaceholder">Placeholder</button>
+          <button class="act accent" @click="fetchJson">Fetch JSON</button>
         </div>
-        <div class="row">
-          <input
-            v-model="apiUrl"
-            type="url"
-            placeholder="https://jsonplaceholder.typicode.com/todos/1"
-            @keyup.enter="apiRun('app.net.fetchJson', apiUrl)" />
-        </div>
-      </article>
-
-      <article class="card">
-        <header>
-          <i class="bi bi-window"></i>
-          <div>
-            <h2>Windows</h2>
-            <p>Second windows, by URL</p>
-          </div>
-        </header>
-        <div class="actions">
-          <button class="act" @click="siteUrl = 'https://vuejs.org'">Vue</button>
-          <button class="act" @click="siteUrl = 'https://deno.com'">Deno</button>
-          <button class="act accent" @click="openWebWindow">
-            <i class="bi bi-box-arrow-up-right"></i> Open
-          </button>
-        </div>
-        <div class="row">
-          <input
-            v-model="siteUrl"
-            type="url"
-            placeholder="https://vite.dev"
-            @keyup.enter="openWebWindow" />
-        </div>
+        <div class="row"><input v-model="apiUrl" type="url" placeholder="https://api.github.com/zen"></div>
       </article>
 
       <article class="card">
@@ -219,17 +311,14 @@ async function removeRows(ids: Array<string | number>) {
           <i class="bi bi-browser-chrome"></i>
           <div>
             <h2>Playwright</h2>
-            <p>Backend-controlled Chromium</p>
+            <p><code>md.app.playwright.play</code></p>
           </div>
         </header>
         <div class="actions">
-          <button class="act accent" @click="apiRun('app.playwright.play')">
-            <i class="bi bi-play-circle"></i> Play (≈5s)
-          </button>
+          <button class="act accent" @click="play"><i class="bi bi-play-circle"></i> Launch Chromium (3s)</button>
         </div>
         <p class="hint">
-          Launches the bundled Chromium, opens a page, closes it. Needs
-          <code>--chromium</code> in the bundle.
+          Backend resolves Chromium via facade. <code>npm i playwright && npx playwright install chromium</code> if needed.
         </p>
       </article>
 
@@ -238,70 +327,54 @@ async function removeRows(ids: Array<string | number>) {
           <i class="bi bi-lightning-charge"></i>
           <div>
             <h2>Queue &amp; cron</h2>
-            <p>In-process scheduling</p>
+            <p><code>md.app.demo.*</code></p>
           </div>
         </header>
         <div class="actions">
-          <button class="act" @click="apiRun('app.demo.queue')">Run queue</button>
-          <button class="act" @click="apiRun('app.demo.schedule', 2)">Cron · 2s</button>
+          <button class="act" @click="runQueue">Run queue</button>
+          <button class="act" @click="runSchedule">Cron · 2s</button>
         </div>
-        <p class="hint">Queue jobs run with status tracking; cron ticks every 2s via the scheduler.</p>
       </article>
-    </section>
 
-    <section class="card table-card">
-      <header>
-        <i class="bi bi-table"></i>
-        <div>
-          <h2>gum data table</h2>
-          <p>In-process pagination via the <code>app.demo.table</code> binding</p>
-        </div>
-      </header>
-      <DataTable
-        ref="table"
-        path="app.demo.table"
-        :option="[10, 25, 50]"
-        @remove="removeRows">
-        <template #thead>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Role</th>
-          <th>Created</th>
-        </template>
-        <template #tbody="{ td }">
-          <td>{{ td.name }}</td>
-          <td>{{ td.email }}</td>
-          <td>{{ td.role }}</td>
-          <td>{{ td.created }}</td>
-        </template>
-      </DataTable>
-      <p class="hint">
-        Tick rows and hit the trash icon — gum <code>delete</code> hits the
-        <code>app.demo.destroy</code> binding and the table reloads. The same component
-        reads any REST endpoint with <code>transport="http"</code>.
-      </p>
+      <article class="card wide">
+        <header>
+          <i class="bi bi-table"></i>
+          <div>
+            <h2>Data table (gum)</h2>
+            <p><code>app.demo.table</code> + <code>app.demo.destroy</code></p>
+          </div>
+        </header>
+        <DataTable ref="table" path="app.demo.table" :option="[10, 25, 50]" @remove="removeRows">
+          <template #thead
+            ><th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Created</th></template
+          >
+          <template #tbody="{ td }"
+            ><td>{{ td.name }}</td>
+            <td>{{ td.email }}</td>
+            <td>{{ td.role }}</td>
+            <td>{{ td.created }}</td></template
+          >
+        </DataTable>
+      </article>
     </section>
 
     <section class="term">
       <header>
-        <div class="term-title">
-          <i class="bi bi-terminal"></i> Console
-          <span class="cap">— what the backend answered</span>
-        </div>
-        <button class="act slim" title="Clear console" @click="log = []">
-          <i class="bi bi-trash3"></i>
-        </button>
+        <div class="term-title"><i class="bi bi-terminal"></i> Console <span class="cap">— responses</span></div>
+        <button class="act slim" title="Clear" @click="log = []"><i class="bi bi-trash3"></i></button>
       </header>
-      <pre v-if="log.length" class="lines">
-    <code v-for="(entry, i) in log" :key="i" :class="'k-' + entry.kind" v-text="entry.text"></code>
-  </pre>
-      <p v-else class="empty">Click an action above — results land here.</p>
+      <pre
+        v-if="log.length"
+        class="lines"
+      ><code v-for="(entry, i) in log" :key="i" :class="'k-' + entry.kind" v-text="entry.text"></code></pre>
+      <p v-else class="empty">Click an action. (Works in the Electron app: <code>npm run dev</code>.)</p>
     </section>
 
     <footer class="foot">
-      <span>deskapp starter</span>
-      <span class="rule"></span>
-      <span>Deno Desktop · Vue 3 · Drizzle ORM · SQLite</span>
+      <span>deskapp starter</span><span class="rule"></span><span><code>md.&lt;module&gt;.&lt;controller&gt;.&lt;handler&gt;()</code></span>
     </footer>
   </div>
 </template>
@@ -317,7 +390,6 @@ async function removeRows(ids: Array<string | number>) {
     radial-gradient(50rem 30rem at 88% 4%, rgba(34, 211, 238, 0.12), transparent 60%),
     linear-gradient(180deg, var(--dk-bg) 0%, var(--dk-bg-soft) 100%);
 }
-
 .top {
   display: flex;
   align-items: center;
@@ -325,18 +397,20 @@ async function removeRows(ids: Array<string | number>) {
   padding: 18px 0;
   border-bottom: 1px solid var(--dk-border);
 }
-
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
 }
-
+.brand-sub {
+  font-size: 12px;
+  color: var(--dk-faint);
+  font-weight: 500;
+}
 .logo {
   width: auto;
   height: 28px;
 }
-
 .chip {
   display: flex;
   align-items: center;
@@ -347,138 +421,104 @@ async function removeRows(ids: Array<string | number>) {
   border-radius: 999px;
   padding: 6px 12px;
 }
-
 .chip .dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--dk-safe);
-  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5);
   animation: pulse 2s infinite;
 }
-
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.45);
   }
-
   70% {
     box-shadow: 0 0 0 9px rgba(52, 211, 153, 0);
   }
-
   100% {
     box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
   }
 }
-
 .hero {
-  padding: clamp(28px, 6vh, 56px) 0 28px;
-  text-align: center;
+  padding: clamp(22px, 4vh, 36px) 0 18px;
 }
-
 .eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 10px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dk-faint);
 }
-
 .hero h1 {
-  margin: 0 0 14px;
-  font-size: clamp(26px, 4.5vw, 44px);
+  margin: 0 0 10px;
+  font-size: clamp(24px, 4.2vw, 38px);
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1.08;
 }
-
 .hero .grad {
   background: linear-gradient(92deg, var(--dk-accent), var(--dk-accent-2));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-
 .hero .sub {
-  margin: 0 auto;
-  max-width: 560px;
+  margin: 0 0 12px;
+  max-width: 780px;
   color: var(--dk-muted);
   font-size: 14px;
   line-height: 1.6;
 }
-
-.quick {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 24px;
+.hero .sub code,
+.hint code,
+.snippet {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
-
-.q-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--dk-text);
+.hero .sub code,
+.hint code {
+  font-size: 11.5px;
+  color: var(--dk-accent-2);
+  background: rgba(34, 211, 238, 0.08);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.snippet {
+  margin: 0;
+  white-space: pre-wrap;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #c7d7e8;
+  background: rgba(8, 12, 17, 0.85);
   border: 1px solid var(--dk-border);
-  border-radius: 999px;
-  background: rgba(18, 26, 35, 0.7);
-  padding: 9px 16px;
-  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  border-radius: 12px;
+  padding: 12px 14px;
+  overflow-x: auto;
 }
-
-.q-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgba(78, 163, 255, 0.5);
-  background: rgba(22, 32, 43, 0.9);
-}
-
-.q-btn i {
-  color: var(--dk-accent);
-}
-
-.q-btn.accent,
-.act.accent {
-  background: linear-gradient(92deg, #357dcc, #1f9ec1);
-  border-color: transparent;
-  color: #fff;
-}
-
-.q-btn.accent:hover {
-  background: linear-gradient(92deg, #4189d8, #27aad0);
-}
-
-.q-btn.accent i {
-  color: #fff;
-}
-
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 14px;
-  margin-top: 18px;
+  margin-top: 14px;
 }
-
 .card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   padding: 18px;
   border: 1px solid var(--dk-border);
   border-radius: 16px;
   background: linear-gradient(160deg, rgba(22, 32, 43, 0.85), rgba(14, 20, 27, 0.9));
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
-
+.card.wide {
+  grid-column: 1 / -1;
+}
 .card > header {
   display: flex;
   align-items: center;
   gap: 12px;
 }
-
 .card > header > i {
   font-size: 20px;
   color: var(--dk-accent);
@@ -486,43 +526,21 @@ async function removeRows(ids: Array<string | number>) {
   border-radius: 10px;
   padding: 9px;
 }
-
 .card h2 {
   margin: 0;
   font-size: 15px;
   font-weight: 650;
 }
-
 .card header p {
   margin: 2px 0 0;
   font-size: 12px;
   color: var(--dk-faint);
 }
-
-.table-card {
-  margin-top: 14px;
-}
-
-.table-card :deep(.datatable thead th) {
-  background: rgba(78, 163, 255, 0.07);
-  border-color: var(--dk-border) !important;
-}
-
-.table-card :deep(.datatable td),
-.table-card :deep(.datatable th) {
-  background-color: transparent;
-}
-
-.table-card :deep(.datatable tbody tr:nth-of-type(odd)) {
-  background-color: rgba(255, 255, 255, 0.02);
-}
-
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
 }
-
 .act {
   display: inline-flex;
   align-items: center;
@@ -535,29 +553,28 @@ async function removeRows(ids: Array<string | number>) {
   border-radius: 9px;
   background: var(--dk-surface-2);
   padding: 8px 12px;
-  transition: transform 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+  cursor: pointer;
 }
-
 .act:hover {
-  transform: translateY(-1px);
   border-color: rgba(78, 163, 255, 0.55);
   color: var(--dk-accent);
 }
-
 .act.slim {
   padding: 8px 10px;
 }
-
+.act.accent {
+  background: linear-gradient(92deg, #357dcc, #1f9ec1);
+  border-color: transparent;
+  color: #fff;
+}
 .act.danger:hover {
   border-color: rgba(251, 113, 133, 0.6);
   color: var(--dk-err);
 }
-
 .row {
   display: flex;
   gap: 7px;
 }
-
 .row input {
   flex: 1;
   min-width: 0;
@@ -568,41 +585,23 @@ async function removeRows(ids: Array<string | number>) {
   border-radius: 9px;
   padding: 8px 11px;
 }
-
-.row input::placeholder {
-  color: var(--dk-faint);
-}
-
 .row input:focus {
   outline: none;
   border-color: var(--dk-accent);
-  box-shadow: 0 0 0 3px rgba(78, 163, 255, 0.15);
 }
-
 .hint {
   margin: 0;
   font-size: 12px;
   line-height: 1.55;
   color: var(--dk-faint);
 }
-
-.hint code {
-  font-size: 11.5px;
-  color: var(--dk-accent-2);
-  background: rgba(34, 211, 238, 0.08);
-  border-radius: 5px;
-  padding: 1px 5px;
-}
-
 .term {
-  margin-top: 18px;
+  margin-top: 14px;
   border: 1px solid var(--dk-border);
   border-radius: 16px;
   overflow: hidden;
   background: rgba(8, 12, 17, 0.85);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
-
 .term > header {
   display: flex;
   align-items: center;
@@ -610,7 +609,6 @@ async function removeRows(ids: Array<string | number>) {
   padding: 12px 16px;
   border-bottom: 1px solid var(--dk-border);
 }
-
 .term-title {
   display: flex;
   align-items: center;
@@ -618,16 +616,13 @@ async function removeRows(ids: Array<string | number>) {
   font-size: 12.5px;
   font-weight: 600;
 }
-
 .term-title i {
   color: var(--dk-accent);
 }
-
 .term-title .cap {
   font-weight: 400;
   color: var(--dk-faint);
 }
-
 .lines {
   max-height: 320px;
   overflow: auto;
@@ -638,63 +633,55 @@ async function removeRows(ids: Array<string | number>) {
   font-size: 12px;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   line-height: 1.6;
+  margin: 0;
 }
-
 .lines code {
   white-space: pre-wrap;
   word-break: break-word;
 }
-
 .k-ok {
   color: var(--dk-safe);
 }
-
 .k-err {
   color: var(--dk-err);
 }
-
 .k-warn {
   color: var(--dk-warn);
 }
-
+.k-info {
+  color: var(--dk-accent-2);
+}
 .empty {
   margin: 0;
   padding: 14px 16px;
   font-size: 12.5px;
   color: var(--dk-faint);
 }
-
 .foot {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-top: 26px;
+  margin-top: 22px;
   font-size: 11.5px;
   color: var(--dk-faint);
 }
-
 .foot .rule {
   width: 1px;
   height: 12px;
   background: var(--dk-border);
 }
-
-@media (max-width: 560px) {
+.card :deep(.datatable thead th) {
+  background: rgba(78, 163, 255, 0.07);
+  border-color: var(--dk-border) !important;
+}
+.card :deep(.datatable td),
+.card :deep(.datatable th) {
+  background-color: transparent;
+}
+@media (max-width: 720px) {
   .chip {
     display: none;
-  }
-
-  .hero {
-    text-align: left;
-  }
-
-  .hero .sub {
-    margin: 0;
-  }
-
-  .quick {
-    justify-content: flex-start;
   }
 }
 </style>

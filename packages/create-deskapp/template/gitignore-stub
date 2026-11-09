@@ -4,8 +4,11 @@
 # Node.js
 node_modules/
 
-# Build output
+# Build output (generated)
 dist/
+out/
+release/
+coverage/
 
 # App-managed runtime data (dev databases, state)
 src/storage/

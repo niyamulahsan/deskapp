@@ -1,108 +1,34 @@
-# @niyam/deskapp
+# create-deskapp
 
-> Batteries-included desktop application framework for Deno. One command
-> scaffolds a native desktop app: a Deno backend (window manager, native APIs,
-> storage, SQLite + Drizzle ORM, queue, scheduler, validation, password
-> hashing, Playwright) behind a Vue 3 + Vite UI.
+Scaffold a new Deskapp project with Electron + Vue 3 + npm.
 
-[![JSR](https://img.shields.io/jsr/v/@niyam/deskapp)](https://jsr.io/@niyam/deskapp) [![JSR](https://jsr.io/badges/@niyam/deskapp/total-downloads)](https://jsr.io/@niyam/deskapp)
+## Usage
 
-[Documentation](https://niyamulahsan.github.io/deskapp) · [GitHub](https://github.com/niyamulahsan/deskapp) · [MIT License](https://github.com/niyamulahsan/deskapp/blob/main/LICENSE)
+```bash
+npm create deskapp@latest my-app
+# or
+npx create-deskapp my-app
+```
 
----
+Then:
 
-## 🎯 Features
-
-`@niyam/deskapp` is a full local-first desktop framework. It scaffolds a
-complete project — not a UI shell — with the backend and frontend wired
-together in-process. Everything lives behind **one import** — the facade at
-`@/core/facade.ts` — which exposes a namespace object per capability (`win`,
-`chrome`, `pickers`, `db`, `queue`, `cron`, `storage`, …), so your window,
-database, queue, and scheduler are available everywhere.
-
-## ✨ Highlights
-
-### Desktop
-
-- **Windows & native APIs** — window presets, manager, native chrome, dialogs
-  and file pickers via the `win` / `chrome` / `pickers` facade objects
-- **Bindings** — backend controllers auto-registered and callable from the UI
-  in-process as `bindings['<module>.<controller>.<handler>']()`
-
-### Data
-
-- **SQLite + Drizzle ORM** — type-safe database access with auto-generated
-  schema and migrations
-- **Storage** — private / public / tmp app stores with JSON + file helpers
-
-### Services
-
-- **Queue** — recursive, resumable queue with status tracking
-- **Scheduler** — cron-based task scheduling built into the facade
-
-### Security
-
-- **Validation** — Zod-powered request validation
-- **Password** — Bcrypt hashing (plus CORS and rate limiting)
-
-### UI & Automation
-
-- **Vue 3 + Vite** — run a dev server with HMR or serve the built SPA from the
-  backend
-- **Playwright** — drive webview tabs and external pages
-
-### Distribution
-
-- **Maker CLI** — commands for modules, controllers, models, seeds, schema,
-  migrations, UI, and bundling
-- **Native apps** — per-OS folder apps and binaries (`deno task maker bundle:*`)
-
-## 🎯 Use Cases
-
-- Local-first productivity and data tools
-- Internal desktop dashboards on Windows, macOS, and Linux
-- Apps that want webview rendering without shipping Chromium by default
-- One-codebase desktop apps with a Vue 3 interface
-
-## 📦 Installation
-
-### Deno
-
-```sh
-mkdir my-app
+```bash
 cd my-app
-deno create jsr:@niyam/deskapp
-deno install
-deno task dev
+npm install
+npm run dev
 ```
 
-## 🚀 Quick Start
+## Features
 
-A desktop window opens with the starter dashboard, backed by the full local
-stack. Access every subsystem through one import — the facade:
+- Electron main process + Vue 3 renderer
+- IPC bindings for in-process backend/frontend communication
+- SQLite + Drizzle ORM
+- Queue, scheduler, storage utilities
+- Native windows, menus, dialogs, file pickers
+- Playwright support for automation
+- Hot reload in development
+- Package with electron-builder
 
-```ts
-import { win, queue, storage } from "./src/core/facade.ts";
+## Documentation
 
-win.getWindow()?.setTitle("Hello"); // drive windows
-const q = queue.create({ concurrency: 3 }); // throttle async work
-await q.add(async () => "task done");
-await storage.put("data/hello.json", { hello: "world" });
-```
-
-Run headless as a tray-only service with `deno run -A src/main.ts`.
-
-## 🌍 Compatibility
-
-| Environment | Version | Status          |
-| ----------- | ------- | --------------- |
-| **Deno**    | 2.9+    | Fully supported |
-| **Windows** | —       | Fully supported |
-| **macOS**   | —       | Fully supported |
-| **Linux**   | —       | Fully supported |
-
-## 📚 Documentation
-
-Complete documentation is available at **[deskapp.dev](https://niyamulahsan.github.io/deskapp)**
-(guide, API reference, CLI). Source and changelog live on
-[GitHub](https://github.com/niyamulahsan/deskapp).
+See the [main repository](https://github.com/niyamulahsan/deskapp) for full documentation.

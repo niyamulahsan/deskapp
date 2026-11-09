@@ -1,40 +1,28 @@
-import type { Command } from "@cliffy/command";
-import { fromFileUrl } from "@std/path";
-import { check, push, studio } from "@/core/maker/db/push.ts";
-import { fresh } from "@/core/maker/db/fresh.ts";
-import { generate, schema } from "@/core/maker/db/generate.ts";
-import { migrate, migrateRun } from "@/core/maker/db/migrate.ts";
-import { migrateModule } from "@/core/maker/db/module-migrate.ts";
-import { reset } from "@/core/maker/db/reset.ts";
-import { seed } from "@/core/maker/db/seed.ts";
-import { status } from "@/core/maker/db/status.ts";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import type { CommandDef } from "../help";
+import { check, push, studio } from "./push";
+import { fresh } from "./fresh";
+import { generate, schema } from "./generate";
+import { migrate, migrateRun } from "./migrate";
+import { migrateModule } from "./module-migrate";
+import { reset } from "./reset";
+import { seed } from "./seed";
+import { status } from "./status";
 
-const ROOT = fromFileUrl(new URL("../../../../", import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..", "..", "..", "..");
 
-function runSafe(action: () => Promise<void>): void {
-  action().catch((error) => {
-    console.error(error instanceof Error ? error.message : error);
-    Deno.exit(1);
-  });
-}
-
-/**
- * Regenerate src/core/api/bindings.generated.ts before any db command that
- * loads the application (migration hooks, seeders). The template ships a
- * pre-generated bindings file for its sample module, so removing or renaming
- * controllers leaves stale imports behind - regenerating first keeps it in
- * sync with whatever modules are actually present (fixes "Module not found:
- * ... demo.controller.ts" on db:migrate --seed after replacing sample modules).
- */
 function regenerateBindings(): void {
   console.log(`== bindings:gen (pre-db) ==`);
-  const { code } = new Deno.Command("deno", {
-    args: ["run", "-A", "src/core/api/generate.manifest.ts"],
-    cwd: ROOT,
-    stdout: "inherit",
-    stderr: "inherit",
-  }).outputSync();
-  if (code !== 0) Deno.exit(code);
+  const cmd = "npx";
+  const args = ["--yes", "tsx", "--tsconfig", "tsconfig.json", "src/core/api/generate.manifest.ts"];
+  const isWin = process.platform === "win32";
+  const r = spawnSync(isWin ? "cmd.exe" : cmd, isWin ? ["/d", "/s", "/c", cmd, ...args] : args, {
+    cwd: ROOT, stdio: "inherit", shell: false, env: process.env,
+  });
+  if (r.status !== 0) process.exit(r.status ?? 1);
 }
 
 function withBindings(action: () => Promise<void>): () => Promise<void> {
@@ -44,48 +32,32 @@ function withBindings(action: () => Promise<void>): () => Promise<void> {
   };
 }
 
-function seedModule(options: { module?: unknown }): string | undefined {
-  const value = [options.module].flat().find((v) => typeof v === "string");
-  return value as string | undefined;
+const G = "Database";
+
+export function registerDbCommands(register: (cmd: CommandDef) => void): void {
+  register({ name: "db:schema", group: G, description: "Regenerate src/database/schema.ts from all models", action: () => schema() });
+  register({ name: "db:generate", group: G, description: "Regenerate schema and create migration SQL (drizzle-kit)", action: () => generate() });
+  register({
+    name: "db:migrate", usage: "[--seed]", group: G,
+    description: "Generate + run migrations, apply hooks (seed with --seed)",
+    action: (flags) => withBindings(() => migrate(Boolean(flags.seed)))(),
+  });
+  register({ name: "db:migrate:run", group: G, description: "Run existing migrations + model hooks (no seed)", action: () => withBindings(migrateRun)() });
+  register({
+    name: "db:migrate:module", usage: "<module> [--keep-temp]", group: G,
+    description: "Generate + run migrations for one module's models",
+    action: (flags, args) => {
+      if (!args[0]) throw new Error("Module name is required.");
+      return withBindings(() => migrateModule(args[0], Boolean(flags["keep-temp"])))();
+    },
+  });
+  register({ name: "db:fresh", usage: "[--seed]", group: G, description: "Reset DB, then generate, migrate, hooks (seed with --seed)", action: (flags) => withBindings(() => fresh(Boolean(flags.seed)))() });
+  register({ name: "db:seed", usage: "[--module <module>]", group: G, description: "Run seeders (all, or one module; auto FK-ordered)", action: (flags) => withBindings(() => seed(typeof flags.module === "string" ? flags.module : undefined))() });
+  register({ name: "db:status", group: G, description: "List generated migration files", action: () => status() });
+  register({ name: "db:push", group: G, description: "Push schema directly (drizzle-kit push)", action: () => push() });
+  register({ name: "db:check", group: G, description: "Run drizzle-kit check", action: () => check() });
+  register({ name: "db:studio", group: G, description: "Open Drizzle Studio", action: () => studio() });
+  register({ name: "db:reset", group: G, description: "Delete the SQLite database file", action: () => reset() });
+  register({ name: "db:wipe", group: G, description: "Delete the SQLite database file", action: () => reset() });
 }
 
-/** Register the db:* subcommand family on the maker CLI. */
-export function registerDbCommands(program: Command): void {
-  program
-    .command("db:schema", "Regenerate src/database/schema.ts from all models")
-    .action(() => runSafe(schema))
-    .command("db:generate", "Regenerate schema and create migration SQL")
-    .action(() => runSafe(generate))
-    .command(
-      "db:migrate",
-      "Generate+run migrations, apply model hooks (seed with --seed)",
-    )
-    .option("--seed", "Run seeders after migration")
-    .action((options) => runSafe(withBindings(() => migrate(Boolean(options.seed)))))
-    .command("db:migrate:run", "Run existing migrations + model hooks (no seed)")
-    .action(() => runSafe(withBindings(migrateRun)))
-    .command("db:migrate:module", "Generate + run migrations for one module's models")
-    .arguments("<module:string>")
-    .option("--keep-temp", "Keep the temporary schema file")
-    .action((options, module) =>
-      runSafe(withBindings(() => migrateModule(module, Boolean(options.keepTemp))))
-    )
-    .command("db:fresh", "Reset DB, then generate, migrate, hooks (seed with --seed)")
-    .option("--seed", "Run seeders after fresh")
-    .action((options) => runSafe(withBindings(() => fresh(Boolean(options.seed)))))
-    .command("db:reset", "Delete the SQLite database file")
-    .action(() => runSafe(reset))
-    .command("db:wipe", "Delete the SQLite database file")
-    .action(() => runSafe(reset))
-    .command("db:status", "List generated migration files")
-    .action(() => runSafe(status))
-    .command("db:seed", "Run all seeders (auto FK-ordered)")
-    .option("--module <module:string>", "Seed only one module")
-    .action((options) => runSafe(withBindings(() => seed(seedModule(options)))))
-    .command("db:push", "Push schema directly (drizzle-kit push)")
-    .action(() => runSafe(push))
-    .command("db:check", "Run drizzle-kit check")
-    .action(() => runSafe(check))
-    .command("db:studio", "Open Drizzle Studio")
-    .action(() => runSafe(studio));
-}

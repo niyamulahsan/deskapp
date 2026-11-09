@@ -15,13 +15,17 @@
 
 declare module "*.vue" {
   import type { DefineComponent } from "vue";
+
   const component: DefineComponent<{}, {}, any>;
   export default component;
 }
 
 declare module "lodash-es" {
   export function debounce<T extends (...args: any[]) => any>(fn: T, wait?: number): T;
-  export function throttle<T extends (...args: any[]) => any>(fn: T, wait?: number): T & {
+  export function throttle<T extends (...args: any[]) => any>(
+    fn: T,
+    wait?: number
+  ): T & {
     cancel: () => void;
     flush: () => void;
   };

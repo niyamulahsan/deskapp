@@ -1,57 +1,74 @@
 /**
  * config.ts - runtime framework configuration.
  *
- * Identity comes from the project's own deno.json (desktop.app.name +
- * desktop.output), so a scaffold carries the name you chose at create time
- * through window titles, tray tooltips, bundle outputs, and the default
- * database file. Feature flags are read from the environment with sensible
- * defaults; app code imports this fresh (or through the facade) instead of
- * scattering Deno.env reads.
- *
- * Flags:
- *   DESKAPP_UI=(true|false)  serve/ship the frontend + open windows.
- *                            false = headless: server-only + tray, no window.
+ * Reads app identity from src/config/app.ts (edit that file for 0-hassle naming),
+ * with safe fallback to package.json.
  */
 
-import { dirname, fromFileUrl, join } from "@std/path";
-import { isDesktopRuntime } from "@/core/env.ts";
+import fs from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
+import { appConfig } from "@config/app";
 
-interface DenoJsonDesktopOutput {
-  macos?: string;
-  windows?: string;
-  linux?: string;
-}
-
-interface DenoJsonConfig {
-  desktop?: {
-    app?: { name?: string };
-    output?: DenoJsonDesktopOutput;
+interface PackageJsonConfig {
+  name?: string;
+  productName?: string;
+  build?: {
+    productName?: string;
+    mac?: { icon?: string };
+    win?: { icon?: string };
+    linux?: { icon?: string };
   };
 }
 
-/** The project's deno.json, read once and cached. In a packaged app the file
- * is copied next to the executable (bundle.ts), so fall back to it. */
-let denoJsonCache: DenoJsonConfig | null | undefined;
-function readDenoJson(): DenoJsonConfig | undefined {
-  if (denoJsonCache !== undefined) return denoJsonCache;
-  const candidates = [fromFileUrl(new URL("../../deno.json", import.meta.url))];
-  if (isDesktopRuntime()) candidates.push(join(dirname(Deno.execPath()), "deno.json"));
-  for (const path of candidates) {
-    try {
-      denoJsonCache = JSON.parse(Deno.readTextFileSync(path)) as DenoJsonConfig;
-      return denoJsonCache;
-    } catch {
-      // try the next candidate
-      continue;
-    }
+function getElectronApp(): any {
+  try {
+    const req = typeof require !== "undefined" ? require : createRequire(process.cwd() + "/");
+    const e = req("electron");
+    if (e && typeof e === "object" && typeof e.app?.getPath === "function") return e.app;
+  } catch {}
+  return undefined;
+}
+
+/** The project's package.json, read once and cached (fallback / extra build metadata). */
+let pkgJsonCache: PackageJsonConfig | null | undefined;
+function readPackageJson(): PackageJsonConfig | undefined {
+  if (pkgJsonCache !== undefined) return pkgJsonCache;
+
+  const candidates: string[] = [];
+  const app = getElectronApp();
+  try {
+    if (app?.getAppPath) candidates.push(join(app.getAppPath(), "package.json"));
+  } catch {}
+  try {
+    if (app?.isPackaged) candidates.push(join(dirname(app.getPath("exe")), "package.json"));
+  } catch {}
+  candidates.push(join(process.cwd(), "package.json"));
+
+  // Walk up from cwd to find package.json (CLI/dev safety)
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    candidates.push(join(dir, "package.json"));
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
   }
-  denoJsonCache = null;
+
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        pkgJsonCache = JSON.parse(fs.readFileSync(p, "utf-8")) as PackageJsonConfig;
+        return pkgJsonCache;
+      }
+    } catch {}
+  }
+  pkgJsonCache = null;
   return undefined;
 }
 
 /** Parse a boolean env var: "1"/"true"/"yes"/"on" are on, anything else off. */
 export function envBool(name: string, fallback: boolean): boolean {
-  const value = Deno.env.get(name);
+  const value = process.env[name];
   if (value === undefined) return fallback;
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 }
@@ -59,16 +76,22 @@ export function envBool(name: string, fallback: boolean): boolean {
 const uiEnabled = () => envBool("DESKAPP_UI", true);
 
 const APP_NAME_FALLBACK = "Deskapp";
-const appName = readDenoJson()?.desktop?.app?.name?.trim() || APP_NAME_FALLBACK;
-const appKebab = appName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+const pkg = readPackageJson();
+
+// Prefer src/config/app.ts (zero-hassle), fall back to package.json.
+const appName = appConfig?.productName || pkg?.build?.productName || pkg?.productName || pkg?.name || APP_NAME_FALLBACK;
+const appKebab = (appConfig?.name || appName)
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-+|-+$/g, "");
 
 export const config = {
-  /** Display name (deno.json > desktop.app.name, fallback "Deskapp"). */
+  /** Display name (src/config/app.ts > package.json, fallback "Deskapp"). */
   appName,
   /** Filesystem-safe kebab form — sqlite filename, linux binary name. */
   appKebab,
-  /** Per-OS output paths from deno.json > desktop.output (bundle output). */
-  desktopOutput: readDenoJson()?.desktop?.output ?? null,
+  /** Per-OS output paths from package.json build config */
+  desktopOutput: pkg?.build ?? null,
   ui: {
     /** True when the frontend should be served and a window opened. */
     enabled: uiEnabled(),
