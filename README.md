@@ -5,10 +5,6 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/niyamulahsan/deskapp/main/logo-favicon/deskapp.png" alt="Deskapp" width="128" />
-</p>
-
-<p align="center">
   <a href="https://niyamulahsan.github.io/deskapp"><img src="https://img.shields.io/badge/docs%20%7C%20deskapp-3b8eed" alt="Documentation"></a>
   <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/v/@niyamulahsan/create-deskapp" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/dt/@niyamulahsan/create-deskapp" alt="npm downloads"></a>
