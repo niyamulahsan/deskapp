@@ -1,3 +1,11 @@
+<p align="center">
+  <a href="https://niyamulahsan.github.io/deskapp"><img src="https://img.shields.io/badge/docs%20%7C%20deskapp-3b8eed" alt="Documentation"></a>
+  <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/v/@niyamulahsan/create-deskapp" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/dt/@niyamulahsan/create-deskapp" alt="npm downloads"></a>
+  <a href="https://github.com/niyamulahsan/deskapp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <a href="https://github.com/niyamulahsan/deskapp"><img src="https://img.shields.io/github/stars/niyamulahsan/deskapp?style=social" alt="GitHub Stars"></a>
+</p>
+
 # Deskapp
 
 Deskapp is a desktop application framework built on **Electron + Vue 3** with TypeScript. It provides a complete, opinionated starting point for building cross-platform desktop apps with native windows, IPC bindings, SQLite/Drizzle, queues, schedulers, and more.

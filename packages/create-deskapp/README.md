@@ -1,13 +1,21 @@
-# create-deskapp
+<p align="center">
+  <a href="https://niyamulahsan.github.io/deskapp"><img src="https://img.shields.io/badge/docs%20%7C%20deskapp-3b8eed" alt="Documentation"></a>
+  <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/v/@niyamulahsan/create-deskapp" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@niyamulahsan/create-deskapp"><img src="https://img.shields.io/npm/dt/@niyamulahsan/create-deskapp" alt="npm downloads"></a>
+  <a href="https://github.com/niyamulahsan/deskapp/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License"></a>
+  <a href="https://github.com/niyamulahsan/deskapp"><img src="https://img.shields.io/github/stars/niyamulahsan/deskapp?style=social" alt="GitHub Stars"></a>
+</p>
+
+# @niyamulahsan/create-deskapp
 
 Scaffold a new Deskapp project with Electron + Vue 3 + npm.
 
 ## Usage
 
 ```bash
-npm create deskapp@latest my-app
+npm create @niyamulahsan/deskapp@latest my-app
 # or
-npx create-deskapp my-app
+npx @niyamulahsan/create-deskapp my-app
 ```
 
 Then:

@@ -1,14 +1,16 @@
 # Changelog
 
-## [1.2.0] - 2026-11-10
+## [1.2.1] - 2026-11-10
 
 ### Changed
-- **Migrated to Electron + npm** - Replaced Deno Desktop with Electron. Build system now uses esbuild, Vite, and electron-builder.
-- **Switched scaffolding to npm-only** - `create-deskapp` is now an npm package. Use `npm create deskapp@latest` or `npx create-deskapp`. Deno/JSR publishing deprecated.
-- **Maker CLI updated for Node.js** - CLI and stubs adapted for Node/Electron environment.
-- **Documentation rewritten for Electron** - All docs updated with Electron/npm workflows and comprehensive examples.
+- **Package name changed to scoped** - Published as `@niyamulahsan/create-deskapp`. Use `npm create @niyamulahsan/deskapp@latest`.
+- **Updated README badges and documentation** - Added badges and corrected package references.
 
 ### Added
+- **Migrated to Electron + npm** - Replaced Deno Desktop with Electron. Build system now uses esbuild, Vite, and electron-builder.
+- **Switched scaffolding to npm-only** - Deno/JSR publishing deprecated.
+- **Maker CLI updated for Node.js** - CLI and stubs adapted for Node/Electron environment.
+- **Documentation rewritten for Electron** - All docs updated with Electron/npm workflows and comprehensive examples.
 - **New `md` bindings API** - Call bindings as `md.module.controller.handler()` alongside `bindings[]` form.
 - **Comprehensive recipes & guides** - Added detailed examples for dialogs/pickers, windows/menus/tray, queue/scheduler, Playwright automation, file operations, Excel/CSV/PDF, audio/video streaming.
 - **Improved sync tooling** - Enhanced template sync with env pinning, sanitization, and better filtering.

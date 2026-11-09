@@ -1,6 +1,6 @@
 {
-  "name": "create-deskapp",
-  "version": "1.2.0",
+  "name": "@niyamulahsan/create-deskapp",
+  "version": "1.2.1",
   "description": "Scaffold a new Deskapp (Electron + Vue + npm) project",
   "type": "module",
   "bin": {
