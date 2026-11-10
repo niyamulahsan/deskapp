@@ -100,7 +100,7 @@ custom.addEventListener("menuclick", (e) => {
   switch ((e.detail as { id?: string }).id) {
     case "show": win.getWindow()?.show(); break;
     case "settings": void win.openWindow("settings"); break;
-    case "quit": Deno.exit(0); break;
+    case "quit": process.exit(0); break;
   }
 });
 ```

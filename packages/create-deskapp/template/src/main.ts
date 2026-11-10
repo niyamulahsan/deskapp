@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { windowDev, windows } from "@config/winsetup";
 import { app, BrowserWindow, dialog } from "electron";
 import { bindAll } from "@/core/api/registry";
 import { config } from "@/core/config";
 import { loadEnv } from "@/core/env";
 import { chrome, cron, db, win } from "@/core/facade";
 import { storage } from "@/core/utils/storage";
-import { windows } from "@/window/config";
 
 function logFatal(err: unknown): void {
   const msg = err instanceof Error ? `${err.stack || err.message}` : String(err);
@@ -74,19 +74,23 @@ if (!gotLock) {
             if (!created.isDestroyed()) created.show();
           });
 
-          if (isMain && preset.chrome !== false) {
-            chrome.setupDesktopChrome(created);
+          if (isMain) {
+            const chromeParts = chrome.resolveChrome(preset.chrome);
+            if (chromeParts.appMenu || chromeParts.contextMenu || chromeParts.tray) {
+              chrome.setupDesktopChrome(created, chromeParts);
+            }
           }
           isMain = false;
 
           if (devUrl) {
             const route = preset.route || "/";
             await created.loadURL(`${devUrl}${route}`);
-            if (isDev) {
-              created.webContents.openDevTools({ mode: "bottom" });
-            }
           } else {
             await created.loadFile(getRendererIndexPath());
+          }
+
+          if (isDev && windowDev.devTools !== "none") {
+            created.webContents.openDevTools({ mode: windowDev.devTools });
           }
         }
       } else {

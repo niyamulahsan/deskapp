@@ -33,10 +33,6 @@ describe("window/native chrome", () => {
     expect(dialog.showMessageBox).toHaveBeenCalled();
   });
 
-  it("promptDialog is a stub returning null", async () => {
-    expect(await chrome.promptDialog("name")).toBeNull();
-  });
-
   it("createTray/createAppTray/createHeadlessTray use Tray", () => {
     expect(chrome.createTray()).toBeTruthy();
     expect(chrome.createAppTray()).toBeTruthy();

@@ -1,5 +1,28 @@
 import { BrowserWindow, dialog } from "electron";
 
+// ---------------------------------------------------------------------------
+// Message dialogs (confirm / alert / prompt)
+// ---------------------------------------------------------------------------
+
+export async function confirmDialog(message: string): Promise<boolean> {
+  const result = await dialog.showMessageBox({
+    type: "question",
+    buttons: ["Cancel", "OK"],
+    title: "Confirm",
+    message: message
+  });
+
+  return result.response === 1;
+}
+
+export async function alertDialog(message: string): Promise<void> {
+  await dialog.showMessageBox({
+    type: "info",
+    title: "Alert",
+    message: message
+  });
+}
+
 export interface PickOpenOptions {
   title?: string;
   filter?: string; // Electron uses extensions array, but we can parse your string

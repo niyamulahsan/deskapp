@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.2] - 2026-11-10
+
+### Changed
+- **Docs and configuration updates** - Improved documentation for windows, menus, dialogs, pickers, and app configuration. Added winsetup/config details.
+
 ## [1.2.1] - 2026-11-10
 
 ### Changed

@@ -1,7 +1,7 @@
 import path from "node:path";
 import { app, BrowserWindow } from "electron";
-import { type WindowPreset, windowConfig, windows as windowPresets } from "@/window/config";
 import { closeDatabase } from "@/core/database/connection";
+import { type WindowPreset, windowConfig, windows as windowPresets } from "@/window/config";
 
 // We map your custom options to Electron's expected options
 export interface BrowserWindowOptions extends WindowPreset {}
@@ -52,8 +52,8 @@ function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath
       preload: resolvedPreload,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
-    },
+      sandbox: false
+    }
   });
 
   const winId = win.id;
@@ -135,5 +135,5 @@ export const win = {
   getWindow,
   getWindowCount,
   openWindow,
-  watchFrontend,
+  watchFrontend
 };

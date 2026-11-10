@@ -73,19 +73,19 @@ import nodemailer from "npm:nodemailer";
 import { validate } from "@/core/facade.ts";
 
 const opts = validate.run(validate.z.object({ host: validate.z.string(), port: validate.z.coerce.number().int() }), {
-  host: Deno.env.get("SMTP_HOST"),
-  port: Deno.env.get("SMTP_PORT"),
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
 });
 
 const transport = nodemailer.createTransport({
   host: opts.host,
   port: opts.port,
   secure: true,
-  auth: { user: Deno.env.get("SMTP_USER"), pass: Deno.env.get("SMTP_PASS") },
+  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
 });
 
 export async function sendEmail(to: string, subject: string, body: string) {
-  return transport.sendMail({ from: Deno.env.get("SMTP_FROM") ?? "noreply@example.com", to, subject, text: body });
+  return transport.sendMail({ from: process.env.SMTP_FROM ?? "noreply@example.com", to, subject, text: body });
 }
 ```
 

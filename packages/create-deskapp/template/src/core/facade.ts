@@ -35,8 +35,10 @@ export { type CronHandle, cron } from "@/core/utils/scheduler";
 export { type Disk, type FileData, files, storage } from "@/core/utils/storage";
 // Validation (zod schemas + runner: `validate.z`, `validate.run`)
 export { validate } from "@/core/utils/validation";
-// Native Windows file/folder pickers (Explorer-style Open / Save As / folder)
+// Native Windows file/folder pickers and message dialogs (Explorer-style Open / Save As / folder, confirm/alert)
 export {
+  alertDialog,
+  confirmDialog,
   type PickFolderOptions,
   type PickOpenOptions,
   type PickSaveOptions,
