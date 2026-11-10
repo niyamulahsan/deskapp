@@ -1,7 +1,7 @@
-import { registerDbCommands } from "./db/mod";
-import { printCommandHelp, printHelp, type CommandDef } from "./help";
-import { registerMakeCommands } from "./make/mod";
-import { registerRunCommands } from "./run/mod";
+import { registerDbCommands } from "@/core/maker/db/mod";
+import { type CommandDef, printCommandHelp, printHelp } from "@/core/maker/help";
+import { registerMakeCommands } from "@/core/maker/make/mod";
+import { registerRunCommands } from "@/core/maker/run/mod";
 
 const commands = new Map<string, CommandDef>();
 

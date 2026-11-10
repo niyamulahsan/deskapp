@@ -94,6 +94,6 @@ export const config = {
   desktopOutput: pkg?.build ?? null,
   ui: {
     /** True when the frontend should be served and a window opened. */
-    enabled: uiEnabled(),
-  },
+    enabled: uiEnabled()
+  }
 };

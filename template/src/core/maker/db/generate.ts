@@ -1,4 +1,4 @@
-import { generateMigrations, generateSchema } from "@/core/maker/db/helpers.ts";
+import { generateMigrations, generateSchema } from "@/core/maker/db/helpers";
 
 /** db:schema - regenerate src/database/schema.ts from all models. */
 export async function schema(): Promise<void> {

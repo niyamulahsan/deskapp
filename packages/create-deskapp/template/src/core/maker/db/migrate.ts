@@ -6,8 +6,8 @@ import {
   migrationCount,
   runDrizzle,
   runScript,
-  runSeedScript,
-} from "@/core/maker/db/helpers.ts";
+  runSeedScript
+} from "@/core/maker/db/helpers";
 
 /** db:migrate - generate+run migrations, apply hooks, seed only with --seed. */
 export async function migrate(seed = false): Promise<void> {
@@ -19,7 +19,7 @@ export async function migrate(seed = false): Promise<void> {
     throw new Error(
       "Initial migration was generated, but the database already contains tables. " +
         "This usually means migration files were deleted while DB data still exists. " +
-        "Use 'db:fresh --seed' to rebuild locally, or restore migration files before running db:migrate.",
+        "Use 'db:fresh --seed' to rebuild locally, or restore migration files before running db:migrate."
     );
   }
   await runDrizzle(["migrate"]);
@@ -33,4 +33,3 @@ export async function migrateRun(): Promise<void> {
   await runDrizzle(["migrate"]);
   await runScript("src/core/database/migrate-hooks.ts");
 }
-

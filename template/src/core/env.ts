@@ -85,7 +85,7 @@ export function loadEnv(): string | null {
     electronApp?.isPackaged ? dirname(electronApp.getPath("exe")) : undefined,
     base,
     electronApp?.getAppPath ? electronApp.getAppPath() : undefined,
-    resolve(process.cwd()),
+    resolve(process.cwd())
   ].filter((dir): dir is string => Boolean(dir) && dir.length > 0);
 
   for (const dir of [...new Set(candidates)]) {

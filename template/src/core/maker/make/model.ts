@@ -1,5 +1,5 @@
 import path from "node:path";
-import type { MakerOptions } from "./helpers";
+import type { MakerOptions } from "@/core/maker/make/helpers";
 import { assertModuleExists, assertName, modelContent, moduleDir, writeFile } from "./helpers";
 
 export function makeModel(module: string, name: string, options: MakerOptions = {}): void {

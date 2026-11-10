@@ -6,7 +6,10 @@ const MIGRATION_DIR = path.join(process.cwd(), "src", "database", "migrations", 
 
 export function listMigrations(dir = MIGRATION_DIR): string[] {
   try {
-    return fs.readdirSync(dir).filter((name) => name.endsWith(".sql")).sort();
+    return fs
+      .readdirSync(dir)
+      .filter((name) => name.endsWith(".sql"))
+      .sort();
   } catch {
     return [];
   }

@@ -8,7 +8,11 @@
 
 export type QueueTask<T> = () => Promise<T>;
 
-interface Pending<T> { task: QueueTask<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void; }
+interface Pending<T> {
+  task: QueueTask<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+}
 
 export interface Queue<T> {
   add(task: QueueTask<T>): Promise<T>;
@@ -21,12 +25,12 @@ export interface Queue<T> {
  * facade: `const q = queue.create({ concurrency: 3 })`.
  */
 export const queue = {
-  create<T>(options?: { concurrency?: number; }): Queue<T> {
+  create<T>(options?: { concurrency?: number }): Queue<T> {
     return createQueue<T>(options);
-  },
+  }
 };
 
-function createQueue<T>(options?: { concurrency?: number; }): Queue<T> {
+function createQueue<T>(options?: { concurrency?: number }): Queue<T> {
   const concurrency = Math.max(1, options?.concurrency ?? 1);
   const pending: Pending<T>[] = [];
   let running = 0;
@@ -35,10 +39,13 @@ function createQueue<T>(options?: { concurrency?: number; }): Queue<T> {
     while (running < concurrency && pending.length > 0) {
       const entry = pending.shift()!;
       running += 1;
-      entry.task().then(entry.resolve, entry.reject).finally(() => {
-        running -= 1;
-        tick();
-      });
+      entry
+        .task()
+        .then(entry.resolve, entry.reject)
+        .finally(() => {
+          running -= 1;
+          tick();
+        });
     }
   };
 
@@ -54,6 +61,6 @@ function createQueue<T>(options?: { concurrency?: number; }): Queue<T> {
     },
     get running() {
       return running;
-    },
+    }
   };
 }

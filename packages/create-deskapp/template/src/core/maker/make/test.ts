@@ -1,6 +1,6 @@
 import path from "node:path";
-import { loadStub } from "../stub";
-import type { MakerOptions } from "./helpers";
+import type { MakerOptions } from "@/core/maker/make/helpers";
+import { loadStub } from "@/core/maker/stub";
 import { assertModuleExists, assertName, moduleDir, writeFile } from "./helpers";
 
 /**
@@ -10,7 +10,7 @@ import { assertModuleExists, assertName, moduleDir, writeFile } from "./helpers"
 export function makeTest(module: string, name?: string, options: MakerOptions = {}): void {
   const moduleName = assertName(module, "Module name");
   assertModuleExists(moduleName);
-  const rawName = name && name.trim() ? assertName(name, "Test name") : moduleName;
+  const rawName = name?.trim() ? assertName(name, "Test name") : moduleName;
   // strip trailing .test/.spec if provided
   const testName = rawName.replace(/\.(test|spec)$/i, "");
 

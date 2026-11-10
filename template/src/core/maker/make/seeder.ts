@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { MakerOptions } from "./helpers";
+import type { MakerOptions } from "@/core/maker/make/helpers";
 import { assertModuleExists, assertName, moduleDir, seederContent, writeFile } from "./helpers";
 
 export function makeSeeder(module: string, name: string, options: MakerOptions = {}): void {
@@ -10,7 +10,7 @@ export function makeSeeder(module: string, name: string, options: MakerOptions =
   const modelPath = path.join(moduleDir(moduleName), "database", "models", `${seederName}.model.ts`);
   if (!fs.existsSync(modelPath) || !fs.statSync(modelPath).isFile()) {
     throw new Error(
-      `Model not found for seeder: src/modules/${moduleName}/database/models/${seederName}.model.ts. Create it first with: npm run maker -- make:model ${moduleName} ${seederName}`,
+      `Model not found for seeder: src/modules/${moduleName}/database/models/${seederName}.model.ts. Create it first with: npm run maker -- make:model ${moduleName} ${seederName}`
     );
   }
   const filePath = path.join(moduleDir(moduleName), "database", "seeders", `${seederName}.seed.ts`);

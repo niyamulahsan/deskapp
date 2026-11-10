@@ -1,10 +1,10 @@
-import type { CommandDef } from "../help";
-import type { MakerOptions } from "./helpers";
-import { makeController } from "./controller";
-import { makeModule } from "./module";
-import { makeModel } from "./model";
-import { makeSeeder } from "./seeder";
-import { makeTest } from "./test";
+import type { CommandDef } from "@/core/maker/help";
+import { makeController } from "@/core/maker/make/controller";
+import type { MakerOptions } from "@/core/maker/make/helpers";
+import { makeModel } from "@/core/maker/make/model";
+import { makeModule } from "@/core/maker/make/module";
+import { makeSeeder } from "@/core/maker/make/seeder";
+import { makeTest } from "@/core/maker/make/test";
 
 const GROUP = "Generators - modules";
 
@@ -24,28 +24,28 @@ export function registerMakeCommands(register: (cmd: CommandDef) => void): void 
     usage: "<name> [--force]",
     group: GROUP,
     description: "Create a module with model, seeder, controller + schema",
-    action: (flags, args) => makeModule(need(args, 0, "Module name"), opts(flags)),
+    action: (flags, args) => makeModule(need(args, 0, "Module name"), opts(flags))
   });
   register({
     name: "make:controller",
     usage: "<module> <name> [--force] [--dry-run]",
     group: GROUP,
     description: "Generate a controller + schema for an existing module",
-    action: (flags, args) => makeController(need(args, 0, "Module name"), need(args, 1, "Controller name"), opts(flags)),
+    action: (flags, args) => makeController(need(args, 0, "Module name"), need(args, 1, "Controller name"), opts(flags))
   });
   register({
     name: "make:model",
     usage: "<module> <name> [--force] [--dry-run]",
     group: GROUP,
     description: "Generate a model file for an existing module",
-    action: (flags, args) => makeModel(need(args, 0, "Module name"), need(args, 1, "Model name"), opts(flags)),
+    action: (flags, args) => makeModel(need(args, 0, "Module name"), need(args, 1, "Model name"), opts(flags))
   });
   register({
     name: "make:seeder",
     usage: "<module> <name> [--force] [--dry-run]",
     group: GROUP,
     description: "Generate a seeder for an existing module model",
-    action: (flags, args) => makeSeeder(need(args, 0, "Module name"), need(args, 1, "Seeder name"), opts(flags)),
+    action: (flags, args) => makeSeeder(need(args, 0, "Module name"), need(args, 1, "Seeder name"), opts(flags))
   });
 
   const testAction = (flags: Record<string, string | boolean>, args: string[]) =>
@@ -55,14 +55,13 @@ export function registerMakeCommands(register: (cmd: CommandDef) => void): void 
     usage: "<module> [name] [--force] [--dry-run]",
     group: GROUP,
     description: "Generate a Vitest file in src/modules/<module>/__tests__",
-    action: testAction,
+    action: testAction
   });
   register({
     name: "module:make-test",
     usage: "<module> [name] [--force] [--dry-run]",
     group: GROUP,
     description: "Alias for make:test (Nexwire-style)",
-    action: testAction,
+    action: testAction
   });
 }
-

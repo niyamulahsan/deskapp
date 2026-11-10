@@ -1,15 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { MakerOptions } from "./helpers";
-import {
-  assertName,
-  controllerContent,
-  modelContent,
-  modulesRoot,
-  schemaContent,
-  seederContent,
-  writeFile,
-} from "./helpers";
+import type { MakerOptions } from "@/core/maker/make/helpers";
+import { assertName, controllerContent, modelContent, modulesRoot, schemaContent, seederContent, writeFile } from "./helpers";
 
 export function makeModule(name: string, options: MakerOptions = {}): void {
   const moduleName = assertName(name, "Module name");
@@ -30,30 +22,15 @@ export function makeModule(name: string, options: MakerOptions = {}): void {
   fs.mkdirSync(path.join(root, "database", "seeders"), { recursive: true });
   fs.mkdirSync(path.join(root, "controllers"), { recursive: true });
 
-  writeFile(
-    path.join(root, "database", "models", `${moduleName}.model.ts`),
-    modelContent(moduleName, moduleName),
-    options,
-    "Model file",
-  );
-  writeFile(
-    path.join(root, "database", "seeders", `${moduleName}.seed.ts`),
-    seederContent(moduleName, moduleName),
-    options,
-    "Seeder file",
-  );
+  writeFile(path.join(root, "database", "models", `${moduleName}.model.ts`), modelContent(moduleName, moduleName), options, "Model file");
+  writeFile(path.join(root, "database", "seeders", `${moduleName}.seed.ts`), seederContent(moduleName, moduleName), options, "Seeder file");
   writeFile(
     path.join(root, "controllers", `${moduleName}.controller.ts`),
     controllerContent(moduleName, moduleName),
     options,
-    "Controller file",
+    "Controller file"
   );
-  writeFile(
-    path.join(root, "controllers", `${moduleName}.schema.ts`),
-    schemaContent(moduleName, moduleName),
-    options,
-    "Schema file",
-  );
+  writeFile(path.join(root, "controllers", `${moduleName}.schema.ts`), schemaContent(moduleName, moduleName), options, "Schema file");
 
   console.log(`Module ready: ${path.resolve(root)}`);
   console.log("Database files: database/models/{name}.model.ts, database/seeders/{name}.seed.ts");

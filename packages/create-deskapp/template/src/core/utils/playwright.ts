@@ -1,7 +1,7 @@
-import { dirname, join } from "node:path";
-import { createRequire } from "node:module";
 import { execSync } from "node:child_process";
 import fs from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, join } from "node:path";
 import { app } from "electron";
 
 function getRequire(): NodeRequire {
@@ -16,15 +16,15 @@ export const chromium = {
   exists(path: string): boolean {
     return existsPath(path);
   },
-  candidates(overrides?: { env?: string | null; execPath?: string; cwd?: string; }): string[] {
+  candidates(overrides?: { env?: string | null; execPath?: string; cwd?: string }): string[] {
     return chromiumCandidates(overrides);
   },
-  resolve(overrides?: { env?: string | null; execPath?: string; cwd?: string; }): string | undefined {
+  resolve(overrides?: { env?: string | null; execPath?: string; cwd?: string }): string | undefined {
     return resolveChromium(overrides);
   },
-  extensions(overrides?: { execPath?: string; cwd?: string; }): string[] {
+  extensions(overrides?: { execPath?: string; cwd?: string }): string[] {
     return extensionsCandidates(overrides);
-  },
+  }
 };
 
 export function existsPath(path: string): boolean {
@@ -38,28 +38,31 @@ export function existsPath(path: string): boolean {
 
 export function platformRelPaths(): string[][] {
   if (process.platform === "win32") {
-    return [["chrome-win64", "chrome.exe"], ["chrome-win", "chrome.exe"]];
+    return [
+      ["chrome-win64", "chrome.exe"],
+      ["chrome-win", "chrome.exe"]
+    ];
   }
   if (process.platform === "linux") {
     return [["chrome-linux", "chrome"]];
   }
   if (process.platform === "darwin") {
     const app = ["Google Chrome for Testing.app", "Contents", "MacOS", "Google Chrome for Testing"];
-    return [["chrome-mac-arm64", ...app], ["chrome-mac", ...app]];
+    return [
+      ["chrome-mac-arm64", ...app],
+      ["chrome-mac", ...app]
+    ];
   }
   return [];
 }
 
-export function chromiumCandidates(overrides?: { env?: string | null; execPath?: string; cwd?: string; }): string[] {
+export function chromiumCandidates(overrides?: { env?: string | null; execPath?: string; cwd?: string }): string[] {
   const out: string[] = [];
   const env = overrides?.env === undefined ? process.env.DESKAPP_CHROMIUM : overrides.env;
   if (env) out.push(env);
 
-  const bases = [
-    dirname(overrides?.execPath ?? app.getPath("exe")), 
-    overrides?.cwd ?? process.cwd()
-  ];
-  
+  const bases = [dirname(overrides?.execPath ?? app.getPath("exe")), overrides?.cwd ?? process.cwd()];
+
   for (const base of bases) {
     for (const rel of platformRelPaths()) {
       out.push(join(base, "chromium", ...rel));
@@ -68,17 +71,14 @@ export function chromiumCandidates(overrides?: { env?: string | null; execPath?:
   return out;
 }
 
-export function resolveChromium(overrides?: { env?: string | null; execPath?: string; cwd?: string; }): string | undefined {
+export function resolveChromium(overrides?: { env?: string | null; execPath?: string; cwd?: string }): string | undefined {
   return chromiumCandidates(overrides).find(existsPath);
 }
 
-export function extensionsCandidates(overrides?: { execPath?: string; cwd?: string; }): string[] {
+export function extensionsCandidates(overrides?: { execPath?: string; cwd?: string }): string[] {
   const out: string[] = [];
-  const bases = [
-    dirname(overrides?.execPath ?? app.getPath("exe")), 
-    overrides?.cwd ?? process.cwd()
-  ];
-  
+  const bases = [dirname(overrides?.execPath ?? app.getPath("exe")), overrides?.cwd ?? process.cwd()];
+
   for (const base of bases) {
     for (const rel of ["extensions", join("src", "extensions")]) {
       const root = join(base, rel);
@@ -96,7 +96,7 @@ export function extensionsCandidates(overrides?: { execPath?: string; cwd?: stri
   return out;
 }
 
-export function resolveExtensions(overrides?: { execPath?: string; cwd?: string; }): string[] {
+export function resolveExtensions(overrides?: { execPath?: string; cwd?: string }): string[] {
   return extensionsCandidates(overrides);
 }
 
@@ -106,11 +106,11 @@ export async function ensurePlaywrightBrowser(browser = "chromium"): Promise<voi
     const req = getRequire();
     const playwrightPkg = req.resolve("playwright/package.json");
     const cliFile = join(dirname(playwrightPkg), "cli.js");
-    
+
     if (!existsPath(cliFile)) {
       throw new Error(`playwright CLI not found at ${cliFile}; install the browser manually with 'npx playwright install ${browser}'.`);
     }
-    
+
     // In Electron, process.execPath is the Electron binary, not Node.
     // We use the system's Node execution to run the playwright CLI.
     execSync(`node "${cliFile}" install ${browser}`, { stdio: "inherit" });

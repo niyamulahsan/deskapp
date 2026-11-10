@@ -1,4 +1,4 @@
-import { runScript } from "@/core/maker/db/helpers.ts";
+import { runScript } from "@/core/maker/db/helpers";
 
 /** db:reset / db:wipe - delete the SQLite database file only. */
 export async function reset(): Promise<void> {

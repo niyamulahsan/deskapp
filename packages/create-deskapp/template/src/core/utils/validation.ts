@@ -26,10 +26,10 @@ export const validate = {
       throw {
         status: 422,
         message: "Validation failed",
-        errors: result.error.flatten(),
+        errors: result.error.flatten()
       };
     }
 
     return result.data;
-  },
+  }
 };

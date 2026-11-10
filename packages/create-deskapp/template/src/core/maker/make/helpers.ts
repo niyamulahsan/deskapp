@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadStub } from "../stub";
+import { loadStub } from "@/core/maker/stub";
 
 export interface MakerOptions {
   force?: boolean;
@@ -32,9 +32,7 @@ export function moduleDir(moduleName: string): string {
 export function assertModuleExists(moduleName: string): void {
   const dir = moduleDir(moduleName);
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
-    throw new Error(
-      `Module does not exist: ${moduleName}. Create it first with: npm run maker -- make:module ${moduleName}`,
-    );
+    throw new Error(`Module does not exist: ${moduleName}. Create it first with: npm run maker -- make:module ${moduleName}`);
   }
 }
 
@@ -59,7 +57,7 @@ export function modelContent(module: string, name: string): string {
     tableVariable: `${name}s`,
     ClassName,
     name,
-    module,
+    module
   });
 }
 
@@ -70,7 +68,7 @@ export function seederContent(module: string, name: string): string {
     name,
     ClassName,
     tableName: `${name}s`,
-    tableVariable: `${name}s`,
+    tableVariable: `${name}s`
   });
 }
 
@@ -79,7 +77,7 @@ export function controllerContent(module: string, name: string): string {
   return loadStub("controller/controller.controller.stub", {
     module,
     controller: name,
-    ClassName,
+    ClassName
   });
 }
 
@@ -88,6 +86,6 @@ export function schemaContent(module: string, name: string): string {
   return loadStub("controller/controller.schema.stub", {
     module,
     controller: name,
-    ClassName,
+    ClassName
   });
 }

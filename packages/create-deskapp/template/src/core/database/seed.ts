@@ -75,9 +75,7 @@ function moduleNameOf(file: string): string {
 const moduleArg = process.argv.find((arg) => arg.startsWith("--module="));
 const moduleName = moduleArg?.split("=")[1]?.trim();
 
-const seedFiles = moduleName 
-  ? discoverSeederFiles().filter((f) => moduleNameOf(f) === moduleName) 
-  : discoverSeederFiles();
+const seedFiles = moduleName ? discoverSeederFiles().filter((f) => moduleNameOf(f) === moduleName) : discoverSeederFiles();
 
 await db.init();
 
@@ -94,7 +92,7 @@ try {
       module: moduleNameOf(file),
       execute: () => mod.default(),
       tableName: table?.[NAME_SYMBOL] as string | undefined,
-      dependsOn: table ? getTableDeps(table) : [],
+      dependsOn: table ? getTableDeps(table) : []
     });
   }
 

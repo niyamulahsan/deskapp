@@ -1,6 +1,6 @@
-import { sqliteFile } from "@/core/database/config";
 import fs from "node:fs";
 import path from "node:path";
+import { sqliteFile } from "@/core/database/config";
 
 const raw = sqliteFile();
 const file = path.resolve(process.cwd(), raw);

@@ -13,7 +13,7 @@
  *   await paginate.model({ table: schema.users, query: db.query.users });
  */
 
-import { count, getTableColumns, sql, type SQL } from "drizzle-orm";
+import { count, getTableColumns, type SQL, sql } from "drizzle-orm";
 import type { SQLiteTable } from "drizzle-orm/sqlite-core";
 import { db } from "@/core/facade";
 
@@ -51,14 +51,14 @@ export type PaginateTableOptions = PaginateInput & {
 
 export type PaginateModelOptions<T = unknown> = PaginateInput & {
   table?: SQLiteTable;
-  query?: { findMany: (args: Record<string, unknown>) => Promise<T[]>; };
+  query?: { findMany: (args: Record<string, unknown>) => Promise<T[]> };
   where?: SQL<unknown>;
   with?: Record<string, unknown>;
   columns?: Record<string, unknown>;
   extras?: Record<string, unknown>;
   orderBy?: unknown;
   total?: () => Promise<number>;
-  data?: (params: { limit: number; offset: number; }) => Promise<T[]>;
+  data?: (params: { limit: number; offset: number }) => Promise<T[]>;
 };
 
 function toPositiveInt(value: unknown, fallback: number): number {
@@ -97,14 +97,14 @@ export const paginate = {
   },
 
   /**
-* nexgen-style pagination for Drizzle RELATIONAL queries - mirrors nexgen's
+   * nexgen-style pagination for Drizzle RELATIONAL queries - mirrors nexgen's
    * paginateModel. Counts via `table` (+ `where`), then pages through
    * `db.query.<table>.findMany({ limit, offset, where, with, columns, extras,
    * orderBy })` for eager-loaded resources.
    */
   model<T = unknown>(options: PaginateModelOptions<T>): Promise<PaginatedResult<T>> {
     return paginateModel<T>(options);
-  },
+  }
 };
 
 /** Generic paginator for custom `total()`/`data(limit, offset)` callbacks. */
@@ -139,7 +139,7 @@ async function paginateQuery<T = unknown>(options: PaginateQueryOptions<T>): Pro
     per_page: perPage,
     prev_page_url: prevPageUrl,
     to,
-    total,
+    total
   };
 }
 
@@ -163,7 +163,7 @@ function paginateTable<T = unknown>(table: SQLiteTable, options: PaginateTableOp
       if (options.where) dataQuery = dataQuery.where(options.where);
       if (options.orderBy?.length) dataQuery = dataQuery.orderBy(...options.orderBy);
       return dataQuery.limit(limit).offset(offset);
-    },
+    }
   });
 }
 
@@ -215,7 +215,7 @@ function paginateModel<T = unknown>(options: PaginateModelOptions<T>): Promise<P
       if (options.extras) args.extras = options.extras;
       if (options.orderBy) args.orderBy = options.orderBy;
       return options.query.findMany(args);
-    },
+    }
   });
 }
 

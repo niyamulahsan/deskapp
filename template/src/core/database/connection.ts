@@ -1,28 +1,28 @@
-import type { Client as LibSqlClient } from "@libsql/client";
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import * as schema from "@/database/schema";
+import type { Client as LibSqlClient } from "@libsql/client";
 import { sqliteFile } from "@/core/database/config";
+import * as schema from "@/database/schema";
 
 let databaseInstance: DrizzleDatabase | null = null;
 let databaseClient: LibSqlClient | null = null;
 
 export type DrizzleDatabase = import("drizzle-orm/libsql").LibSQLDatabase<typeof schema>;
 
-function resolveMigrationsDir(): string {
+async function resolveMigrationsDir(): Promise<string> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const e = require("electron") as any;
-    if (typeof e?.app?.getAppPath === "function") {
+    const e = (await import("electron").catch(() => null)) as any;
+    if (e?.app?.getAppPath) {
       const dir = path.join(e.app.getAppPath(), "src", "database", "migrations", "sqlite");
-      if (require("node:fs").existsSync(dir)) return dir;
+      if (fsSync.existsSync(dir)) return dir;
     }
   } catch {}
   // CLI/dev fallback: find project root
   let dir = process.cwd();
   for (let i = 0; i < 6; i++) {
     const candidate = path.join(dir, "src", "database", "migrations", "sqlite");
-    if (require("node:fs").existsSync(path.join(dir, "package.json"))) return candidate;
+    if (fsSync.existsSync(path.join(dir, "package.json"))) return candidate;
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -43,7 +43,7 @@ export async function initDatabase(): Promise<DrizzleDatabase> {
 }
 
 async function runBundledMigrations(): Promise<void> {
-  const folder = resolveMigrationsDir();
+  const folder = await resolveMigrationsDir();
   let journal: { entries?: { tag: string }[] };
 
   try {
@@ -99,7 +99,7 @@ export const db: DrizzleDatabase & {
     if (property === "close") return closeDatabase;
     const value = database()[property as keyof DrizzleDatabase];
     return typeof value === "function" ? value.bind(database()) : value;
-  },
+  }
 });
 
 export function closeDatabase(): void {

@@ -52,7 +52,7 @@ export function generateSchemaFile(srcPath = SRC_PATH, schemaPath = SCHEMA_PATH)
       const rel = path.relative(srcPath, f).replace(/\\/g, "/");
       const ext = rel.endsWith(".tsx") ? ".tsx" : ".ts";
       const base = rel.slice(0, -ext.length);
-      return `export * from "../${base}${ext}";`;
+      return `export * from "../${base}";`;
     })
     .join("\n");
 

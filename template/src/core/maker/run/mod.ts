@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { CommandDef } from "../help";
+import type { CommandDef } from "@/core/maker/help";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..", "..", "..", "..");
@@ -14,7 +14,7 @@ function run(cmd: string, args: string[], opts: { cwd?: string; label?: string }
     cwd: opts.cwd ?? ROOT,
     stdio: "inherit",
     shell: false,
-    env: process.env,
+    env: process.env
   });
   if (r.error) throw r.error;
   if (r.status !== 0) process.exit(r.status ?? 1);
@@ -42,42 +42,42 @@ export function registerRunCommands(register: (cmd: CommandDef) => void): void {
     action: () => {
       schemaAndBindings();
       run("npm", ["run", "dev"], { label: "dev" });
-    },
+    }
   });
 
   register({
     name: "ui",
     group: "Getting started",
     description: "Start Vite dev server for the renderer only (no Electron bindings)",
-    action: () => run("npx", ["vite", "--config", "src/ui/vite.config.ts"], { label: "vite dev", cwd: ROOT }),
+    action: () => run("npx", ["vite", "--config", "src/ui/vite.config.ts"], { label: "vite dev", cwd: ROOT })
   });
 
   register({
     name: "start",
     group: "Getting started",
     description: "Run the built Electron app (loads src/ui/dist; requires build)",
-    action: () => run("npm", ["run", "start"], { label: "start" }),
+    action: () => run("npm", ["run", "start"], { label: "start" })
   });
 
   register({
     name: "config:sync",
     group: "Build & codegen",
     description: "Sync src/config/app.ts -> package.json build/identity + scripts/installer.nsh",
-    action: () => configSync(),
+    action: () => configSync()
   });
 
   register({
     name: "codegen",
     group: "Build & codegen",
     description: "Sync config + regenerate database schema + bindings manifest",
-    action: () => schemaAndBindings(),
+    action: () => schemaAndBindings()
   });
 
   register({
     name: "bindings:gen",
     group: "Build & codegen",
     description: "Regenerate src/core/api/bindings.generated.ts from controllers",
-    action: () => tsxScript("src/core/api/generate.manifest.ts", "bindings:gen"),
+    action: () => tsxScript("src/core/api/generate.manifest.ts", "bindings:gen")
   });
 
   register({
@@ -87,7 +87,7 @@ export function registerRunCommands(register: (cmd: CommandDef) => void): void {
     action: () => {
       schemaAndBindings();
       run("npm", ["run", "build"], { label: "build", cwd: ROOT });
-    },
+    }
   });
 
   register({
@@ -101,12 +101,32 @@ export function registerRunCommands(register: (cmd: CommandDef) => void): void {
       if (typeof flags.platform === "string") ebArgs.push(`--${flags.platform}`);
       if (typeof flags.target === "string") ebArgs.push(`--${flags.target}`);
       run("npx", ebArgs, { label: "electron-builder" });
-    },
+    }
   });
 
-  register({ name: "serve", group: "Getting started", description: "Alias for dev (Electron)", action: () => run("npm", ["run", "dev"], { label: "dev" }) });
+  register({
+    name: "serve",
+    group: "Getting started",
+    description: "Alias for dev (Electron)",
+    action: () => run("npm", ["run", "dev"], { label: "dev" })
+  });
 
-  register({ name: "test", group: "Testing", description: "Run Vitest unit tests (node environment)", action: () => run("npx", ["vitest", "run"], { label: "test" }) });
-  register({ name: "test:watch", group: "Testing", description: "Run Vitest in watch mode", action: () => run("npx", ["vitest"], { label: "test:watch" }) });
-  register({ name: "test:coverage", group: "Testing", description: "Run Vitest with V8 coverage", action: () => run("npx", ["vitest", "run", "--coverage"], { label: "test:coverage" }) });
+  register({
+    name: "test",
+    group: "Testing",
+    description: "Run Vitest unit tests (node environment)",
+    action: () => run("npx", ["vitest", "run"], { label: "test" })
+  });
+  register({
+    name: "test:watch",
+    group: "Testing",
+    description: "Run Vitest in watch mode",
+    action: () => run("npx", ["vitest"], { label: "test:watch" })
+  });
+  register({
+    name: "test:coverage",
+    group: "Testing",
+    description: "Run Vitest with V8 coverage",
+    action: () => run("npx", ["vitest", "run", "--coverage"], { label: "test:coverage" })
+  });
 }

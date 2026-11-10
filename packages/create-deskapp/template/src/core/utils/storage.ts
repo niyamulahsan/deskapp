@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
+import { createRequire } from "node:module";
 import { basename, dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 import { appBaseDir } from "@/core/env";
 
 function getElectronApp(): { getPath: (name: string) => string; isPackaged: boolean } | undefined {

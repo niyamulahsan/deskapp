@@ -11,18 +11,12 @@ const WORDMARK = [
   " |  _ \\| ____/ ___|| |/ /   / \\  |  _ \\|  _ \\ ",
   " | | | |  _| \\___ \\| ' /   / _ \\ | |_) | |_) |",
   " | |_| | |___ ___) | . \\  / ___ \\|  __/|  __/ ",
-  " |____/|_____|____/|_|\\_\\/_/   \\_\\_|   |_|    ",
+  " |____/|_____|____/|_|\\_\\/_/   \\_\\_|   |_|    "
 ];
 
-const LOGO = "\n" + WORDMARK.join("\n") + "\n";
+const LOGO = `\n${WORDMARK.join("\n")}\n`;
 
-const GROUP_ORDER = [
-  "Getting started",
-  "Generators - modules",
-  "Database",
-  "Build & codegen",
-  "Testing",
-];
+const GROUP_ORDER = ["Getting started", "Generators - modules", "Database", "Build & codegen", "Testing"];
 
 function padRows(rows: Array<{ left: string; desc: string }>): string[] {
   if (!rows.length) return [];
@@ -32,8 +26,8 @@ function padRows(rows: Array<{ left: string; desc: string }>): string[] {
 
 export function printCommandHelp(cmd: CommandDef): void {
   console.log(LOGO);
-  console.log(`Usage: npm run maker -- ${cmd.name}${cmd.usage ? " " + cmd.usage : ""} [options]\n`);
-  console.log(cmd.description + "\n");
+  console.log(`Usage: npm run maker -- ${cmd.name}${cmd.usage ? ` ${cmd.usage}` : ""} [options]\n`);
+  console.log(`${cmd.description}\n`);
 }
 
 export function printHelp(commands: Map<string, CommandDef>): void {
@@ -50,10 +44,7 @@ export function printHelp(commands: Map<string, CommandDef>): void {
   }
   for (const arr of byGroup.values()) arr.sort((a, b) => a.name.localeCompare(b.name));
 
-  const groups = [
-    ...GROUP_ORDER.filter((g) => byGroup.has(g)),
-    ...[...byGroup.keys()].filter((g) => !GROUP_ORDER.includes(g)),
-  ];
+  const groups = [...GROUP_ORDER.filter((g) => byGroup.has(g)), ...[...byGroup.keys()].filter((g) => !GROUP_ORDER.includes(g))];
   for (const group of groups) {
     const rows = (byGroup.get(group) || []).map((c) => ({ left: c.name, desc: c.description }));
     if (!rows.length) continue;

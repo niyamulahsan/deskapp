@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ensureMigrationMeta, migrationCount, PROJECT_ROOT, runDrizzle } from "./helpers";
+import { ensureMigrationMeta, migrationCount, PROJECT_ROOT, runDrizzle } from "@/core/maker/db/helpers";
 
 const MODULES_PATH = path.join(PROJECT_ROOT, "src", "modules");
 
@@ -10,9 +10,7 @@ function moduleModels(moduleName: string): string[] {
   try {
     entries = fs.readdirSync(modelsDir, { withFileTypes: true });
   } catch {
-    throw new Error(
-      `Module does not exist: ${moduleName}. Create it first with: npm run maker -- make:module ${moduleName}`,
-    );
+    throw new Error(`Module does not exist: ${moduleName}. Create it first with: npm run maker -- make:module ${moduleName}`);
   }
   const files = entries
     .filter((e) => e.isFile() && (e.name.endsWith(".ts") || e.name.endsWith(".tsx")))
@@ -41,13 +39,16 @@ export async function migrateModule(moduleName: string, keepTemp = false): Promi
   await ensureMigrationMeta();
   const tmpPath = await writeModuleSchemaTemp(moduleName);
   const schemaEnv = {
-    DRIZZLE_SCHEMA: `./${path.relative(PROJECT_ROOT, tmpPath).replaceAll("\\", "/")}`,
+    DRIZZLE_SCHEMA: `./${path.relative(PROJECT_ROOT, tmpPath).replaceAll("\\", "/")}`
   };
   try {
     await runDrizzle(["generate", ...(migrationCount() === 0 ? ["--name", "init"] : [])], schemaEnv);
     await runDrizzle(["migrate"], schemaEnv);
     console.log(`Module migration complete: ${moduleName}`);
   } finally {
-    if (!keepTemp) try { fs.unlinkSync(tmpPath); } catch {}
+    if (!keepTemp)
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {}
   }
 }

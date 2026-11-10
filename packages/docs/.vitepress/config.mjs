@@ -78,6 +78,12 @@ export default defineConfig({
             { text: label("broadcast", "Realtime (Pulse)"), link: "/guide/realtime" },
           ],
         },
+        {
+          text: label("list-details", "More"),
+          items: [
+            { text: label("list-details", "Changelog"), link: "/changelog" },
+          ],
+        },
       ],
       "/api/": [
         {
@@ -131,11 +137,23 @@ export default defineConfig({
             { text: label("device-floppy", "storage"), link: "/api/storage" },
           ],
         },
+        {
+          text: label("list-details", "More"),
+          items: [
+            { text: label("list-details", "Changelog"), link: "/changelog" },
+          ],
+        },
       ],
       "/cli/": [
         { text: label("hammer", "Maker Commands"), link: "/cli/maker" },
         { text: label("database", "Database Commands"), link: "/cli/database" },
         { text: label("package", "Bundle & Build"), link: "/cli/bundle" },
+        {
+          text: label("list-details", "More"),
+          items: [
+            { text: label("list-details", "Changelog"), link: "/changelog" },
+          ],
+        },
       ],
     },
     footer: {
