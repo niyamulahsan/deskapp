@@ -1,7 +1,7 @@
 import type { ChromeParts } from "@config/winsetup";
 import { resolveChrome } from "@config/winsetup";
-import { defaultMenuItems, installAppMenu } from "./app-menu";
-import { installContextMenu } from "./context-menu";
+import { defaultMenuItems, installAppMenu, removeAppMenu } from "./app-menu";
+import { disableContextMenu, installContextMenu } from "./context-menu";
 import { alertDialog, confirmDialog } from "./dialogs";
 import type { DesktopWindow } from "./manager";
 import { createAppTray, createHeadlessTray, createTray, hideDock, isTrayAvailable } from "./tray";
@@ -14,9 +14,14 @@ export type { ChromeParts };
  * Install desktop chrome for a window. Pass `parts` for granular control;
  * defaults to all enabled (backward compatible).
  */
-function setupDesktopChrome(win: DesktopWindow, parts: Required<ChromeParts> = { appMenu: true, contextMenu: true, tray: true }): void {
+function setupDesktopChrome(
+  win: DesktopWindow,
+  parts: Required<ChromeParts> = { appMenu: true, contextMenu: true, tray: true },
+): void {
   if (parts.appMenu) installAppMenu(win);
+  else removeAppMenu(win);
   if (parts.contextMenu) installContextMenu(win);
+  else disableContextMenu(win);
   if (parts.tray) createAppTray();
 }
 

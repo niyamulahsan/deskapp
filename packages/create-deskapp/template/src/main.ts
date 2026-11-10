@@ -76,9 +76,7 @@ if (!gotLock) {
 
           if (isMain) {
             const chromeParts = chrome.resolveChrome(preset.chrome);
-            if (chromeParts.appMenu || chromeParts.contextMenu || chromeParts.tray) {
-              chrome.setupDesktopChrome(created, chromeParts);
-            }
+            chrome.setupDesktopChrome(created, chromeParts);
           }
           isMain = false;
 

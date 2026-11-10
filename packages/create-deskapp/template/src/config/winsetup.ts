@@ -67,7 +67,7 @@ export function resolveChrome(chrome: WindowPreset["chrome"]): Required<ChromePa
   return {
     appMenu: !!chrome.appMenu,
     contextMenu: !!chrome.contextMenu,
-    tray: !!chrome.tray,
+    tray: !!chrome.tray
   };
 }
 

@@ -1,7 +1,33 @@
 import path from "node:path";
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, nativeImage } from "electron";
 import { closeDatabase } from "@/core/database/connection";
 import { type WindowPreset, windowConfig, windows as windowPresets } from "@/window/config";
+
+function resolveWindowIcon(): Electron.NativeImage | string | undefined {
+  const bases = app.isPackaged
+    ? [app.getAppPath()]
+    : [path.resolve(app.getAppPath(), "..", ".."), app.getAppPath(), process.cwd()];
+
+  const candidates: string[] = [];
+  for (const root of Array.from(new Set(bases))) {
+    const base = path.join(root, "src", "icons");
+    candidates.push(
+      path.join(base, "favicon.ico"),
+      path.join(base, "web-app-manifest-512x512.png"),
+      path.join(base, "web-app-manifest-192x192.png"),
+      path.join(base, "favicon-96x96.png"),
+    );
+  }
+
+  for (const iconPath of candidates) {
+    try {
+      const icon = nativeImage.createFromPath(iconPath);
+      if (!icon.isEmpty()) return icon;
+    } catch {}
+  }
+  // Fallback: no custom icon found (Electron default will be used).
+  return undefined;
+}
 
 // We map your custom options to Electron's expected options
 export interface BrowserWindowOptions extends WindowPreset {}
@@ -37,6 +63,7 @@ function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath
   const resolvedPreload = resolvePreloadPath(preloadPath);
   if (resolvedPreload && !defaultPreloadPath) defaultPreloadPath = resolvedPreload;
 
+  const icon = resolveWindowIcon();
   const win = new BrowserWindow({
     title: preset.title,
     width: preset.width,
@@ -48,12 +75,13 @@ function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath
     frame: !preset.frameless,
     transparent: preset.transparentTitlebar ?? false,
     show: false,
+    ...(icon ? { icon } : {}),
     webPreferences: {
       preload: resolvedPreload,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false
-    }
+      sandbox: false,
+    },
   });
 
   const winId = win.id;

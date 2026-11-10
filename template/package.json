@@ -80,8 +80,7 @@
     },
     "win": {
       "icon": "src/icons/web-app-manifest-512x512.png",
-      "target": "nsis",
-      "signAndEditExecutable": false
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,

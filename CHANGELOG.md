@@ -1,6 +1,10 @@
 # Changelog
 
-## [1.2.3] - 2026-11-10
+## [1.2.4] - 2026-11-11
+
+### Fixed
+- **Menu/tray/context menu fixes** - Resolved issues with app menu, context menu, and tray menu not working properly.
+- **Icon path fixes** - Corrected icon paths.
 
 ### Changed
 - **Docs improvements** - Added changelog to sidebars, improved windows/menus/dialogs/tray documentation with winsetup config details, fixed Deno references.

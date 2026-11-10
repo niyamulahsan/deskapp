@@ -12,3 +12,10 @@ export function installContextMenu(win: DesktopWindow): void {
     menu.popup({ window: win });
   });
 }
+
+export function disableContextMenu(win: DesktopWindow): void {
+  // Suppress default/custom context menu when explicitly disabled.
+  win.webContents.on("context-menu", (event) => {
+    event.preventDefault();
+  });
+}

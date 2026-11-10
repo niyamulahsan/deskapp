@@ -1,6 +1,12 @@
 import { Menu } from "electron";
 import { type DesktopWindow, win as winApi } from "@/window/manager";
 
+export function removeAppMenu(win: DesktopWindow): void {
+  win.setMenu(null);
+  // On Windows/Linux this controls the application menu bar.
+  Menu.setApplicationMenu(null);
+}
+
 export interface MenuRole {
   role: string;
 }
