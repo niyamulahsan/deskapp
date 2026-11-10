@@ -6,11 +6,6 @@
 - **Menu/tray/context menu fixes** - Resolved issues with app menu, context menu, and tray menu not working properly.
 - **Icon path fixes** - Corrected icon paths.
 
-### Changed
-- **Docs improvements** - Added changelog to sidebars, improved windows/menus/dialogs/tray documentation with winsetup config details, fixed Deno references.
-- **Database/schema fixes** - Fixed schema generation to avoid .ts extensions, fixed ESM/CommonJS require issues in database connection.
-- **Template fixes** - Updated create command to use scoped package name.
-
 ## [1.2.3] - 2026-11-10
 
 ### Changed
