@@ -30,6 +30,7 @@ import { pulse } from "@/ui/plugins/pulse.ts";
 | Member                       | Description                                                                                            |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `connect()` / `disconnect()` | Explicit socket lifecycle. Calling any `channel()`/`private()` auto-connects first.                    |
+| `setToken(token)`            | Set the access token (string, `null`, or a getter) sent in the Socket.IO handshake. See below.         |
 | `channel(name)`              | Listen on a public channel. Joins the Socket.IO room (`emit("join", name)`), returns a channel handle. |
 | `private(room)`              | Alias for `channel("private:" + room)` — per-user rooms.                                               |
 | `leave(room)`                | Leave the room and drop its listeners.                                                                 |
@@ -55,7 +56,7 @@ ui.listen<{ ref: string; status: string }>("payment.status", async (payload) => 
 
 `bindings` is the in-process bridge (a `Proxy`, typed by `src/ui/src/bindings.d.ts`) — available only under `deno desktop`. Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`.
 
-After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true` and `transports: ["websocket", "polling"]`, and tracks joined rooms so it **re-emits `join` for each room on reconnect**.
+After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true`, `transports: ["websocket", "polling"]`, and a handshake `auth` callback that resolves the token set via `setToken()` (if any). It tracks joined rooms so it **re-emits `join` for each room on reconnect**.
 
 ### Usage — Vue components
 
@@ -167,23 +168,25 @@ There is no `$pulse` global in React — import `pulse` where needed, or provide
 
 The client resolves its socket URL from `VITE_SOCKET_URL` → `VITE_API_URL` → `window.location.origin` (build-time). To bridge the desktop UI to your backend engine, set `VITE_SOCKET_URL` when building the UI (see [Connecting to your engine](#connecting-to-your-engine) below).
 
-`__SOCKET_ENABLED__` is defined in `src/ui/vite.config.ts` as `true` when `VITE_SOCKET_URL` or `VITE_API_URL` is set; otherwise `pulse` is replaced by a **no-op client** — `connect`/`disconnect`/`channel`/`private`/`leave` return immediately and `listen`/`stopListening` are safe no-ops. The app continues to work without any socket backend (disable via the `PulsePlugin`/no-op path, or set `DESKAPP_UI=false` for a fully headless run).
+`__SOCKET_ENABLED__` is defined in `src/ui/vite.config.ts` as `true` when `VITE_SOCKET_URL` or `VITE_API_URL` is set; otherwise `pulse` is replaced by a **no-op client** — `connect`/`disconnect`/`setToken`/`channel`/`private`/`leave` return immediately and `listen`/`stopListening` are safe no-ops. The app continues to work without any socket backend (disable via the `PulsePlugin`/no-op path, or set `DESKAPP_UI=false` for a fully headless run).
 
 ## Connecting to your engine
 
-The engine authenticates sockets from the access-token cookie (`framework/realtime/socket-cookie.ts`). A desktop webview can pass the same token through the Socket.IO handshake:
+The engine authenticates sockets from the access-token cookie, or — for desktop and native clients that cannot send that cookie — from the bare JWT in the Socket.IO handshake `auth` payload (`framework/realtime/socket-cookie.ts`). Pass the token through `pulse.setToken()`:
 
 ```ts
-import { io } from "socket.io-client";
+import { pulse } from "@/ui/plugins/pulse.ts";
 
-const socket = io(engineUrl, {
-  auth: { token: getAccessToken() },
-  withCredentials: true,
-  transports: ["websocket", "polling"],
-});
+// Prefer a getter: it is resolved on every (re)connect, so a refreshed token
+// is picked up automatically.
+pulse.setToken(() => getAccessToken());
+
+const ui = pulse.channel("payments");
 ```
 
-If you control the engine, extend `authFromSocketHandshake` (in `socket-cookie.ts`) to fall back to `socket.handshake.auth.token` before checking the cookie — then desktop and browser clients authenticate identically, and the engine still auto-joins `user:{id}`, `role:{role}`, and `auth` rooms.
+`setToken` accepts a token string, `null`, or a getter. Calling it while connected drops and re-establishes the socket, and the existing `connect` handler re-joins every tracked room. When no token is set the client still sends `withCredentials: true`, so a cookie-capable engine keeps working.
+
+If you control the engine, make sure `authFromSocketHandshake` (in `socket-cookie.ts`) falls back to `socket.handshake.auth.token` before checking the cookie — the nexwire engine already does — then desktop and browser clients authenticate identically, and the engine still auto-joins `user:{id}`, `role:{role}`, and `auth` rooms. The handshake token is a **bare JWT**, not the signed cookie value, so the server must not strip its signature.
 
 ## Presence (who's online)
 

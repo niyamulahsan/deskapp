@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.2.5] - 2026-11-11
+
+### Fixed
+- **Realtime auth** - The Pulse client now sends the access token through the Socket.IO handshake (`auth` callback) instead of relying on an httpOnly cookie the Electron webview cannot set. After `pulse.setToken(...)`, the engine authenticates the socket and auto-joins `user:{id}`, `role:{role}`, and `auth` rooms; previously the socket stayed a guest even when signed in.
+- **`pulse.setToken()`** - Accepts a token string, `null`, or a getter (resolved on every reconnect). Calling it while connected re-handshakes and re-joins all tracked rooms, and the `__SOCKET_ENABLED__ = false` no-op client implements it too.
+
+### Changed
+- **Docs** - `guide/realtime.md` and `guide/ui.md` document handshake-token auth and the updated `pulse.ts` source.
+
 ## [1.2.4] - 2026-11-11
 
 ### Fixed

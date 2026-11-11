@@ -173,6 +173,12 @@ declare const __SOCKET_ENABLED__: boolean;
 
 type EventCallback<T = unknown> = (payload: T) => void;
 
+// Access token (or a getter returning one) sent with the Socket.IO handshake.
+// The desktop client cannot send the httpOnly auth cookie, so the server reads
+// this bare JWT from `handshake.auth.token`. A getter is preferred because it
+// is resolved on every (re)connect.
+export type PulseToken = string | null | (() => string | null);
+
 type ChannelBinding = {
   event: string;
   callback: EventCallback;
@@ -187,6 +193,7 @@ type PulseChannel = {
 export type PulseClient = {
   connect: () => PulseClient;
   disconnect: () => PulseClient;
+  setToken: (token: PulseToken) => PulseClient;
   channel: (name: string) => PulseChannel;
   private: (room: string) => PulseChannel;
   leave: (room: string) => PulseClient;
@@ -198,6 +205,7 @@ function createPulse(): PulseClient {
     const c: PulseClient = {
       connect: () => c,
       disconnect: () => c,
+      setToken: () => c,
       channel: n,
       private: n,
       leave: () => c,
@@ -206,8 +214,12 @@ function createPulse(): PulseClient {
   }
 
   let socket: Socket | null = null;
+  let tokenSource: PulseToken = null;
   const channels = new Map<string, ChannelBinding[]>();
   const joinedRooms = new Set<string>();
+
+  // Resolve lazily so every reconnect picks up the current token.
+  const resolveToken = () => (typeof tokenSource === "function" ? tokenSource() : tokenSource);
 
   const socketUrl = () => {
     const explicit = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL;
@@ -221,6 +233,10 @@ function createPulse(): PulseClient {
     socket = io(socketUrl(), {
       withCredentials: true,
       transports: ["websocket", "polling"],
+      auth: (callback) => {
+        const token = resolveToken();
+        callback(token ? { token } : {});
+      },
     });
 
     socket.on("connect", () => {
@@ -280,6 +296,15 @@ function createPulse(): PulseClient {
     disconnect: () => {
       socket?.disconnect();
       socket = null;
+      return pulse;
+    },
+    setToken: (token: PulseToken) => {
+      tokenSource = token;
+      if (socket) {
+        // Force a new handshake with the updated credentials. The connect
+        // handler re-joins every room in joinedRooms.
+        socket.disconnect().connect();
+      }
       return pulse;
     },
     channel,
