@@ -772,20 +772,20 @@ if (userPath) await files.writeTextFile(userPath, JSON.stringify({ data: [] }, n
 
 Import from `@/core/facade` in backend code (controllers/jobs). From UI use `bindings`.
 
-| API | Purpose | Common Usage |
-|---|---|---|
-| `db` | Drizzle ORM instance + init/close | `await db.select().from(table)`, `await db.insert()...` |
-| `paginate` / `sql` | Pagination helpers | `paginate.model({ table, query: db.query.table, page, perPage })` |
-| `pass` | Password hashing/verification | `await pass.hashPassword(pw)`, `await pass.verifyPassword(pw, hash)` |
-| `validate` | Zod validation | `const data = await validate.run(schema, input); validate.z.object({...})` |
-| `queue` | Background job queue | `queue.add('task.name', payload)`, register processors |
-| `cron` | Scheduler | `cron.schedule('id', '*/5 * * * *', fn)`, `cron.stop('id')` |
-| `storage` | App-managed files (private/tmp) | `storage.put()`, `storage.get()`, `storage.disk('tmp')` |
-| `files` | User-file operations | Read/write arbitrary paths, atomic operations |
-| `chromium` | Playwright/Chromium helpers | `chromium.resolve()` to get executable path |
-| `win` | Window management | `win.openWindow()`, `win.getWindow()`, `win.createWindow()` |
-| `chrome` | Menus, tray, dialogs | `chrome.setupDesktopChrome()`, `chrome.confirmDialog()` |
-| `pickers` | Native file dialogs | `pickers.open()`, `pickers.save()`, `pickers.folder()` |
+| API                | Purpose                           | Common Usage                                                               |
+| ------------------ | --------------------------------- | -------------------------------------------------------------------------- |
+| `db`               | Drizzle ORM instance + init/close | `await db.select().from(table)`, `await db.insert()...`                    |
+| `paginate` / `sql` | Pagination helpers                | `paginate.model({ table, query: db.query.table, page, perPage })`          |
+| `pass`             | Password hashing/verification     | `await pass.hashPassword(pw)`, `await pass.verifyPassword(pw, hash)`       |
+| `validate`         | Zod validation                    | `const data = await validate.run(schema, input); validate.z.object({...})` |
+| `queue`            | Background job queue              | `queue.add('task.name', payload)`, register processors                     |
+| `cron`             | Scheduler                         | `cron.schedule('id', '*/5 * * * *', fn)`, `cron.stop('id')`                |
+| `storage`          | App-managed files (private/tmp)   | `storage.put()`, `storage.get()`, `storage.disk('tmp')`                    |
+| `files`            | User-file operations              | Read/write arbitrary paths, atomic operations                              |
+| `chromium`         | Playwright/Chromium helpers       | `chromium.resolve()` to get executable path                                |
+| `win`              | Window management                 | `win.openWindow()`, `win.getWindow()`, `win.createWindow()`                |
+| `chrome`           | Menus, tray, dialogs              | `chrome.setupDesktopChrome()`, `chrome.confirmDialog()`                    |
+| `pickers`          | Native file dialogs               | `pickers.open()`, `pickers.save()`, `pickers.folder()`                     |
 
 ### Detailed examples
 

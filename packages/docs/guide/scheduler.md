@@ -12,10 +12,10 @@ cron.schedule("cleanup", "0 4 * * *", () => {
 
 ## API
 
-| Function | Description |
-| --- | --- |
+| Function                                        | Description                                                                                                                                                          |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cron.schedule(name, expression, fn, options?)` | Register a named cron job. Returns a handle with only `stop()`. Re-scheduling the **same name replaces the old job** (and stops it). Options accept `{ timezone? }`. |
-| `cron.stop()` | Stop **all** registered cron jobs (called on app shutdown). |
+| `cron.stop()`                                   | Stop **all** registered cron jobs (called on app shutdown).                                                                                                          |
 
 The returned handle's `stop()` also de-registers the job so it won't be stopped twice at shutdown.
 

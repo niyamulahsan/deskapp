@@ -8,29 +8,29 @@ All writes are **atomic** (temp-file + rename). All functions are platform-agnos
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `ensureDir` | `(path: string) => Promise<void>` | Create a directory (and parents) if missing. |
-| `pathExists` | `(path: string) => Promise<boolean>` | Whether a path exists. |
-| `isFile` | `(path: string) => Promise<boolean>` | Whether the path is a regular file. |
-| `isDirectory` | `(path: string) => Promise<boolean>` | Whether the path is a directory. |
-| `fileMeta` | `(path: string) => Promise<{ path: string; size: number; modifiedAt: Date; isFile: boolean; isDirectory: boolean } \| null>` | Stat info, or `null` when missing. |
-| `listFiles` | `(path: string) => Promise<string[]>` | Absolute paths of the files in a directory (sorted, non-recursive). |
-| `listDirectories` | `(path: string) => Promise<string[]>` | Absolute paths of the immediate subdirectories. |
-| `readTextFile` | `(path: string) => Promise<string>` | Read a UTF-8 text file. |
-| `readTextFileOr` | `(path: string, fallback: string) => Promise<string>` | Read text, or return the fallback when missing. |
-| `readBinaryFile` | `(path: string) => Promise<Uint8Array>` | Read raw bytes. |
-| `readJson` | `<T>(path: string, fallback: T) => Promise<T>` | Read + parse JSON, or the fallback when missing/corrupt. |
-| `writeTextFile` | `(path: string, data: string) => Promise<void>` | Write UTF-8 text (atomic). |
-| `writeBinaryFile` | `(path: string, data: Uint8Array) => Promise<void>` | Write raw bytes (atomic). |
-| `writeFile` | `(path: string, data: string \| Uint8Array) => Promise<void>` | Write text or bytes (atomic). |
-| `writeJson` | `(path: string, value: unknown) => Promise<void>` | Stringify + write JSON (atomic). |
-| `copyFile` | `(from: string, to: string) => Promise<void>` | Copy a file. |
-| `moveFile` | `(from: string, to: string) => Promise<void>` | Move/rename a file. |
-| `removePath` | `(path: string) => Promise<void>` | Delete a file or directory **tree** (recursive); missing paths ignored. |
-| `uniquePath` | `(dir: string, name: string) => Promise<string>` | A non-colliding path for `name` inside `dir`. |
-| `uploadFile` | `(source: string, destDir: string) => Promise<string>` | Copy a source file into a folder (de-duplicates the name), returns the new path. |
-| `downloadFile` | `(source: string, destPath: string) => Promise<string>` | Download an `http(s)`/`file://` URL or copy a local path to a destination (atomic). |
+| Function          | Signature                                                                                                                    | Description                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `ensureDir`       | `(path: string) => Promise<void>`                                                                                            | Create a directory (and parents) if missing.                                        |
+| `pathExists`      | `(path: string) => Promise<boolean>`                                                                                         | Whether a path exists.                                                              |
+| `isFile`          | `(path: string) => Promise<boolean>`                                                                                         | Whether the path is a regular file.                                                 |
+| `isDirectory`     | `(path: string) => Promise<boolean>`                                                                                         | Whether the path is a directory.                                                    |
+| `fileMeta`        | `(path: string) => Promise<{ path: string; size: number; modifiedAt: Date; isFile: boolean; isDirectory: boolean } \| null>` | Stat info, or `null` when missing.                                                  |
+| `listFiles`       | `(path: string) => Promise<string[]>`                                                                                        | Absolute paths of the files in a directory (sorted, non-recursive).                 |
+| `listDirectories` | `(path: string) => Promise<string[]>`                                                                                        | Absolute paths of the immediate subdirectories.                                     |
+| `readTextFile`    | `(path: string) => Promise<string>`                                                                                          | Read a UTF-8 text file.                                                             |
+| `readTextFileOr`  | `(path: string, fallback: string) => Promise<string>`                                                                        | Read text, or return the fallback when missing.                                     |
+| `readBinaryFile`  | `(path: string) => Promise<Uint8Array>`                                                                                      | Read raw bytes.                                                                     |
+| `readJson`        | `<T>(path: string, fallback: T) => Promise<T>`                                                                               | Read + parse JSON, or the fallback when missing/corrupt.                            |
+| `writeTextFile`   | `(path: string, data: string) => Promise<void>`                                                                              | Write UTF-8 text (atomic).                                                          |
+| `writeBinaryFile` | `(path: string, data: Uint8Array) => Promise<void>`                                                                          | Write raw bytes (atomic).                                                           |
+| `writeFile`       | `(path: string, data: string \| Uint8Array) => Promise<void>`                                                                | Write text or bytes (atomic).                                                       |
+| `writeJson`       | `(path: string, value: unknown) => Promise<void>`                                                                            | Stringify + write JSON (atomic).                                                    |
+| `copyFile`        | `(from: string, to: string) => Promise<void>`                                                                                | Copy a file.                                                                        |
+| `moveFile`        | `(from: string, to: string) => Promise<void>`                                                                                | Move/rename a file.                                                                 |
+| `removePath`      | `(path: string) => Promise<void>`                                                                                            | Delete a file or directory **tree** (recursive); missing paths ignored.             |
+| `uniquePath`      | `(dir: string, name: string) => Promise<string>`                                                                             | A non-colliding path for `name` inside `dir`.                                       |
+| `uploadFile`      | `(source: string, destDir: string) => Promise<string>`                                                                       | Copy a source file into a folder (de-duplicates the name), returns the new path.    |
+| `downloadFile`    | `(source: string, destPath: string) => Promise<string>`                                                                      | Download an `http(s)`/`file://` URL or copy a local path to a destination (atomic). |
 
 ## Use cases
 

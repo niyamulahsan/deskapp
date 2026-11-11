@@ -8,20 +8,20 @@ Paginates a full schema table: runs a `count()` query plus the paged select, wit
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
+| Function         | Signature                                                                                | Description                    |
+| ---------------- | ---------------------------------------------------------------------------------------- | ------------------------------ |
 | `paginate.table` | `<T>(table: SQLiteTable, options?: PaginateTableOptions) => Promise<PaginatedResult<T>>` | Paginate a whole schema table. |
 
 Options:
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `page` | `number` | `1` | 1-indexed, clamped to `last_page`. |
-| `perPage` | `number` | `15` | Items per page. |
-| `maxPerPage` | `number` | `100` | Clamp on `perPage`. |
-| `path` | `string` | `""` | Base path used in generated `*_page_url` links. |
-| `where` | `SQL<unknown>` | — | Applied to both the count and the data query (use `sql`). |
-| `orderBy` | `unknown[]` | — | Drizzle `orderBy(...args)` spread, e.g. `[sql\`created_at desc\`]`. |
+| Option       | Type           | Default | Description                                                         |
+| ------------ | -------------- | ------- | ------------------------------------------------------------------- |
+| `page`       | `number`       | `1`     | 1-indexed, clamped to `last_page`.                                  |
+| `perPage`    | `number`       | `15`    | Items per page.                                                     |
+| `maxPerPage` | `number`       | `100`   | Clamp on `perPage`.                                                 |
+| `path`       | `string`       | `""`    | Base path used in generated `*_page_url` links.                     |
+| `where`      | `SQL<unknown>` | —       | Applied to both the count and the data query (use `sql`).           |
+| `orderBy`    | `unknown[]`    | —       | Drizzle `orderBy(...args)` spread, e.g. `[sql\`created_at desc\`]`. |
 
 ## Use cases
 

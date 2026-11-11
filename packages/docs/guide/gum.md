@@ -6,10 +6,10 @@ It exists to answer one question: **"how do I talk to the backend from the UI?"*
 
 ## Transports
 
-| Transport | When | The "url" is… | Under the hood |
-| --- | --- | --- | --- |
-| `"bindings"` **(default)** | Desktop app, backend runs in-process | a binding name `<module>.<controller>.<handler>`, e.g. `app.demo.table` | `bindings[name](...args)` → no HTTP, no CORS, no server |
-| `"http"` | Web build / remote API, backend is a separate process | a REST endpoint, e.g. `/api/users` | `axios` calls |
+| Transport                  | When                                                  | The "url" is…                                                           | Under the hood                                          |
+| -------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| `"bindings"` **(default)** | Desktop app, backend runs in-process                  | a binding name `<module>.<controller>.<handler>`, e.g. `app.demo.table` | `bindings[name](...args)` → no HTTP, no CORS, no server |
+| `"http"`                   | Web build / remote API, backend is a separate process | a REST endpoint, e.g. `/api/users`                                      | `axios` calls                                           |
 
 The transport is chosen **per app** in `GumPlugin` options, and can be overridden **per call or per table** — so one UI can mix SQLite bindings and a remote API:
 
@@ -37,12 +37,12 @@ createApp(App)
 
 ### Plugin options
 
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `rememberPrefix` | `"gum"` | localStorage key prefix for `useGumRemember` |
-| `recentlySuccessfulDuration` | `2000` | how long `useGumForm`'s `recentlySuccessful` stays `true` (ms) |
-| `transport` | `"bindings"` | default transport: `"bindings"` or `"http"` |
-| `baseURL` | `""` | base URL prepended to every HTTP request |
+| Option                       | Default      | Meaning                                                        |
+| ---------------------------- | ------------ | -------------------------------------------------------------- |
+| `rememberPrefix`             | `"gum"`      | localStorage key prefix for `useGumRemember`                   |
+| `recentlySuccessfulDuration` | `2000`       | how long `useGumForm`'s `recentlySuccessful` stays `true` (ms) |
+| `transport`                  | `"bindings"` | default transport: `"bindings"` or `"http"`                    |
+| `baseURL`                    | `""`         | base URL prepended to every HTTP request                       |
 
 `gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`). It also needs the `bindings` global, which only exists under `deno desktop` — the demo table in the starter dashboard runs through `deno task dev`.
 
@@ -50,13 +50,13 @@ createApp(App)
 
 Handlers and HTTP endpoints follow the same contract as the generated controllers / REST routes. Bindings map directly:
 
-| Controller handler | Method | Payload passed to the handler |
-| --- | --- | --- |
-| `index()` | `get` | `undefined` |
-| `show(params)` | `get` | `query` (or `data`) |
-| `store(body)` | `post` | `data` |
+| Controller handler         | Method          | Payload passed to the handler               |
+| -------------------------- | --------------- | ------------------------------------------- |
+| `index()`                  | `get`           | `undefined`                                 |
+| `show(params)`             | `get`           | `query` (or `data`)                         |
+| `store(body)`              | `post`          | `data`                                      |
 | `update({ params, body })` | `put` / `patch` | `{ params: query ?? {}, body: data ?? {} }` |
-| `destroy(params)` | `delete` | `query` (or `data`) |
+| `destroy(params)`          | `delete`        | `query` (or `data`)                         |
 
 Over HTTP the same shape becomes axios conventions: `params` → query string, `data` → request body, and `update` sends both.
 
@@ -72,15 +72,15 @@ const gum = useGum();
 
 ### Visit methods
 
-| Method | Signature |
-| --- | --- |
-| `get(url, options?)` | fetch data (GET) |
-| `post(url, data?, options?)` | create (POST) |
-| `put(url, data?, options?)` | full update (PUT) |
-| `patch(url, data?, options?)` | partial update (PATCH) |
-| `delete(url, options?)` | delete (DELETE) |
-| `reload(options?)` | GET the current route again |
-| `visit(url, options)` | the core; everything above delegates to it |
+| Method                        | Signature                                  |
+| ----------------------------- | ------------------------------------------ |
+| `get(url, options?)`          | fetch data (GET)                           |
+| `post(url, data?, options?)`  | create (POST)                              |
+| `put(url, data?, options?)`   | full update (PUT)                          |
+| `patch(url, data?, options?)` | partial update (PATCH)                     |
+| `delete(url, options?)`       | delete (DELETE)                            |
+| `reload(options?)`            | GET the current route again                |
+| `visit(url, options)`         | the core; everything above delegates to it |
 
 `processing` (a `ref`) flips `true` while a visit is in flight.
 
@@ -88,19 +88,19 @@ const gum = useGum();
 
 `method`, `data`, `query`, `transport`, `baseURL` are the request controls above. The rest shape the navigation + lifecycle:
 
-| Option | Default | Meaning |
-| --- | --- | --- |
-| `routePath` | current route path | path to navigate to when `navigate` runs |
-| `replace` | `false` | `router.replace` instead of `router.push` |
-| `preserveState` | `method !== "get"` | keep `useGumRemember` values for that path |
-| `preserveScroll` | `false` | restore the previous scroll position afterwards |
-| `skipFetch` | `false` | skip the request, only do navigation lifecycle |
-| `navigate` | `method === "get"` | after a **GET**, push `query` into the route (SPA filter state). Set `false` for plain data fetch |
-| `onBefore` | — | return `false` to cancel the visit |
-| `onStart` | — | just before the request |
-| `onSuccess(response)` | — | after success; `response.data` is the body |
-| `onError(errors, error)` | — | after a failure; `errors` is normalized (see below) |
-| `onFinish` | — | always, last |
+| Option                   | Default            | Meaning                                                                                           |
+| ------------------------ | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `routePath`              | current route path | path to navigate to when `navigate` runs                                                          |
+| `replace`                | `false`            | `router.replace` instead of `router.push`                                                         |
+| `preserveState`          | `method !== "get"` | keep `useGumRemember` values for that path                                                        |
+| `preserveScroll`         | `false`            | restore the previous scroll position afterwards                                                   |
+| `skipFetch`              | `false`            | skip the request, only do navigation lifecycle                                                    |
+| `navigate`               | `method === "get"` | after a **GET**, push `query` into the route (SPA filter state). Set `false` for plain data fetch |
+| `onBefore`               | —                  | return `false` to cancel the visit                                                                |
+| `onStart`                | —                  | just before the request                                                                           |
+| `onSuccess(response)`    | —                  | after success; `response.data` is the body                                                        |
+| `onError(errors, error)` | —                  | after a failure; `errors` is normalized (see below)                                               |
+| `onFinish`               | —                  | always, last                                                                                      |
 
 **Two idioms, deliberately different:**
 
@@ -169,15 +169,15 @@ await form.post("users.users.store");   // send `data` as the store body
 
 State returned:
 
-| Property | Meaning |
-| --- | --- |
-| `data` | reactive form values (a structured clone of your defaults) |
-| `errors` | `Partial<Record<key, string>>` — first error per field |
-| `processing` | submitting in progress |
-| `progress` | reserved (upload) — currently `null` |
-| `wasSuccessful` | last submit succeeded |
-| `recentlySuccessful` | true for `recentlySuccessfulDuration` ms after success |
-| `isDirty` | data changed since init (deep JSON compare) |
+| Property             | Meaning                                                    |
+| -------------------- | ---------------------------------------------------------- |
+| `data`               | reactive form values (a structured clone of your defaults) |
+| `errors`             | `Partial<Record<key, string>>` — first error per field     |
+| `processing`         | submitting in progress                                     |
+| `progress`           | reserved (upload) — currently `null`                       |
+| `wasSuccessful`      | last submit succeeded                                      |
+| `recentlySuccessful` | true for `recentlySuccessfulDuration` ms after success     |
+| `isDirty`            | data changed since init (deep JSON compare)                |
 
 Helpers: `setError(field, msg)`, `clearErrors(...fields)`, `reset(...fields)` (restores the original defaults), and submit methods `post` / `put` / `patch` / `delete(url, payload?, options?)`, each taking `onStart` / `onSuccess` / `onError(errors, error)` / `onFinish` hooks.
 
@@ -227,19 +227,19 @@ The starter ships a ready-made, gum-powered table at `src/ui/src/components/data
 
 ### Props
 
-| Prop | Default | Meaning |
-| --- | --- | --- |
-| `path` (required) | — | binding name **or** REST endpoint |
-| `search` | `""` | external search term |
-| `loop` | `false` | static rows instead of fetching (e.g. a computed list) |
-| `option` | `[10, 25, 50]` | page-size choices |
-| `removable` | `true` | show the selection checkbox + trash button |
-| `countable` | `true` | show the `#` index column |
-| `searchable` | `true` | show the search box |
-| `optionable` | `true` | show the "Show N entries" select |
-| `disabled` | `false` | disable selection while loading |
-| `transport` | plugin default | per-table `"bindings"` or `"http"` |
-| `baseURL` | plugin default | HTTP base URL for `path` |
+| Prop              | Default        | Meaning                                                |
+| ----------------- | -------------- | ------------------------------------------------------ |
+| `path` (required) | —              | binding name **or** REST endpoint                      |
+| `search`          | `""`           | external search term                                   |
+| `loop`            | `false`        | static rows instead of fetching (e.g. a computed list) |
+| `option`          | `[10, 25, 50]` | page-size choices                                      |
+| `removable`       | `true`         | show the selection checkbox + trash button             |
+| `countable`       | `true`         | show the `#` index column                              |
+| `searchable`      | `true`         | show the search box                                    |
+| `optionable`      | `true`         | show the "Show N entries" select                       |
+| `disabled`        | `false`        | disable selection while loading                        |
+| `transport`       | plugin default | per-table `"bindings"` or `"http"`                     |
+| `baseURL`         | plugin default | HTTP base URL for `path`                               |
 
 ### Slots & events
 

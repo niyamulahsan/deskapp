@@ -9,14 +9,14 @@ Configuration comes from environment variables in `.env`. Copy `.env.example` to
 
 ## Variables
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | `sqlite:./src/storage/something-else.sqlite` (see `.env.example`) | SQLite database location. Relative paths are anchored to the base dir (project root in dev, next to the executable / `APP_BASE_DIR` in a packaged build). |
-| `APP_DATA_DIR` | `<base>/src/storage/app` | Redirects the app-managed storage root (private + tmp disks). |
-| `APP_BASE_DIR` | *(auto)* | Runtime base dir for relative `DATABASE_URL` / storage paths and where `.env` is loaded from. Useful for installed apps so config + data live outside the install folder. |
-| `DESKAPP_UI` | `true` | `false` = headless mode at runtime (tray only, no window). |
-| `DESKAPP_CHROMIUM` | *(unset)* | Overrides the Chromium binary path used by Playwright features. |
-| `NODE_ENV` | *(unset)* | Set to `development` in dev scripts for hot reload behavior. |
+| Variable           | Default                                                           | Purpose                                                                                                                                                                   |
+| ------------------ | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`     | `sqlite:./src/storage/something-else.sqlite` (see `.env.example`) | SQLite database location. Relative paths are anchored to the base dir (project root in dev, next to the executable / `APP_BASE_DIR` in a packaged build).                 |
+| `APP_DATA_DIR`     | `<base>/src/storage/app`                                          | Redirects the app-managed storage root (private + tmp disks).                                                                                                             |
+| `APP_BASE_DIR`     | *(auto)*                                                          | Runtime base dir for relative `DATABASE_URL` / storage paths and where `.env` is loaded from. Useful for installed apps so config + data live outside the install folder. |
+| `DESKAPP_UI`       | `true`                                                            | `false` = headless mode at runtime (tray only, no window).                                                                                                                |
+| `DESKAPP_CHROMIUM` | *(unset)*                                                         | Overrides the Chromium binary path used by Playwright features.                                                                                                           |
+| `NODE_ENV`         | *(unset)*                                                         | Set to `development` in dev scripts for hot reload behavior.                                                                                                              |
 
 ## Example
 

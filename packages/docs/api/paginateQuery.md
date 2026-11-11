@@ -6,20 +6,20 @@ The generic paginator. You own both halves of the query — a `total()` callback
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
+| Function         | Signature                                                              | Description                                                           |
+| ---------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | `paginate.query` | `<T>(options: PaginateQueryOptions<T>) => Promise<PaginatedResult<T>>` | Paginate over your own `total()` and `data(limit, offset)` callbacks. |
 
 Options:
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `page` | `number` | `1` | 1-indexed, clamped to `last_page`. |
-| `perPage` | `number` | `15` | Items per page. |
-| `maxPerPage` | `number` | `100` | Clamp on `perPage`. |
-| `path` | `string` | `""` | Base path used in generated `*_page_url` links. |
-| `total` | `() => Promise<number>` | — | Count query; must resolve to the total row count. |
-| `data` | `(limit: number, offset: number) => Promise<T[]>` | — | Paged select; receives the effective `limit` and `offset`. |
+| Option       | Type                                              | Default | Description                                                |
+| ------------ | ------------------------------------------------- | ------- | ---------------------------------------------------------- |
+| `page`       | `number`                                          | `1`     | 1-indexed, clamped to `last_page`.                         |
+| `perPage`    | `number`                                          | `15`    | Items per page.                                            |
+| `maxPerPage` | `number`                                          | `100`   | Clamp on `perPage`.                                        |
+| `path`       | `string`                                          | `""`    | Base path used in generated `*_page_url` links.            |
+| `total`      | `() => Promise<number>`                           | —       | Count query; must resolve to the total row count.          |
+| `data`       | `(limit: number, offset: number) => Promise<T[]>` | —       | Paged select; receives the effective `limit` and `offset`. |
 
 ## Use cases
 

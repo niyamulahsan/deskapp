@@ -6,8 +6,8 @@ Bounded in-process async queue: at most `concurrency` tasks run at once; excess 
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
+| Function | Signature                                             | Description                                                              |
+| -------- | ----------------------------------------------------- | ------------------------------------------------------------------------ |
 | `create` | `<T>(options?: { concurrency?: number }) => Queue<T>` | New queue running at most `concurrency` (default `1`) tasks in parallel. |
 
 ## Types

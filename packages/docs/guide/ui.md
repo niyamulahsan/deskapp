@@ -74,23 +74,23 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 
 ### File inventory
 
-| File | What it controls | When you switch |
-| --- | --- | --- |
-| `src/ui/vite.config.ts` | Vite plugins, aliases, dev server, build output | **Keep.** Swap `plugins: [vue()]` for your framework's plugin; keep the `@`/`@/ui` aliases, `server.fs.allow` (shared `src/icons/`), `server.proxy`, and `build.outDir: "dist"`. |
-| `src/ui/tsconfig.json` | `@/ui/*` → `./src/*` alias, `moduleResolution: "bundler"`, `noEmit` | **Keep** — paths are a convention, not Vue-specific. |
-| `src/ui/index.html` | SPA shell (`<div id="app">` + module script) | **Keep** the shell; repoint the script at your entry (e.g. `/src/app.tsx`). |
-| `src/ui/src/bindings.d.ts` | Types the runtime `bindings` global | **Keep** — independent of your framework. |
-| `src/ui/src/vite-env.d.ts` | Vite client types | **Keep.** |
-| `src/ui/src/app.ts` | `createApp(App).use(...).mount('#app')` | **Replace** with your framework's mount code. |
-| `src/ui/src/App.vue`, `components/` | Vue demo UI | **Replace** with your components. |
-| `src/ui/src/plugins/pulse.ts` | Realtime socket bridge (a Vue plugin) | **Replace** with your framework's equivalent if you use realtime. |
-| `src/ui/src/plugins/gum.ts` | Requests & forms (bindings or HTTP) + the `DataTable` component | **Replace** with your framework's data-fetching layer, or keep both and call the backend via `bindings` anyway. |
-| `src/ui/.vscode/extensions.json` | Recommends `Vue.volar` | Update to your framework's editor extension. |
-| `src/ui/public/` | Static assets copied verbatim into `dist` | Keep / extend. |
-| `deno.json` → `imports` | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here (`npm:`). |
-| `deno.json` → `tasks` (`ui`, `build:ui`, `dev`, `build:*`) | Run the Vite build | **Keep** — they just invoke `vite`; only edit if you leave Vite. |
-| `src/main.ts` | `resolveDistPath()` → `serveDir` of `src/ui/dist` | **Keep** — never framework-dependent. |
-| `.env` / `.env.example` | `DESKAPP_UI`, `VITE_SOCKET_URL`, `VITE_API_URL` | Keep; `DESKAPP_UI=false` disables the UI at runtime. |
+| File                                                       | What it controls                                                                                                                            | When you switch                                                                                                                                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/vite.config.ts`                                    | Vite plugins, aliases, dev server, build output                                                                                             | **Keep.** Swap `plugins: [vue()]` for your framework's plugin; keep the `@`/`@/ui` aliases, `server.fs.allow` (shared `src/icons/`), `server.proxy`, and `build.outDir: "dist"`. |
+| `src/ui/tsconfig.json`                                     | `@/ui/*` → `./src/*` alias, `moduleResolution: "bundler"`, `noEmit`                                                                         | **Keep** — paths are a convention, not Vue-specific.                                                                                                                             |
+| `src/ui/index.html`                                        | SPA shell (`<div id="app">` + module script)                                                                                                | **Keep** the shell; repoint the script at your entry (e.g. `/src/app.tsx`).                                                                                                      |
+| `src/ui/src/bindings.d.ts`                                 | Types the runtime `bindings` global                                                                                                         | **Keep** — independent of your framework.                                                                                                                                        |
+| `src/ui/src/vite-env.d.ts`                                 | Vite client types                                                                                                                           | **Keep.**                                                                                                                                                                        |
+| `src/ui/src/app.ts`                                        | `createApp(App).use(...).mount('#app')`                                                                                                     | **Replace** with your framework's mount code.                                                                                                                                    |
+| `src/ui/src/App.vue`, `components/`                        | Vue demo UI                                                                                                                                 | **Replace** with your components.                                                                                                                                                |
+| `src/ui/src/plugins/pulse.ts`                              | Realtime socket bridge (a Vue plugin)                                                                                                       | **Replace** with your framework's equivalent if you use realtime.                                                                                                                |
+| `src/ui/src/plugins/gum.ts`                                | Requests & forms (bindings or HTTP) + the `DataTable` component                                                                             | **Replace** with your framework's data-fetching layer, or keep both and call the backend via `bindings` anyway.                                                                  |
+| `src/ui/.vscode/extensions.json`                           | Recommends `Vue.volar`                                                                                                                      | Update to your framework's editor extension.                                                                                                                                     |
+| `src/ui/public/`                                           | Static assets copied verbatim into `dist`                                                                                                   | Keep / extend.                                                                                                                                                                   |
+| `deno.json` → `imports`                                    | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here (`npm:`).                                                                                                                              |
+| `deno.json` → `tasks` (`ui`, `build:ui`, `dev`, `build:*`) | Run the Vite build                                                                                                                          | **Keep** — they just invoke `vite`; only edit if you leave Vite.                                                                                                                 |
+| `src/main.ts`                                              | `resolveDistPath()` → `serveDir` of `src/ui/dist`                                                                                           | **Keep** — never framework-dependent.                                                                                                                                            |
+| `.env` / `.env.example`                                    | `DESKAPP_UI`, `VITE_SOCKET_URL`, `VITE_API_URL`                                                                                             | Keep; `DESKAPP_UI=false` disables the UI at runtime.                                                                                                                             |
 
 ### Reference — full file contents
 
@@ -99,32 +99,37 @@ Switching frontends replaces the files below. The copy-paste-safe originals are 
 **`src/ui/vite.config.ts`** — as shipped:
 
 ```ts
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
+
+const rootDir = typeof import.meta.dirname === "string"
+  ? import.meta.dirname
+  : path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  // Use path.resolve for bulletproof Windows support
+  root: path.resolve(rootDir, "."),
   plugins: [vue()],
+  base: "./",
   define: {
-    __SOCKET_ENABLED__: JSON.stringify(
-      !!process.env.VITE_SOCKET_URL || !!process.env.VITE_API_URL
-    ),
+    __SOCKET_ENABLED__: JSON.stringify(!!process.env.VITE_SOCKET_URL || !!process.env.VITE_API_URL),
   },
   resolve: {
     alias: {
-      "@/ui": fileURLToPath(new URL("src/", import.meta.url)),
-      "@": fileURLToPath(new URL("src/", import.meta.url)),
+      "@/ui": path.resolve(rootDir, "./src"),
+      "@": path.resolve(rootDir, "../../src"),
     },
   },
   server: {
-    // Allow serving the shared icon folder at the project root (src/icons)
-    // alongside the ui package root.
+    port: 5173,
+    strictPort: true,
     fs: {
-      allow: [fileURLToPath(new URL("../..", import.meta.url))],
+      allow: [path.resolve(rootDir, "../..")],
     },
     proxy: {
       "/__invoke": "http://localhost:8000",
-      "/__bindings": "http://localhost:8000",
     },
   },
   build: {
@@ -150,14 +155,11 @@ Keep the `define` block (realtime flag), both aliases, `server.fs.allow` and `se
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "paths": {
-      "@/ui/*": [
-        "./src/*"
-      ]
+      "@/ui/*": ["./src/*"],
+      "@/*": ["../../src/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
 ```
 

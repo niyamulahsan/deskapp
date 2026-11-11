@@ -12,11 +12,11 @@ const q = queue.create({ concurrency: 2 });
 
 The created queue is an object with:
 
-| Member | Description |
-| --- | --- |
+| Member      | Description                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
 | `q.add(fn)` | Enqueue a job `() => Promise<T>` or `() => T`. Resolves with the job's value; rejects only that caller. |
-| `q.size` | Number of jobs waiting to run. |
-| `q.running` | Number of jobs currently executing. |
+| `q.size`    | Number of jobs waiting to run.                                                                          |
+| `q.running` | Number of jobs currently executing.                                                                     |
 
 Jobs run sequentially up to `concurrency`; the queue never exceeds that budget.
 

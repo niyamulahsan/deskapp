@@ -11,33 +11,33 @@ Top-level methods operate on the default `private` disk; scope explicitly with `
 
 ## Signature
 
-| Member | Signature | Description |
-| --- | --- | --- |
-| `init` | `() => Promise<void>` | Create the configured disk directories (called at boot). |
-| `driver` | `string` | `"local"`. |
-| `defaultDisk` | `Disk` | `"private"`. |
-| `disk` | `(disk: Disk) => StorageDisk` | A disk-scoped handle. |
-| `put` | `(file: string, data: FileData) => Promise<string>` | Write a file; returns the normalized key. |
-| `putFile` | `(directory: string, file: File, name?: string) => Promise<string>` | Store a browser-style `File` with a deterministic name. |
-| `get` | `(file: string) => Promise<Uint8Array>` | Read a file's bytes. |
-| `delete` | `(file: string) => Promise<void>` | Delete a file (missing ignored). |
-| `copy` | `(from: string, to: string) => Promise<string>` | Duplicate a file. |
-| `move` | `(from: string, to: string) => Promise<string>` | Move/rename a file. |
-| `exists` | `(file: string) => Promise<boolean>` | Whether the file exists. |
-| `missing` | `(file: string) => Promise<boolean>` | Negation of `exists`. |
-| `size` | `(file: string) => Promise<number>` | Byte size. |
-| `mimeType` / `mime` | `(file: string) => Promise<string>` | MIME type. |
-| `lastModified` | `(file: string) => Promise<number>` | Epoch ms of last modification. |
-| `files` | `(directory?: string) => Promise<string[]>` | Flat file paths in a directory (relative). |
-| `directories` | `(directory?: string) => Promise<string[]>` | Immediate child directory names. |
-| `makeDirectory` | `(directory: string) => Promise<string>` | Ensure a directory exists. |
-| `deleteDirectory` | `(directory: string) => Promise<void>` | Delete a directory tree. |
-| `readStream` | `(file: string) => Promise<ReadableStream<Uint8Array>>` | Stream a file's bytes out. |
-| `writeStream` | `(file: string, stream: ReadableStream<Uint8Array>) => Promise<string>` | Drain a stream into a file. |
-| `url` / `temporaryUrl` | `(file: string) => string` | Direct `file://` URL for the file. |
-| `download` | `(c: unknown, file: string, filename?: string) => Promise<Response>` | A `Response` with attachment headers for the file. |
-| `generateForDownload` | `(o: { prefix: string; extension: string; data: FileData }) => Promise<string>` | Write an ephemeral file into tmp for a deferred download. |
-| `consumeGenerated` | `(file: string) => Promise<Uint8Array>` | Read a generated tmp file once, then delete it. |
+| Member                 | Signature                                                                       | Description                                               |
+| ---------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `init`                 | `() => Promise<void>`                                                           | Create the configured disk directories (called at boot).  |
+| `driver`               | `string`                                                                        | `"local"`.                                                |
+| `defaultDisk`          | `Disk`                                                                          | `"private"`.                                              |
+| `disk`                 | `(disk: Disk) => StorageDisk`                                                   | A disk-scoped handle.                                     |
+| `put`                  | `(file: string, data: FileData) => Promise<string>`                             | Write a file; returns the normalized key.                 |
+| `putFile`              | `(directory: string, file: File, name?: string) => Promise<string>`             | Store a browser-style `File` with a deterministic name.   |
+| `get`                  | `(file: string) => Promise<Uint8Array>`                                         | Read a file's bytes.                                      |
+| `delete`               | `(file: string) => Promise<void>`                                               | Delete a file (missing ignored).                          |
+| `copy`                 | `(from: string, to: string) => Promise<string>`                                 | Duplicate a file.                                         |
+| `move`                 | `(from: string, to: string) => Promise<string>`                                 | Move/rename a file.                                       |
+| `exists`               | `(file: string) => Promise<boolean>`                                            | Whether the file exists.                                  |
+| `missing`              | `(file: string) => Promise<boolean>`                                            | Negation of `exists`.                                     |
+| `size`                 | `(file: string) => Promise<number>`                                             | Byte size.                                                |
+| `mimeType` / `mime`    | `(file: string) => Promise<string>`                                             | MIME type.                                                |
+| `lastModified`         | `(file: string) => Promise<number>`                                             | Epoch ms of last modification.                            |
+| `files`                | `(directory?: string) => Promise<string[]>`                                     | Flat file paths in a directory (relative).                |
+| `directories`          | `(directory?: string) => Promise<string[]>`                                     | Immediate child directory names.                          |
+| `makeDirectory`        | `(directory: string) => Promise<string>`                                        | Ensure a directory exists.                                |
+| `deleteDirectory`      | `(directory: string) => Promise<void>`                                          | Delete a directory tree.                                  |
+| `readStream`           | `(file: string) => Promise<ReadableStream<Uint8Array>>`                         | Stream a file's bytes out.                                |
+| `writeStream`          | `(file: string, stream: ReadableStream<Uint8Array>) => Promise<string>`         | Drain a stream into a file.                               |
+| `url` / `temporaryUrl` | `(file: string) => string`                                                      | Direct `file://` URL for the file.                        |
+| `download`             | `(c: unknown, file: string, filename?: string) => Promise<Response>`            | A `Response` with attachment headers for the file.        |
+| `generateForDownload`  | `(o: { prefix: string; extension: string; data: FileData }) => Promise<string>` | Write an ephemeral file into tmp for a deferred download. |
+| `consumeGenerated`     | `(file: string) => Promise<Uint8Array>`                                         | Read a generated tmp file once, then delete it.           |
 
 ## Types
 

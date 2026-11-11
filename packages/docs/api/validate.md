@@ -6,10 +6,10 @@ Schema validation with a normalized error shape: build a schema with `validate.z
 
 ## Signature
 
-| Member | Signature | Description |
-| --- | --- | --- |
-| `z` | (Zod) | The full Zod namespace — build schemas. |
-| `run` | `<T>(schema: ZodType<T>, data: unknown) => Promise<T>` | Validate + parse. On success returns typed data; on failure **throws** a structured 422-shaped failure. |
+| Member | Signature                                              | Description                                                                                             |
+| ------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `z`    | (Zod)                                                  | The full Zod namespace — build schemas.                                                                 |
+| `run`  | `<T>(schema: ZodType<T>, data: unknown) => Promise<T>` | Validate + parse. On success returns typed data; on failure **throws** a structured 422-shaped failure. |
 
 ## Error shape
 

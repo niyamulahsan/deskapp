@@ -6,27 +6,27 @@ nexgen-style pagination for Drizzle **relational** queries — mirrors nexgen's 
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
+| Function         | Signature                                                              | Description                                     |
+| ---------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
 | `paginate.model` | `<T>(options: PaginateModelOptions<T>) => Promise<PaginatedResult<T>>` | Paginate relational queries with eager loading. |
 
 Options:
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
-| `page` | `number` | `1` | 1-indexed, clamped to `last_page`. |
-| `perPage` | `number` | `15` | Items per page. |
-| `maxPerPage` | `number` | `100` | Clamp on `perPage`. |
-| `path` | `string` | `""` | Base path used in generated `*_page_url` links. |
-| `table` | `SQLiteTable` | — | Model used for the `count()` (e.g. `posts` from `@/modules/blog/database/models/post.model.ts`). |
-| `query` | `{ findMany: (args) => Promise<T[]> }` | — | The relational query surface, e.g. `db.query.posts`. |
-| `where` | `SQL<unknown>` | — | Applied to both the count and `findMany`. |
-| `with` | `Record<string, unknown>` | — | Eager-load relations (`{ author: true }`). |
-| `columns` | `Record<string, unknown>` | — | Column selection passed to `findMany`. |
-| `extras` | `Record<string, unknown>` | — | Extra fields passed to `findMany`. |
-| `orderBy` | `unknown` | — | Drizzle relational `orderBy` (callback or SQL array). |
-| `total` | `() => Promise<number>` | — | Custom count — overrides `table` + `where`. |
-| `data` | `(params: { limit: number; offset: number }) => Promise<T[]>` | — | Custom data loader — overrides `query`. |
+| Option       | Type                                                          | Default | Description                                                                                      |
+| ------------ | ------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `page`       | `number`                                                      | `1`     | 1-indexed, clamped to `last_page`.                                                               |
+| `perPage`    | `number`                                                      | `15`    | Items per page.                                                                                  |
+| `maxPerPage` | `number`                                                      | `100`   | Clamp on `perPage`.                                                                              |
+| `path`       | `string`                                                      | `""`    | Base path used in generated `*_page_url` links.                                                  |
+| `table`      | `SQLiteTable`                                                 | —       | Model used for the `count()` (e.g. `posts` from `@/modules/blog/database/models/post.model.ts`). |
+| `query`      | `{ findMany: (args) => Promise<T[]> }`                        | —       | The relational query surface, e.g. `db.query.posts`.                                             |
+| `where`      | `SQL<unknown>`                                                | —       | Applied to both the count and `findMany`.                                                        |
+| `with`       | `Record<string, unknown>`                                     | —       | Eager-load relations (`{ author: true }`).                                                       |
+| `columns`    | `Record<string, unknown>`                                     | —       | Column selection passed to `findMany`.                                                           |
+| `extras`     | `Record<string, unknown>`                                     | —       | Extra fields passed to `findMany`.                                                               |
+| `orderBy`    | `unknown`                                                     | —       | Drizzle relational `orderBy` (callback or SQL array).                                            |
+| `total`      | `() => Promise<number>`                                       | —       | Custom count — overrides `table` + `where`.                                                      |
+| `data`       | `(params: { limit: number; offset: number }) => Promise<T[]>` | —       | Custom data loader — overrides `query`.                                                          |
 
 ## Use cases
 

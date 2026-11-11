@@ -14,12 +14,12 @@ This also runs automatically as part of `npm run package`. The sync updates `pac
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `npm run build` | Build UI and Electron main/preload. |
-| `npm run build:ui` | Build the Vue UI with Vite. |
-| `npm run build:electron` | Build main and preload with esbuild. |
-| `npm run package` | Build and package with electron-builder. Outputs to `release/`. |
+| Command                  | What it does                                                    |
+| ------------------------ | --------------------------------------------------------------- |
+| `npm run build`          | Build UI and Electron main/preload.                             |
+| `npm run build:ui`       | Build the Vue UI with Vite.                                     |
+| `npm run build:electron` | Build main and preload with esbuild.                            |
+| `npm run package`        | Build and package with electron-builder. Outputs to `release/`. |
 
 ```sh
 npm run build

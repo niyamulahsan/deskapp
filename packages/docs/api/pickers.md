@@ -6,11 +6,11 @@ Real OS dialogs behind one cross-platform API (WinForms on Windows, NSOpenPanel/
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `open` | `(options?: PickOpenOptions) => Promise<string \| null>` | Native "Open a file" dialog. |
-| `save` | `(options?: PickSaveOptions) => Promise<string \| null>` | Native "Save As" dialog. |
-| `folder` | `(options?: PickFolderOptions) => Promise<string \| null>` | Native folder-chooser. |
+| Function | Signature                                                  | Description                  |
+| -------- | ---------------------------------------------------------- | ---------------------------- |
+| `open`   | `(options?: PickOpenOptions) => Promise<string \| null>`   | Native "Open a file" dialog. |
+| `save`   | `(options?: PickSaveOptions) => Promise<string \| null>`   | Native "Save As" dialog.     |
+| `folder` | `(options?: PickFolderOptions) => Promise<string \| null>` | Native folder-chooser.       |
 
 ## Types
 

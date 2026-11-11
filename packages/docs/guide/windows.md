@@ -6,12 +6,12 @@ Deskapp uses Electron's BrowserWindow. It wraps window creation behind `win` (fr
 
 Available from the facade:
 
-| Function | Description |
-| --- | --- |
-| `win.createWindow(preset, name, preloadPath)` | Create a window from a preset. Used internally by `main.ts`. |
-| `win.openWindow(preset)` | Open a window on demand — accepts a config preset name or an inline `WindowPreset`. |
-| `win.getWindow(id?)` | Look up a window by id; no arg returns the first/main window. |
-| `win.getWindowCount()` | Number of tracked open windows. |
+| Function                                      | Description                                                                         |
+| --------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `win.createWindow(preset, name, preloadPath)` | Create a window from a preset. Used internally by `main.ts`.                        |
+| `win.openWindow(preset)`                      | Open a window on demand — accepts a config preset name or an inline `WindowPreset`. |
+| `win.getWindow(id?)`                          | Look up a window by id; no arg returns the first/main window.                       |
+| `win.getWindowCount()`                        | Number of tracked open windows.                                                     |
 
 Windows are independent. Closing a window closes only that window. On non-macOS platforms, the app quits when all windows are closed (configured in `main.ts`).
 
@@ -54,20 +54,20 @@ export const windows: Record<string, WindowPreset> = {
 
 ### Available APIs (`chrome` from facade)
 
-| Method | Purpose | Usage |
-| --- | --- | --- |
-| `chrome.setupDesktopChrome(win)` | One-call setup for main window (menu + context menu + tray) | Called automatically in `main.ts` if chrome enabled |
-| `chrome.installAppMenu(win)` | Install application menu (`app-menu.ts`) | Manual control |
-| `chrome.installContextMenu(win)` | Install right-click context menu (`context-menu.ts`) | Manual control |
-| `chrome.createAppTray()` | Create app tray with default menu/icon (`tray.ts`) | Returns tray instance or undefined |
-| `chrome.createTray()` | Create custom tray | Returns tray instance |
-| `chrome.createHeadlessTray()` | Create tray for headless mode | Keeps app alive without window |
-| `chrome.hideDock()` | Hide macOS dock icon (for tray-only apps) | macOS only |
-| `chrome.alertDialog(msg)` | Show alert dialog (`dialogs.ts`) | Synchronous |
-| `chrome.confirmDialog(msg)` | Show confirm dialog (OK/Cancel) | Returns boolean |
-| `chrome.promptDialog(msg, default?)` | Show prompt dialog | Returns string or null if cancelled |
-| `chrome.defaultMenuItems()` | Get default menu items array | For customization |
-| `chrome.defaultContextMenuItems()` | Get default context menu items | For customization |
+| Method                               | Purpose                                                     | Usage                                               |
+| ------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------- |
+| `chrome.setupDesktopChrome(win)`     | One-call setup for main window (menu + context menu + tray) | Called automatically in `main.ts` if chrome enabled |
+| `chrome.installAppMenu(win)`         | Install application menu (`app-menu.ts`)                    | Manual control                                      |
+| `chrome.installContextMenu(win)`     | Install right-click context menu (`context-menu.ts`)        | Manual control                                      |
+| `chrome.createAppTray()`             | Create app tray with default menu/icon (`tray.ts`)          | Returns tray instance or undefined                  |
+| `chrome.createTray()`                | Create custom tray                                          | Returns tray instance                               |
+| `chrome.createHeadlessTray()`        | Create tray for headless mode                               | Keeps app alive without window                      |
+| `chrome.hideDock()`                  | Hide macOS dock icon (for tray-only apps)                   | macOS only                                          |
+| `chrome.alertDialog(msg)`            | Show alert dialog (`dialogs.ts`)                            | Synchronous                                         |
+| `chrome.confirmDialog(msg)`          | Show confirm dialog (OK/Cancel)                             | Returns boolean                                     |
+| `chrome.promptDialog(msg, default?)` | Show prompt dialog                                          | Returns string or null if cancelled                 |
+| `chrome.defaultMenuItems()`          | Get default menu items array                                | For customization                                   |
+| `chrome.defaultContextMenuItems()`   | Get default context menu items                              | For customization                                   |
 
 ### Using from UI (via bindings)
 
@@ -94,10 +94,10 @@ export const handlers = { showAlert, showConfirm, showPrompt, toggleTray };
 
 Native file dialogs via Electron's `dialog` module:
 
-| Function | Description |
-| --- | --- |
-| `pickers.open(options)` | Open file dialog |
-| `pickers.save(options)` | Save file dialog |
+| Function                  | Description        |
+| ------------------------- | ------------------ |
+| `pickers.open(options)`   | Open file dialog   |
+| `pickers.save(options)`   | Save file dialog   |
 | `pickers.folder(options)` | Open folder dialog |
 
 ```ts

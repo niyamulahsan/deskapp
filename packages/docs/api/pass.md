@@ -6,10 +6,10 @@ bcrypt password hashing and verification (10 salt rounds). See [Password](../gui
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `hashPassword` | `(password: string) => Promise<string>` | Hash a plaintext password; returns the bcrypt hash string. |
-| `verifyPassword` | `(password: string, hash: string) => Promise<boolean>` | Check a plaintext password against a stored hash. |
+| Function         | Signature                                              | Description                                                |
+| ---------------- | ------------------------------------------------------ | ---------------------------------------------------------- |
+| `hashPassword`   | `(password: string) => Promise<string>`                | Hash a plaintext password; returns the bcrypt hash string. |
+| `verifyPassword` | `(password: string, hash: string) => Promise<boolean>` | Check a plaintext password against a stored hash.          |
 
 ## Use cases
 

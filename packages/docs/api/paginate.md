@@ -8,19 +8,19 @@ Imported from the facade: `import { paginate, sql } from "@/core/facade.ts"`.
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `paginate.query` | `<T>(options: PaginateQueryOptions<T>) => Promise<PaginatedResult<T>>` | Fully custom `total()` / `data(limit, offset)` pagination — joins, aggregates, anything. |
-| `paginate.table` | `<T>(table: SQLiteTable, options?: PaginateTableOptions) => Promise<PaginatedResult<T>>` | Paginate a whole schema table with optional `where` / `orderBy`. |
-| `paginate.model` | `<T>(options: PaginateModelOptions<T>) => Promise<PaginatedResult<T>>` | Paginate relational queries (`db.query.<table>`) with `with` / `columns` / `extras`. |
+| Function         | Signature                                                                                | Description                                                                              |
+| ---------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `paginate.query` | `<T>(options: PaginateQueryOptions<T>) => Promise<PaginatedResult<T>>`                   | Fully custom `total()` / `data(limit, offset)` pagination — joins, aggregates, anything. |
+| `paginate.table` | `<T>(table: SQLiteTable, options?: PaginateTableOptions) => Promise<PaginatedResult<T>>` | Paginate a whole schema table with optional `where` / `orderBy`.                         |
+| `paginate.model` | `<T>(options: PaginateModelOptions<T>) => Promise<PaginatedResult<T>>`                   | Paginate relational queries (`db.query.<table>`) with `with` / `columns` / `extras`.     |
 
 ## Which one do I use?
 
-| You want to… | Use |
-| --- | --- |
-| Paginate the full rows of one table | [`paginate.table`](./paginateTable) (`paginate.table(users, { page: 2 })`) |
-| Paginate eager-loaded relations (`db.query.<table>`) | [`paginate.model`](./paginateModel) (`with: { posts: true }`) |
-| Own the count and data queries completely (joins, aggregates) | [`paginate.query`](./paginateQuery) (you supply `total` + `data`) |
+| You want to…                                                  | Use                                                                        |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Paginate the full rows of one table                           | [`paginate.table`](./paginateTable) (`paginate.table(users, { page: 2 })`) |
+| Paginate eager-loaded relations (`db.query.<table>`)          | [`paginate.model`](./paginateModel) (`with: { posts: true }`)              |
+| Own the count and data queries completely (joins, aggregates) | [`paginate.query`](./paginateQuery) (you supply `total` + `data`)          |
 
 ## Shared envelope
 

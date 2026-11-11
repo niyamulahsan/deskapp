@@ -6,10 +6,10 @@ Named cron schedules backed by [croner](https://croner.github.io/). Jobs are uni
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
+| Function   | Signature                                                                                                              | Description                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
 | `schedule` | `(name: string, expression: string, task: () => void \| Promise<void>, options?: { timezone?: string }) => CronHandle` | Register a named cron job (replacing any existing job with the same name) and return a handle. |
-| `stop` | `() => void` | Stop **all** registered jobs (call on app shutdown). |
+| `stop`     | `() => void`                                                                                                           | Stop **all** registered jobs (call on app shutdown).                                           |
 
 ## Types
 

@@ -24,23 +24,23 @@ import {
 
 Each facade member below has its own page — every export linked here is a documented part of the public API.
 
-| Function | Purpose | Guide |
-| --- | --- | --- |
-| [`win`](./win) | Desktop window lifecycle: create / open / get / count | [Windows](../guide/windows) |
-| [`chrome`](./chrome) | Tray, application & context menus, native dialogs, chrome setup | [Windows](../guide/windows) |
-| [`pickers`](./pickers) | Native open / save / folder dialogs | [Windows](../guide/windows) |
-| [`db`](./db) | Drizzle connection + query proxy (`init` / `close`) | [Database](../guide/database) |
-| [`paginate`](./paginate) | nexgen-style `PaginatedResult` envelope, shared by the three paginators below | [Database](../guide/database) |
-| [`paginateQuery`](./paginateQuery) | Generic paginator over custom `total()` / `data(limit, offset)` callbacks | [Database](../guide/database) |
-| [`paginateTable`](./paginateTable) | Paginate a whole schema table with `where` / `orderBy` | [Database](../guide/database) |
-| [`paginateModel`](./paginateModel) | Paginate relational queries (`db.query.<table>`) with eager loading | [Database](../guide/database) |
-| [`queue`](./queue) | Bounded in-process async queue with `create({ concurrency })` | [Queue](../guide/queue) |
-| [`cron`](./cron) | Named cron schedules with `schedule` / `stop` | [Scheduler](../guide/scheduler) |
-| [`chromium`](./chromium) | Chromium binary + bundled extension resolution for Playwright | [Playwright](../guide/playwright) |
-| [`pass`](./pass) | bcrypt hash / verify | [Password](../guide/password) |
-| [`validate`](./validate) | Zod schemas + `run` with a 422-shaped failure | [Validation](../guide/validation) |
-| [`files`](./files) | Open / save / upload / download / remove on any user-picked path | [Storage](../guide/storage) |
-| [`storage`](./storage) | The app's own `private` / `tmp` disks | [Storage](../guide/storage) |
+| Function                           | Purpose                                                                       | Guide                             |
+| ---------------------------------- | ----------------------------------------------------------------------------- | --------------------------------- |
+| [`win`](./win)                     | Desktop window lifecycle: create / open / get / count                         | [Windows](../guide/windows)       |
+| [`chrome`](./chrome)               | Tray, application & context menus, native dialogs, chrome setup               | [Windows](../guide/windows)       |
+| [`pickers`](./pickers)             | Native open / save / folder dialogs                                           | [Windows](../guide/windows)       |
+| [`db`](./db)                       | Drizzle connection + query proxy (`init` / `close`)                           | [Database](../guide/database)     |
+| [`paginate`](./paginate)           | nexgen-style `PaginatedResult` envelope, shared by the three paginators below | [Database](../guide/database)     |
+| [`paginateQuery`](./paginateQuery) | Generic paginator over custom `total()` / `data(limit, offset)` callbacks     | [Database](../guide/database)     |
+| [`paginateTable`](./paginateTable) | Paginate a whole schema table with `where` / `orderBy`                        | [Database](../guide/database)     |
+| [`paginateModel`](./paginateModel) | Paginate relational queries (`db.query.<table>`) with eager loading           | [Database](../guide/database)     |
+| [`queue`](./queue)                 | Bounded in-process async queue with `create({ concurrency })`                 | [Queue](../guide/queue)           |
+| [`cron`](./cron)                   | Named cron schedules with `schedule` / `stop`                                 | [Scheduler](../guide/scheduler)   |
+| [`chromium`](./chromium)           | Chromium binary + bundled extension resolution for Playwright                 | [Playwright](../guide/playwright) |
+| [`pass`](./pass)                   | bcrypt hash / verify                                                          | [Password](../guide/password)     |
+| [`validate`](./validate)           | Zod schemas + `run` with a 422-shaped failure                                 | [Validation](../guide/validation) |
+| [`files`](./files)                 | Open / save / upload / download / remove on any user-picked path              | [Storage](../guide/storage)       |
+| [`storage`](./storage)             | The app's own `private` / `tmp` disks                                         | [Storage](../guide/storage)       |
 
 ## Which one do I use when?
 

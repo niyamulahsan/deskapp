@@ -15,12 +15,12 @@ A tool like Playwright needs to know *which* Chromium to launch. That binary exi
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `exists` | `(path: string) => boolean` | Whether a path exists on disk. |
-| `candidates` | `(overrides?: { env?: string \| null; execPath?: string; cwd?: string }) => string[]` | All candidate binaries, in resolution order. |
-| `resolve` | `(overrides?: { env?: string \| null; execPath?: string; cwd?: string }) => string \| undefined` | The first existing candidate, or `undefined` (then let Playwright use its registry cache). |
-| `extensions` | `(overrides?: { execPath?: string; cwd?: string }) => string[]` | Bundled unpacked-extension folders next to the binary. |
+| Function     | Signature                                                                                        | Description                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `exists`     | `(path: string) => boolean`                                                                      | Whether a path exists on disk.                                                             |
+| `candidates` | `(overrides?: { env?: string \| null; execPath?: string; cwd?: string }) => string[]`            | All candidate binaries, in resolution order.                                               |
+| `resolve`    | `(overrides?: { env?: string \| null; execPath?: string; cwd?: string }) => string \| undefined` | The first existing candidate, or `undefined` (then let Playwright use its registry cache). |
+| `extensions` | `(overrides?: { execPath?: string; cwd?: string }) => string[]`                                  | Bundled unpacked-extension folders next to the binary.                                     |
 
 Resolution order for the binary: `DESKAPP_CHROMIUM` env → `<exe dir>/chromium/<platform>/...` → `<cwd>/chromium/<platform>/...` → (fallback) Playwright's registry installer cache, dev only.
 

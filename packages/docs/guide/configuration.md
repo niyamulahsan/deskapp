@@ -23,18 +23,18 @@ Key parts:
 
 ## Scripts
 
-| Script | Runs |
-| --- | --- |
-| `dev` | Runs UI dev server, builds main/preload in watch mode, and launches Electron. |
-| `dev:ui` | Vite dev server for the renderer. |
-| `dev:main` | esbuild watch for main and preload. |
-| `dev:electron` | Waits for UI dev server and launches Electron. |
-| `build` | Builds UI and Electron main/preload. |
-| `build:ui` | Builds the Vue app with Vite. |
-| `build:electron` | Builds main and preload with esbuild. |
-| `start` | Runs the built app with Electron. |
-| `package` | Builds and packages with electron-builder (outputs to `release/`). |
-| `maker` | Runs the maker CLI. |
+| Script           | Runs                                                                          |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `dev`            | Runs UI dev server, builds main/preload in watch mode, and launches Electron. |
+| `dev:ui`         | Vite dev server for the renderer.                                             |
+| `dev:main`       | esbuild watch for main and preload.                                           |
+| `dev:electron`   | Waits for UI dev server and launches Electron.                                |
+| `build`          | Builds UI and Electron main/preload.                                          |
+| `build:ui`       | Builds the Vue app with Vite.                                                 |
+| `build:electron` | Builds main and preload with esbuild.                                         |
+| `start`          | Runs the built app with Electron.                                             |
+| `package`        | Builds and packages with electron-builder (outputs to `release/`).            |
+| `maker`          | Runs the maker CLI.                                                           |
 
 ## Windows (`src/window/config.ts`)
 

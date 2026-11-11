@@ -10,21 +10,21 @@ Tray, application/context menus, and native dialog helpers that sit on top of De
 
 ## Signature
 
-| Function | Signature | Description |
-| --- | --- | --- |
-| `createTray` | `() => DesktopTray \| undefined` | Create a low-level tray. Returns `undefined` when the runtime has no tray support. |
-| `isTrayAvailable` | `() => boolean` | Whether a system tray can be created on this runtime/OS. |
-| `confirmDialog` | `(message: string) => boolean` | Synchronous OS OK/Cancel dialog. |
-| `alertDialog` | `(message: string) => void` | Synchronous OS message dialog. |
-| `promptDialog` | `(message: string, defaultValue?: string) => string \| null` | Synchronous OS input dialog; `null` on cancel. |
-| `defaultMenuItems` | `() => MenuItem[]` | Default application menu (File: New / Open Settings / quit role; Edit: undo/redo/cut/copy/paste) for `installAppMenu`. |
-| `installAppMenu` | `(win: DesktopWindow) => void` | Install the default application menu onto a window. |
-| `createAppTray` | `() => DesktopTray \| undefined` | Create the app tray with default icon + menu; clicking the icon shows and focuses the main window. |
-| `defaultContextMenuItems` | `() => MenuItem[]` | Default right-click menu items. |
-| `installContextMenu` | `(win: DesktopWindow) => void` | Wire right-click (and context-menu events) on a window. |
-| `setupDesktopChrome` | `(win: DesktopWindow) => void` | One-shot setup: app menu + context menu + tray for the main window. |
-| `createHeadlessTray` | `() => DesktopTray \| undefined` | Keep the app alive with a tray-only after the last window closes (headless mode). |
-| `hideDock` | `() => void` | Hide the macOS dock icon (used in tray-only/headless mode). |
+| Function                  | Signature                                                    | Description                                                                                                            |
+| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `createTray`              | `() => DesktopTray \| undefined`                             | Create a low-level tray. Returns `undefined` when the runtime has no tray support.                                     |
+| `isTrayAvailable`         | `() => boolean`                                              | Whether a system tray can be created on this runtime/OS.                                                               |
+| `confirmDialog`           | `(message: string) => boolean`                               | Synchronous OS OK/Cancel dialog.                                                                                       |
+| `alertDialog`             | `(message: string) => void`                                  | Synchronous OS message dialog.                                                                                         |
+| `promptDialog`            | `(message: string, defaultValue?: string) => string \| null` | Synchronous OS input dialog; `null` on cancel.                                                                         |
+| `defaultMenuItems`        | `() => MenuItem[]`                                           | Default application menu (File: New / Open Settings / quit role; Edit: undo/redo/cut/copy/paste) for `installAppMenu`. |
+| `installAppMenu`          | `(win: DesktopWindow) => void`                               | Install the default application menu onto a window.                                                                    |
+| `createAppTray`           | `() => DesktopTray \| undefined`                             | Create the app tray with default icon + menu; clicking the icon shows and focuses the main window.                     |
+| `defaultContextMenuItems` | `() => MenuItem[]`                                           | Default right-click menu items.                                                                                        |
+| `installContextMenu`      | `(win: DesktopWindow) => void`                               | Wire right-click (and context-menu events) on a window.                                                                |
+| `setupDesktopChrome`      | `(win: DesktopWindow) => void`                               | One-shot setup: app menu + context menu + tray for the main window.                                                    |
+| `createHeadlessTray`      | `() => DesktopTray \| undefined`                             | Keep the app alive with a tray-only after the last window closes (headless mode).                                      |
+| `hideDock`                | `() => void`                                                 | Hide the macOS dock icon (used in tray-only/headless mode).                                                            |
 
 ## Types
 

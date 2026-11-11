@@ -12,12 +12,12 @@ npm run maker db:status
 
 ## make:* - scaffolding
 
-| Command | Arguments | Options | Creates |
-| --- | --- | --- | --- |
-| `make:module` | `<name:string>` | `--force` | `src/modules/<name>/` with a model + seeder (plus controller + schema) |
-| `make:model` | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/models/<snake>.model.ts` |
-| `make:seeder` | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/seeders/<snake>.seed.ts` |
-| `make:controller` | `<module:string> <name:string>` | `--force`, `--dry-run` | controller + Zod schema pair in the module's `controllers/` |
+| Command           | Arguments                       | Options                | Creates                                                                |
+| ----------------- | ------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| `make:module`     | `<name:string>`                 | `--force`              | `src/modules/<name>/` with a model + seeder (plus controller + schema) |
+| `make:model`      | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/models/<snake>.model.ts`                |
+| `make:seeder`     | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/seeders/<snake>.seed.ts`                |
+| `make:controller` | `<module:string> <name:string>` | `--force`, `--dry-run` | controller + Zod schema pair in the module's `controllers/`            |
 
 After creating files, update the schema and run migrations as needed. See [Database Commands](./database.md).
 

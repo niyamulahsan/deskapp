@@ -32,7 +32,7 @@ import { pulse } from "@/ui/plugins/pulse.ts";
 | `connect()` / `disconnect()` | Explicit socket lifecycle. Calling any `channel()`/`private()` auto-connects first.                    |
 | `setToken(token)`            | Set the access token (string, `null`, or a getter) sent in the Socket.IO handshake. See below.         |
 | `channel(name)`              | Listen on a public channel. Joins the Socket.IO room (`emit("join", name)`), returns a channel handle. |
-| `private(room)`              | Alias for `channel("private:" + room)` — authenticated rooms; `private("user:<id>")` is self-only.       |
+| `private(room)`              | Alias for `channel("private:" + room)` — authenticated rooms; `private("user:<id>")` is self-only.     |
 | `leave(room)`                | Leave the room on the server and drop its listeners.                                                   |
 | `$pulse`                     | Global property (typed) for Options API access.                                                        |
 

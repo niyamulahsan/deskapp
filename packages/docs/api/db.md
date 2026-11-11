@@ -8,15 +8,15 @@ The Drizzle ORM query client for SQLite plus the connection lifecycle in one obj
 
 ## Signature
 
-| Member | Signature | Description |
-| --- | --- | --- |
-| `init` | `() => Promise<DrizzleDatabase>` | Open the connection once (idempotent) and return it. Called at boot in `src/main.ts`. |
-| `close` | `() => void` | Close the connection and reset the singleton. |
-| `select` | (Drizzle) | `db.select().from(users)` — query rows. |
-| `insert` | (Drizzle) | `db.insert(users).values({ ... }).returning()` — create rows. |
-| `update` | (Drizzle) | `db.update(users).set({ ... }).where(...)` — modify rows. |
-| `delete` | (Drizzle) | `db.delete(users).where(...)` — remove rows. |
-| `query` | (Drizzle) | `db.query.users.findMany({ where, with, orderBy })` — relational queries with eager loading. |
+| Member   | Signature                        | Description                                                                                  |
+| -------- | -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `init`   | `() => Promise<DrizzleDatabase>` | Open the connection once (idempotent) and return it. Called at boot in `src/main.ts`.        |
+| `close`  | `() => void`                     | Close the connection and reset the singleton.                                                |
+| `select` | (Drizzle)                        | `db.select().from(users)` — query rows.                                                      |
+| `insert` | (Drizzle)                        | `db.insert(users).values({ ... }).returning()` — create rows.                                |
+| `update` | (Drizzle)                        | `db.update(users).set({ ... }).where(...)` — modify rows.                                    |
+| `delete` | (Drizzle)                        | `db.delete(users).where(...)` — remove rows.                                                 |
+| `query`  | (Drizzle)                        | `db.query.users.findMany({ where, with, orderBy })` — relational queries with eager loading. |
 
 Calls on `db` before `init()` throw "Database is not initialized".
 
