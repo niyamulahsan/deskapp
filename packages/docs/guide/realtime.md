@@ -32,8 +32,8 @@ import { pulse } from "@/ui/plugins/pulse.ts";
 | `connect()` / `disconnect()` | Explicit socket lifecycle. Calling any `channel()`/`private()` auto-connects first.                    |
 | `setToken(token)`            | Set the access token (string, `null`, or a getter) sent in the Socket.IO handshake. See below.         |
 | `channel(name)`              | Listen on a public channel. Joins the Socket.IO room (`emit("join", name)`), returns a channel handle. |
-| `private(room)`              | Alias for `channel("private:" + room)` — per-user rooms.                                               |
-| `leave(room)`                | Leave the room and drop its listeners.                                                                 |
+| `private(room)`              | Alias for `channel("private:" + room)` — authenticated rooms; `private("user:<id>")` is self-only.       |
+| `leave(room)`                | Leave the room on the server and drop its listeners.                                                   |
 | `$pulse`                     | Global property (typed) for Options API access.                                                        |
 
 Each channel handle:
@@ -56,7 +56,7 @@ ui.listen<{ ref: string; status: string }>("payment.status", async (payload) => 
 
 `bindings` is the in-process bridge (a `Proxy`, typed by `src/ui/src/bindings.d.ts`) — available only under `deno desktop`. Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`.
 
-After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true`, `transports: ["websocket", "polling"]`, and a handshake `auth` callback that resolves the token set via `setToken()` (if any). It tracks joined rooms so it **re-emits `join` for each room on reconnect**.
+After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true`, `transports: ["websocket", "polling"]`, and a handshake `auth` callback that resolves the token set via `setToken()` (if any). It tracks joined rooms so it **re-emits `join` for each room on reconnect**; the engine authorizes each join - public rooms, your own `user:<id>` / `private:user:<id>`, and any `role:<name>` you hold are accepted, anything else is refused with `join:error`.
 
 ### Usage — Vue components
 
@@ -105,14 +105,14 @@ export default {
 </script>
 ```
 
-**Per-user rooms + typed payloads** — `private()` is how the engine targets a single user (`private:user:42`):
+**Per-user rooms + typed payloads** — `private()` targets a single user. The engine only lets a socket join its own `private:user:<id>`:
 
 ```ts
 const notify = pulse.private(`user:${userId}`); // joins "private:user:42"
 notify.listen("trx.notify", (n: { message: string }) => showToast(n.message));
 ```
 
-**Leaving a room** — `leave()` removes the listeners for that room too:
+**Leaving a room** — `leave()` leaves the server room and removes its listeners:
 
 ```ts
 pulse.leave("payments"); // leave + drop all "payments" listeners
