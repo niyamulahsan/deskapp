@@ -112,30 +112,28 @@ cpSync(SRC, DEST, {
   recursive: true,
   filter: (s) => {
     const parts = s.split(/[\\/]/);
-    const basename_ = parts.pop();
+    const basename_ = parts[parts.length - 1];
     const skipDirs = new Set(["node_modules", ".git", "dist", "coverage", "out", "release"]);
     const skipRootDirs = new Set(["deploy"]);
     const skipFiles = new Set(["deno.lock", "package-lock.json", "bun.lock", "pnpm-lock.yaml", "yarn.lock"]);
-    const depth = parts.length;
-    
-    // Check if path is in modules/*/__tests__ or modules/*/tests - allow it
+    const depth = parts.length - 1;
+
+    // Keep a module's own test area: anything under modules/<name>/(__tests__|tests)/
+    // ships with the scaffold so `npm test` has examples to run. The basename is
+    // included in `parts` here, so the __tests__/tests directory itself matches too.
     const inAllowedModuleTests = (() => {
-      const idx = parts.findIndex(p => p === "modules");
-      if (idx >= 0 && parts[idx + 1] && (parts[idx + 2] === "__tests__" || parts[idx + 2] === "tests" || parts[idx + 3] === "__tests__" || parts[idx + 3] === "tests")) {
-        return true;
-      }
-      return false;
+      const idx = parts.findIndex((p) => p === "modules");
+      if (idx < 0 || !parts[idx + 1]) return false;
+      return parts.slice(idx + 2).some((p) => p === "__tests__" || p === "tests");
     })();
-    
-    // Skip test files except if in modules/*/__tests__
+
+    // Skip test files and test dirs unless they belong to a module's test area.
     const isTestFile = /\.(test|spec)\.(ts|js|tsx|jsx|mjs|cjs)$/i.test(basename_);
     if (isTestFile && !inAllowedModuleTests) return false;
-    
-    // Skip __tests__ dirs except under modules
     if ((basename_ === "__tests__" || basename_ === "tests") && !inAllowedModuleTests) return false;
-    
-    return !parts.some((p) => skipDirs.has(p) && !(inAllowedModuleTests && (p === "__tests__" || p === "tests")))
-      && !skipDirs.has(basename_) && !(inAllowedModuleTests && (basename_ === "__tests__" || basename_ === "tests") && parts.some(p => p === "modules"))
+
+    return !parts.some((p) => skipDirs.has(p))
+      && !skipDirs.has(basename_)
       && !(depth === 1 && skipRootDirs.has(basename_))
       && !skipFiles.has(basename_)
       && !/\.sqlite($|[-.])/i.test(basename_)

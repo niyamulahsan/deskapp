@@ -3,6 +3,7 @@
 ## [1.2.6] - 2026-11-16
 
 ### Fixed
+- **Scaffolder: sample tests now ship** - `scripts/sync-template.mjs` filtered out the `modules/*/__tests__` directory before it could keep the test files inside it, so scaffolded projects had no tests and `npm test` failed with "No test files found". The filter now mirrors `modules/*/__tests__` (the framework's own `*.test.ts` are still excluded).
 - **Docs: Deno-era drift removed** - `guide/ui.md`, `guide/quick-start.md`, `guide/modules.md`, and `cli/maker.md` no longer describe `serveDir`, `deno task`, `deno.json`/import maps, `FRONTEND_WATCH`, `resolveDistPath`, `bundle:win --ui=`, or `npx deskapp`; they now describe the Electron build (`vite` + esbuild + electron-builder, `loadFile(src/ui/dist/index.html)`, `npm run maker`).
 - **Docs: window preset path** - Every reference to `src/window/config.ts` corrected to `src/config/winsetup.ts` (the real preset map; `src/window/config.ts` is a back-compat re-export) across `guide/{windows,configuration,architecture,recipes,ui}.md` and `api/win.md`.
 - **Docs: storage API** - `guide/storage.md`, `guide/recipes.md`, and `api/storage.md` now use `storage.put`/`storage.get` and `storage.disk("private"|"tmp").path(...)` instead of the non-existent `storage.getAppDataDir()`/`getTmpDir()`, and document the real root (`<userData>/storage`; CLI/dev fallback `<project>/src/storage/app`).
