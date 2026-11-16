@@ -16,7 +16,7 @@
 - **`template/.env.example`** - The realtime comment no longer claims a "local realtime" stack; Pulse is a client that connects out to a server engine.
 
 ### Added
-- **`AGENTS.md`** - Working agreement for the repo (release branches, template↔scaffolder byte-identity, the fix loop, testing), modeled on the nexwire agreement and grounded in the real `template/` code.
+- **`template/AGENTS.md` (ships to scaffolded apps)** - A rich, strict agent contract placed in the template root, so every project scaffolded by `create-deskapp` gets it at the project root. It documents the real Electron-era APIs and conventions — the non-negotiables (never edit `src/core/**`, never hand-edit generated files, directory = meaning, `handlers` map required, facade-only imports, renderer never imports backend), module anatomy, controllers/bindings, schemas/validation, database/pagination, the facade, queue/cron, storage/files, windows/chrome/dialogs/pickers, the `@/ui` alias, gum + DataTable, config, commands, testing, and a pre-done checklist. Modeled on the nexwire agreement and grounded in the real `template/` code; mirrored byte-identically into `packages/create-deskapp/template/AGENTS.md` by `npm run sync:template`.
 
 ## [1.2.5] - 2026-11-11
 
