@@ -29,9 +29,9 @@ There is a process boundary between UI and backend enforced by Electron. The `bi
 
 | Path                                 | Role                                                                                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/main.ts`                        | Electron main process entrypoint. Boots DB + storage, creates windows with preload, binds handlers. Never edit for new windows — use `src/window/config.ts`. |
+| `src/main.ts`                        | Electron main process entrypoint. Boots DB + storage, creates windows with preload, binds handlers. Never edit for new windows — use `src/config/winsetup.ts`. |
 | `src/preload.ts`                     | Preload script exposing `bindings` to renderer via contextBridge over IPC.                                                                                   |
-| `src/window/config.ts`               | `windows` preset map (add a key = add a window).                                                                                                             |
+| `src/config/winsetup.ts`             | `windows` preset map (add a key = add a window).                                                                                                             |
 | `src/window/manager.ts`              | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount`), window lifecycle + close-to-quit logic.                                    |
 | `src/window/native.ts`               | `chrome` namespace (tray, menus, dialogs, setup).                                                                                                            |
 | `src/window/dialogs.ts`              | `pickers` namespace (`open` / `save` / `folder`).                                                                                                            |
@@ -82,11 +82,11 @@ See [Modules](./modules.md) and [Controllers & Bindings](./controllers.md).
 
 ## When window APIs are unavailable
 
-`win.createWindow` may behave differently depending on context. Guard window work accordingly:
+`win.openWindow` / `win.createWindow` may behave differently depending on context. Guard window work accordingly:
 
 ```ts
 import { win } from "@/core/facade";
 
-const w = win.createWindow({ title: "About" });
+const w = await win.openWindow("about");
 if (!w) return;
 ```

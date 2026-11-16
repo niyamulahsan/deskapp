@@ -44,7 +44,7 @@ createApp(App)
 | `transport`                  | `"bindings"` | default transport: `"bindings"` or `"http"`                    |
 | `baseURL`                    | `""`         | base URL prepended to every HTTP request                       |
 
-`gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`). It also needs the `bindings` global, which only exists under `deno desktop` — the demo table in the starter dashboard runs through `deno task dev`.
+`gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`). It also needs the `bindings` global, which the preload script exposes only inside the Electron renderer — the demo table in the starter dashboard runs through `npm run dev`.
 
 ## Payload conventions
 
@@ -336,7 +336,7 @@ export const destroy = async (opts?: { ids?: Array<string | number> }) => {
 export const handlers = { table, destroy };
 ```
 
-Run it: `deno task dev`, open the dashboard, tick rows, trash them. The console prints the `app.demo.destroy` response.
+Run it: `npm run dev`, open the dashboard, tick rows, trash them. The console prints the `app.demo.destroy` response.
 
 ### Usage — HTTP / REST (or mixing both)
 
@@ -358,7 +358,7 @@ or per table:
 </DataTable>
 ```
 
-The backend can be anything — Express, Fastify, a Deno `serve` — as long as it honors `?page=&size=&search=` and replies with the envelope above, plus `422 { errors: { fieldErrors, formErrors } }` for validation failures if the rows are editable.
+The backend can be anything — Express, Fastify, a Node `http` server — as long as it honors `?page=&size=&search=` and replies with the envelope above, plus `422 { errors: { fieldErrors, formErrors } }` for validation failures if the rows are editable.
 
 ### Loading skeleton
 

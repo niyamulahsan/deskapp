@@ -14,6 +14,7 @@ npm run maker db:status
 | `db:generate`          | Regenerate schema and create migration SQL files          | does not apply them                |
 | `db:migrate`           | Generate + run migrations, then apply model hooks         | `--seed` also runs seeders         |
 | `db:migrate:run`       | Run existing migrations + model hooks                     | no generate, no seed               |
+| `db:migrate:module`    | Generate + run migrations for one module's models         | `<module>`; `--keep-temp`          |
 | `db:fresh`             | Delete the database file, then generate + migrate + hooks | `--seed` also seeds                |
 | `db:reset` / `db:wipe` | Delete the SQLite database file only                      | destructive                        |
 | `db:status`            | List generated migration files                            |                                    |

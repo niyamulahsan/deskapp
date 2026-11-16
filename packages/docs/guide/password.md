@@ -11,9 +11,10 @@ const ok = await pass.verifyPassword("correct horse battery staple", hash); // t
 const bad = await pass.verifyPassword("wrong", hash);                       // false
 ```
 
-- Uses [bcryptjs](https://www.npmjs.com/package/bcryptjs) (`npm:bcryptjs`) from the root import map — pure JS, no native dependency.
+- Uses [bcryptjs](https://www.npmjs.com/package/bcryptjs) (`bcryptjs` in `package.json`) — pure JS, no native dependency.
 - Store the returned hash (not the plain password) in the database — give your model a `password` text column for it.
 - `pass.verifyPassword` costs are handled inside the library; it's safe for normal login flows.
+- `pass.hashPassword` / `pass.verifyPassword` are async (they return a `Promise`) — always `await` them.
 
 Example usage in a controller:
 

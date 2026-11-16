@@ -56,7 +56,7 @@ Select with `columns` to drop sensitive fields on every page.
 import { paginate } from "@/core/facade.ts";
 import { users } from "@/modules/auth/database/models/user.model.ts";
 
-const users = await paginate.model({
+const page = await paginate.model({
   page: 2, perPage: 25,
   table: users,
   query: db.query.users,

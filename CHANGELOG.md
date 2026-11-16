@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.2.6] - 2026-11-16
+
+### Fixed
+- **Docs: Deno-era drift removed** - `guide/ui.md`, `guide/quick-start.md`, `guide/modules.md`, and `cli/maker.md` no longer describe `serveDir`, `deno task`, `deno.json`/import maps, `FRONTEND_WATCH`, `resolveDistPath`, `bundle:win --ui=`, or `npx deskapp`; they now describe the Electron build (`vite` + esbuild + electron-builder, `loadFile(src/ui/dist/index.html)`, `npm run maker`).
+- **Docs: window preset path** - Every reference to `src/window/config.ts` corrected to `src/config/winsetup.ts` (the real preset map; `src/window/config.ts` is a back-compat re-export) across `guide/{windows,configuration,architecture,recipes,ui}.md` and `api/win.md`.
+- **Docs: storage API** - `guide/storage.md`, `guide/recipes.md`, and `api/storage.md` now use `storage.put`/`storage.get` and `storage.disk("private"|"tmp").path(...)` instead of the non-existent `storage.getAppDataDir()`/`getTmpDir()`, and document the real root (`<userData>/storage`; CLI/dev fallback `<project>/src/storage/app`).
+- **Docs: chrome/dialogs API** - Removed the non-existent `chrome.promptDialog` and `chrome.defaultContextMenuItems`; documented that `confirmDialog`/`alertDialog` are async and are also exported at the facade top level.
+- **Docs: queue & scheduler API** - `guide/{queue,recipes}.md` and `api/index.md` now show `queue.create({ concurrency })` then `q.add(fn)` (no global `queue.add`/`queue.process`) and `cron.schedule(name, expr, fn, { timezone })` with a handle `.stop()` (and `cron.stop()` for all).
+- **Docs: Chromium resolve** - `chromium.resolve()` documented as synchronous (returns `string | undefined`) in `guide/recipes.md` and `api/chromium.md`.
+- **Docs: pickers, database, bindings** - Pickers now describe Electron's `dialog` module + the `"Name|pattern"` filter syntax; `guide/database.md` documents the real default SQLite path; `guide/controllers.md` points at `src/ui/src/bindings.d.ts` and the `md` alias.
+- **Docs: paginate example** - Fixed a self-shadowing `const users = await paginate.model(...)` in `api/paginateModel.md`.
+- **Docs: broken anchor** - `guide/storage.md` → `guide/windows.md#file-pickers` now resolves.
+- **`template/.env.example`** - The realtime comment no longer claims a "local realtime" stack; Pulse is a client that connects out to a server engine.
+
+### Added
+- **`AGENTS.md`** - Working agreement for the repo (release branches, template↔scaffolder byte-identity, the fix loop, testing), modeled on the nexwire agreement and grounded in the real `template/` code.
+
 ## [1.2.5] - 2026-11-11
 
 ### Fixed

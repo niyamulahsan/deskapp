@@ -60,7 +60,7 @@ my-app/
     database/          generated schema + migrations
     icons/             favicon, tray, app icons
     modules/           your modules (app by default)
-    storage/           live database and files folder
+    storage/           dev/CLI fallback for app-managed data (runtime default: userData)
     ui/                Vue 3 frontend (Vite)
     window/            window presets / manager / native chrome / dialogs
     main.ts            Electron main process entrypoint
@@ -76,9 +76,9 @@ my-app/
 The template includes a maker CLI for scaffolding:
 
 ```sh
-npx deskapp maker                    # list all commands
-npx deskapp maker make:module blog   # create a new module with a model + seeder
-npx deskapp maker db:migrate         # generate + run migrations
+npm run maker                    # list all commands
+npm run maker make:module blog   # create a new module with a model + seeder
+npm run maker db:migrate         # generate + run migrations
 ```
 
 Or add scripts to `package.json` as needed. See [Maker Commands](../cli/maker.md) and [Database Commands](../cli/database.md).

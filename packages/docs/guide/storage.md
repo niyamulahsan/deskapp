@@ -26,14 +26,15 @@ To expose any of these to the UI, wrap them in a controller + binding (`<module>
 
 ## Layer 2 — app-managed area
 
-Framework-managed `private`/`tmp` disks with atomic writes, rooted at `src/storage/app/` (configurable via `APP_DATA_DIR`; gitignored):
+Framework-managed `private`/`tmp` disks with atomic writes. The root is the Electron `userData` folder (`<userData>/storage`), overridable with `APP_DATA_DIR` (the CLI/dev fallback is `<project>/src/storage/app`):
 
 ```
-src/storage/
-  app/     app private data (survives restarts)
-  tmp/     temporary files
-  deskapp.sqlite   the database
+<userData>/storage/
+  private/   app-internal data (survives restarts)
+  tmp/       transient files (uploads, generated downloads)
 ```
+
+The SQLite database is a separate file — `<userData>/<app-kebab>.sqlite` by default (see [`DATABASE_URL`](./environment)).
 
 `storage.init()` creates the disk folders at boot. Top-level `storage.*` methods act on the default disk (`private`); scope explicitly with `storage.disk("private" | "tmp")`. A `StorageDisk` wraps every operation with safe path resolution (relative keys; `..` or leading slashes are rejected) and — for writes — atomic tmp-file-and-rename semantics:
 

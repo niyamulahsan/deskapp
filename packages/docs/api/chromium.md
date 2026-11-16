@@ -30,6 +30,9 @@ Chromium work belongs in the backend. Write a controller that exposes a handler,
 
 ```ts
 // src/modules/<your-module>/controllers/browser.controller.ts
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { chromium as pw } from "playwright";
 import { chromium as chromiumApi } from "@/core/facade.ts";
 
@@ -45,7 +48,7 @@ export const visit = async (opts?: { url?: string; seconds?: number; headless?: 
   try {
     if (extensions.length > 0) {
       // Unpacked extensions require a persistent context + load flags.
-      const profile = await Deno.makeTempDir({ prefix: "browser-ext-" });
+      const profile = await mkdtemp(join(tmpdir(), "browser-ext-"));
       const context = await pw.launchPersistentContext(profile, {
         headless: false,                                             // headless shell can't run extensions
         executablePath,
@@ -78,7 +81,7 @@ export const handlers = { visit };
 
 > The `as any` casts keep the snippet import-light; Playwright's own types give you real types at compile time.
 >
-> This snippet imports `playwright` directly, which only resolves once you've opted in — `playwright` is **not** in a scaffold's default `deno.json` imports (see [Playwright & Chromium](../guide/playwright)). Add it there and run `deno install` before using browser automation; the first launch auto-downloads the browser binary, or install it manually with `npx playwright install chromium`.
+> This snippet imports `playwright` directly, which only resolves once you've opted in — `playwright` is **not** a default dependency of the scaffold (see [Playwright & Chromium](../guide/playwright)). Add it with `npm install playwright` before using browser automation; the first launch auto-downloads the browser binary, or install it manually with `npx playwright install chromium`.
 
 The binding name follows the registry convention `<module>.<controller>.<handler>` — for a module named `"worker"` this becomes `worker.browser.visit`. That is key:
 

@@ -17,6 +17,8 @@ import {
   validate,       // Zod schemas + runner
   files,          // operate on any path the user picks
   storage,        // the app's own private/tmp disks
+  alertDialog,    // top-level OS alert dialog (also chrome.alertDialog)
+  confirmDialog,  // top-level OS OK/Cancel dialog (also chrome.confirmDialog)
 } from "@/core/facade.ts";
 ```
 
@@ -41,6 +43,8 @@ Each facade member below has its own page — every export linked here is a docu
 | [`validate`](./validate)           | Zod schemas + `run` with a 422-shaped failure                                 | [Validation](../guide/validation) |
 | [`files`](./files)                 | Open / save / upload / download / remove on any user-picked path              | [Storage](../guide/storage)       |
 | [`storage`](./storage)             | The app's own `private` / `tmp` disks                                         | [Storage](../guide/storage)       |
+| [`alertDialog`](./chrome)          | Top-level OS alert dialog (same function as `chrome.alertDialog`)             | [Windows](../guide/windows)       |
+| [`confirmDialog`](./chrome)        | Top-level OS OK/Cancel dialog (same function as `chrome.confirmDialog`)       | [Windows](../guide/windows)       |
 
 ## Which one do I use when?
 
@@ -62,17 +66,17 @@ Deskapp has **no built-in mailer** — add a third-party SMTP client and drive i
 Add the SMTP client (example uses nodemailer):
 
 ```sh
-deno add npm:nodemailer
+npm install nodemailer
 ```
 
 A tiny mailer service around it:
 
 ```ts
 // src/core/utils/mailer.ts
-import nodemailer from "npm:nodemailer";
+import nodemailer from "nodemailer";
 import { validate } from "@/core/facade.ts";
 
-const opts = validate.run(validate.z.object({ host: validate.z.string(), port: validate.z.coerce.number().int() }), {
+const opts = await validate.run(validate.z.object({ host: validate.z.string(), port: validate.z.coerce.number().int() }), {
   host: process.env.SMTP_HOST,
   port: process.env.SMTP_PORT,
 });
@@ -137,6 +141,6 @@ Which pieces did you just use? [`db`](./db) (read + write), [`queue`](./queue) (
 ## Rules of the facade
 
 - **Everything is a namespace object** — import `win`, not a bare `openWindow`. Grouping makes the code searchable and collisions impossible.
-- **Desktop-only items degrade gracefully** — `win.createWindow`, `chrome.createTray` etc. return `undefined` (not throw) when not running under `deno desktop`.
+- **Desktop-only items degrade gracefully** — `win.createWindow`, `chrome.createTray` etc. return `undefined` (not throw) when the Electron runtime isn't available (e.g. under Vitest/CLI).
 - **Nothing here needs network access** — all utilities are in-process.
 - **Exports stay truthful** — the facade only re-exports what is implemented. If a signature is missing here, it does not exist yet.

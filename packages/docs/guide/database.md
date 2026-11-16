@@ -18,7 +18,7 @@ await db.insert(users).values({
 const rows = await db.select().from(users);
 ```
 
-`drizzle.config.ts` points to the SQLite file (default as configured in `.env`).
+`drizzle.config.ts` mirrors the runtime default so drizzle-kit and the app agree on the SQLite file: `<project>/src/storage/<app-kebab>.sqlite`, overridable with `DATABASE_URL` (see [Environment](./environment.md)).
 
 ## Schema
 

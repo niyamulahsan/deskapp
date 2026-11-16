@@ -6,7 +6,7 @@ The bindings system is the heart of Deskapp. Every handler you export from a con
 
 1. At boot, `bindAll()` scans controller files under `src/modules/*/controllers/*.controller.ts` via the generated manifest (`src/core/api/bindings.generated.ts`).
 2. Each file's `handlers` object is reflected: every entry becomes a binding named `<module>.<controller>.<handler>`.
-3. Handlers are registered with Electron's `ipcMain.handle()` as `deskapp:<name>`. The preload script exposes them to the renderer via `contextBridge` as `window.bindings`.
+3. Handlers are registered with Electron's `ipcMain.handle()` as `deskapp:<name>`. The preload script exposes them to the renderer via `contextBridge` as `window.bindings` (flat + nested) and the nested `window.md` alias.
 
 Regenerate the manifest when adding/removing controllers:
 
@@ -58,7 +58,7 @@ await md.blog.post.create({ title: 'Hello' });
 
 Both forms work. The `md` global provides a nested object structure for better readability and IDE support. `bindings` remains as a deprecated alias for compatibility.
 
-The bindings are exposed by the preload script. Type declarations live in `src/ui/src/env.d.ts` or similar.
+The bindings are exposed by the preload script. Type declarations live in `src/ui/src/bindings.d.ts`.
 
 ## Frontend → backend without CORS
 

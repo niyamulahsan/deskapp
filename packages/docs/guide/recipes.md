@@ -70,33 +70,25 @@ Use the storage/files API from the facade. The framework provides `files` and `s
 
 ```ts
 // src/modules/files/controllers/io.controller.ts
-import { files, storage } from "@/core/facade";
-import path from "node:path";
+import { storage } from "@/core/facade";
 
+// App-managed data lives on the `private` disk; keys are relative to it.
 export const writeJson = async (filename: string, data: any) => {
-  const fullPath = path.join(storage.getAppDataDir(), filename);
-  await files.writeTextFile(fullPath, JSON.stringify(data, null, 2));
-  return { ok: true, path: fullPath };
+  const key = await storage.put(filename, JSON.stringify(data, null, 2));
+  return { ok: true, key, path: storage.disk("private").path(key) };
 };
 
 export const readJson = async (filename: string) => {
-  const fullPath = path.join(storage.getAppDataDir(), filename);
-  const text = await files.readTextFile(fullPath);
-  return JSON.parse(text);
+  const bytes = await storage.get(filename);          // Buffer (a Uint8Array)
+  return JSON.parse(bytes.toString("utf8"));
 };
 
 export const writeBuffer = async (filename: string, base64: string) => {
-  const fullPath = path.join(storage.getAppDataDir(), filename);
-  const buf = Buffer.from(base64, "base64");
-  await files.writeFile(fullPath, buf);
-  return { ok: true };
+  const key = await storage.put(filename, Buffer.from(base64, "base64"));
+  return { ok: true, key };
 };
 
-export const list = async (dir?: string) => {
-  const target = dir || storage.getAppDataDir();
-  const entries = await files.readDir(target);
-  return entries;
-};
+export const list = async (dir = "") => storage.files(dir);
 
 export const handlers = { writeJson, readJson, writeBuffer, list };
 ```
@@ -138,7 +130,7 @@ import { chromium } from "@/core/facade";
 import { chromium as pwChromium } from "playwright";
 
 export const scrape = async (url: string) => {
-  const execPath = await chromium.resolve();
+  const execPath = chromium.resolve();
   const browser = await pwChromium.launch({ executablePath: execPath, headless: true });
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
@@ -149,7 +141,7 @@ export const scrape = async (url: string) => {
 };
 
 export const screenshot = async (url: string) => {
-  const execPath = await chromium.resolve();
+  const execPath = chromium.resolve();
   const browser = await pwChromium.launch({ executablePath: execPath, headless: true });
   const page = await browser.newPage();
   await page.goto(url);
@@ -184,7 +176,7 @@ import { chromium as pwChromium } from "playwright";
 import path from "node:path";
 
 export const runWithExtension = async (url: string) => {
-  const execPath = await chromium.resolve();
+  const execPath = chromium.resolve();
   const extensionPath = path.resolve(process.cwd(), "src/extensions/my-extension");
   const userDataDir = path.resolve(process.cwd(), "src/storage/chrome-user-data");
   
@@ -297,7 +289,7 @@ export const exportExcel = async (data: any[]) => {
   }
   
   const buffer = await wb.xlsx.writeBuffer();
-  const outPath = path.join(storage.getAppDataDir(), `export_${Date.now()}.xlsx`);
+  const outPath = storage.disk("private").path(`export_${Date.now()}.xlsx`);
   await files.writeFile(outPath, Buffer.from(buffer));
   return { ok: true, path: outPath };
 };
@@ -311,7 +303,7 @@ export const handlers = { exportExcel };
 import { createObjectCsvWriter } from 'csv-writer';
 
 export const exportCsv = async (data: any[], headers: any[]) => {
-  const outPath = path.join(storage.getAppDataDir(), `export_${Date.now()}.csv`);
+  const outPath = storage.disk("private").path(`export_${Date.now()}.csv`);
   const csvWriter = createObjectCsvWriter({
     path: outPath,
     header: headers,
@@ -328,7 +320,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 
 export const exportPdf = async (text: string) => {
-  const outPath = path.join(storage.getAppDataDir(), `export_${Date.now()}.pdf`);
+  const outPath = storage.disk("private").path(`export_${Date.now()}.pdf`);
   const doc = new PDFDocument();
   const stream = fs.createWriteStream(outPath);
   doc.pipe(stream);
@@ -352,13 +344,13 @@ import path from "path";
 import { storage } from "@/core/facade";
 
 export const getFileInfo = async (filename: string) => {
-  const fullPath = path.join(storage.getAppDataDir(), filename);
+  const fullPath = storage.disk("private").path(filename);
   const stat = fs.statSync(fullPath);
   return { size: stat.size, path: fullPath };
 };
 
 export const readChunk = async (filename: string, start: number, end: number) => {
-  const fullPath = path.join(storage.getAppDataDir(), filename);
+  const fullPath = storage.disk("private").path(filename);
   const fd = fs.openSync(fullPath, 'r');
   const buffer = Buffer.alloc(end - start + 1);
   fs.readSync(fd, buffer, 0, buffer.length, start);
@@ -398,7 +390,7 @@ For full video/audio streaming with seeking, better to use chunked reading with 
 ### Define windows in config
 
 ```ts
-// src/window/config.ts
+// src/config/winsetup.ts
 export const windows = {
   main: { title: "Deskapp", width: 1280, height: 800, route: "/" },
   settings: { title: "Settings", width: 600, height: 500, route: "/settings" },
@@ -507,7 +499,7 @@ export const showTray = async () => {
 };
 
 export const showAlertFromMenu = async () => {
-  chrome.alertDialog("Hello from menu!");
+  await chrome.alertDialog("Hello from menu!");
   return { ok: true };
 };
 
@@ -542,21 +534,15 @@ export const pickFolder = async (opts: any = {}) => {
 };
 
 export const alert = async (message: string) => {
-  chrome.alertDialog(message);
+  await chrome.alertDialog(message);
   return { ok: true };
 };
 
 export const confirm = async (message: string) => {
-  const result = chrome.confirmDialog(message);
-  return { confirmed: result };
+  return { confirmed: await chrome.confirmDialog(message) };
 };
 
-export const prompt = async (message: string, defaultValue?: string) => {
-  const result = chrome.promptDialog(message, defaultValue);
-  return { value: result }; // null if cancelled
-};
-
-export const handlers = { openFile, saveFile, pickFolder, alert, confirm, prompt };
+export const handlers = { openFile, saveFile, pickFolder, alert, confirm };
 ```
 
 ### Frontend (Vue)
@@ -568,7 +554,6 @@ import { ref } from 'vue';
 const selectedFile = ref<string | null>(null);
 const savedPath = ref<string | null>(null);
 const folderPath = ref<string | null>(null);
-const promptValue = ref<string | null>(null);
 
 async function chooseFile() {
   const res = await bindings['app.dialogs.openFile']({
@@ -600,11 +585,6 @@ async function showConfirm() {
   const res = await bindings['app.dialogs.confirm']('Are you sure you want to continue?');
   alert(res.confirmed ? 'Confirmed' : 'Cancelled');
 }
-
-async function showPrompt() {
-  const res = await bindings['app.dialogs.prompt']('Enter your name:', 'John');
-  promptValue.value = res.value;
-}
 </script>
 
 <template>
@@ -620,8 +600,6 @@ async function showPrompt() {
     <h3>Native Message Dialogs</h3>
     <button @click="showAlert">Alert</button>
     <button @click="showConfirm">Confirm</button>
-    <button @click="showPrompt">Prompt</button>
-    <p v-if="promptValue !== null">Prompt value: {{ promptValue }}</p>
   </div>
 </template>
 ```
@@ -636,28 +614,33 @@ Use for long-running tasks that shouldn't block the UI. Register processors and 
 // src/modules/jobs/controllers/queue.controller.ts
 import { queue } from "@/core/facade";
 
-export const enqueue = async (payload: any) => {
-  // Add job to queue
-  const jobId = await queue.add("demo.task", payload);
-  return { jobId };
+// One bounded-concurrency queue shared across the process.
+const q = queue.create<{ file: string }>({ concurrency: 2 });
+
+export const enqueue = async (payload: { file: string }) => {
+  // q.add resolves with the task's own result (it never throws for other tasks).
+  const result = await q.add(async () => {
+    // ...heavy work for `payload`...
+    return { ok: true, file: payload.file };
+  });
+  return { result };
 };
 
 export const getStatus = async () => {
-  return { status: "ok" };
+  return { status: "ok", pending: q.size, running: q.running };
 };
 
 export const handlers = { enqueue, getStatus };
 ```
 
-Register processors (often in a service/bootstrap file):
+A "processor" is just the function you hand to `q.add` — there is no global registry:
 
 ```ts
-// Example processor registration
 import { queue } from "@/core/facade";
 
-queue.process("demo.task", async (job) => {
-  console.log("Processing job:", job.data);
-  // Do heavy work here
+const q = queue.create({ concurrency: 1 });
+await q.add(async () => {
+  console.log("Processing job...");
   await new Promise((r) => setTimeout(r, 2000));
   console.log("Done");
 });
@@ -683,15 +666,19 @@ Use for recurring tasks.
 // src/modules/jobs/controllers/scheduler.controller.ts
 import { cron } from "@/core/facade";
 
+let ticker: { stop(): void } | null = null;
+
 export const startTicker = async () => {
-  cron.schedule("demo.ticker", "*/5 * * * * *", async () => {
+  // Re-scheduling the same name replaces the old job.
+  ticker = cron.schedule("demo.ticker", "*/5 * * * * *", () => {
     console.log("Tick every 5 seconds");
   });
   return { ok: true };
 };
 
 export const stopTicker = async () => {
-  cron.stop("demo.ticker");
+  ticker?.stop();   // stop this one job; cron.stop() (no arg) stops them all
+  ticker = null;
   return { ok: true };
 };
 
@@ -747,21 +734,14 @@ async function load() {
 Two layers - use as appropriate:
 
 ```ts
-import { storage, files } from "@/core/facade";
-import path from "node:path";
+import { storage, files, pickers } from "@/core/facade";
 
-// App-managed (private) - persistent app data
-const appDir = storage.getAppDataDir();
-await files.writeTextFile(path.join(appDir, "settings.json"), JSON.stringify({ theme: "dark" }, null, 2));
-const settings = JSON.parse(await files.readTextFile(path.join(appDir, "settings.json")));
+// App-managed (private) - persistent app data (keys are relative to the disk)
+await storage.put("settings.json", JSON.stringify({ theme: "dark" }, null, 2));
+const settings = JSON.parse((await storage.get("settings.json")).toString("utf8"));
 
 // App-managed (tmp) - temporary files
-const tmpDir = storage.getTmpDir();
-await files.writeTextFile(path.join(tmpDir, "temp.txt"), "hi");
-
-// Or use storage API directly
-await storage.put("cache/data.json", JSON.stringify({ cached: true }));
-const bytes = await storage.get("cache/data.json");
+await storage.disk("tmp").put("temp.txt", "hi");
 
 // User files - use pickers + files directly with chosen paths
 const userPath = await pickers.save({ defaultName: "export.json" });
@@ -778,8 +758,8 @@ Import from `@/core/facade` in backend code (controllers/jobs). From UI use `bin
 | `paginate` / `sql` | Pagination helpers                | `paginate.model({ table, query: db.query.table, page, perPage })`          |
 | `pass`             | Password hashing/verification     | `await pass.hashPassword(pw)`, `await pass.verifyPassword(pw, hash)`       |
 | `validate`         | Zod validation                    | `const data = await validate.run(schema, input); validate.z.object({...})` |
-| `queue`            | Background job queue              | `queue.add('task.name', payload)`, register processors                     |
-| `cron`             | Scheduler                         | `cron.schedule('id', '*/5 * * * *', fn)`, `cron.stop('id')`                |
+| `queue`            | Bounded async job queue           | `const q = queue.create({ concurrency: 2 }); await q.add(fn)`              |
+| `cron`             | Named cron scheduler              | `const h = cron.schedule(name, expr, fn); h.stop()` / `cron.stop()`        |
 | `storage`          | App-managed files (private/tmp)   | `storage.put()`, `storage.get()`, `storage.disk('tmp')`                    |
 | `files`            | User-file operations              | Read/write arbitrary paths, atomic operations                              |
 | `chromium`         | Playwright/Chromium helpers       | `chromium.resolve()` to get executable path                                |
@@ -802,7 +782,8 @@ const data = await validate.run(schema, input);
 
 // Queue
 import { queue } from "@/core/facade";
-await queue.add('email.send', { to: 'x@y.com' });
+const q = queue.create({ concurrency: 2 });
+await q.add(async () => { /* send email */ });
 
 // Cron
 import { cron } from "@/core/facade";
@@ -817,7 +798,7 @@ const file = await pickers.open({ title: 'Open' });
 
 - Always use `@/core/facade` imports in controllers.
 - Regenerate bindings with `npm run maker bindings:gen` after adding controllers/handlers.
-- Use `storage.getAppDataDir()` / `storage.getTmpDir()` for app-managed files.
+- Use `storage.put()` / `storage.get()` (or `storage.disk("tmp")`) for app-managed files.
 - For large operations, consider using the queue/scheduler.
 - Keep sensitive logic in the main process (controllers), expose only what's needed via bindings.
 - Open new windows via `win.openWindow()` from controllers; add routes to the Vue router.

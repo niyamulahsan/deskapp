@@ -28,9 +28,10 @@ Wrap a submission in a controller + binding so the frontend can enqueue work in-
 // controller: <module>.jobs.submit
 import { queue } from "@/core/facade.ts";
 
-export const submit = (opts?: { items?: string[]; concurrency?: number; delayMs?: number }) => {
-  const jobs = opts?.items ?? ["a", "b", "c"];
-  return queue.run({ concurrency: opts?.concurrency ?? 2, tasks: jobs.map((item) => async () => item) });
+export const submit = async (opts?: { items?: string[]; concurrency?: number }) => {
+  const items = opts?.items ?? ["a", "b", "c"];
+  const q = queue.create<string>({ concurrency: opts?.concurrency ?? 2 });
+  return Promise.all(items.map((item) => q.add(async () => item)));
 };
 
 export const handlers = { submit };

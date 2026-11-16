@@ -1,13 +1,13 @@
 # UI (Vue + Vite)
 
-The **default** frontend is a **Vue 3** single-page app built with **Vite**, styled with **Bootstrap 5** (CSS + JS + icons) on top of a custom **dark SCSS** theme, served from `src/ui/dist` by the Deno backend running under `deno desktop`. It's a plain static SPA — you can replace it with any other frontend (see [Changing the frontend](#changing-the-frontend)).
+The **default** frontend is a **Vue 3** single-page app built with **Vite**, styled with **Bootstrap 5** (CSS + JS + icons) on top of a custom **dark SCSS** theme, loaded from `src/ui/dist` by the Electron main process. It's a plain static SPA — you can replace it with any other frontend (see [Changing the frontend](#changing-the-frontend)).
 
 ## Stack
 
 - Vue 3 (`createApp`) mounted into `src/ui/index.html`
 - TypeScript SFCs, Vite + `@vitejs/plugin-vue`
 - Bootstrap 5 (CSS + JS bundle) + Bootstrap Icons + custom SCSS at `src/ui/src/assets/scss/custom.scss` (dark dashboard theme by default)
-- Axios, Vue Router, Pinia, socket.io-client and Playwright are declared in the root import map — usable on demand
+- Axios, Vue Router, Pinia, socket.io-client and Playwright are declared in `package.json` — usable on demand
 - **gum** (`src/ui/src/plugins/gum.ts`) — Inertia-style request/form helpers over the `bindings` global **or** HTTP/axios, plus the `DataTable` component — see [gum (Requests & Forms)](./gum)
 
 ## Entrypoints
@@ -33,42 +33,41 @@ const result = await bindings['<module>.<controller>.submit'](
 
 Every handler you export from a controller becomes callable here — no network, no HTTP, no extra wiring (see [Controllers & Bindings](./controllers)).
 
-`bindings` exists only under `deno desktop`. During plain `vite` dev (browser tab) it's undefined — guard calls, or rely on the Dev Proxy below.
+`bindings` exists only inside the Electron renderer (the preload script exposes it). During plain `vite` dev in a browser tab it's undefined — guard calls, or rely on the dev proxy below.
 
 ## Vite dev proxy
 
-For browser-based UI development, `src/ui/vite.config.ts` proxies backend HTTP routes:
+For browser-based UI development, `src/ui/vite.config.ts` proxies a backend HTTP route:
 
 ```
 /__invoke     → http://localhost:8000
-/__bindings   → http://localhost:8000
 ```
 
-These proxy targets are not implemented by the backend yet — they exist so a future "call backend from browser" flow can be added. The desktop build talks exclusively via in-process bindings.
+There is no HTTP backend in the desktop build — the proxy is a placeholder so a future "call backend from a browser tab" flow can be added. The desktop app talks exclusively via in-process bindings.
 
 ## Icons
 
 - The **webview favicon** is bundled inside the UI at `src/ui/src/assets/images/favicon/favicon.ico` and set by `src/ui/src/app.ts`.
-- `src/icons/` keeps the **desktop** icons at the project root — the OS taskbar/dock/window icon set referenced by `deno.json` → `desktop.app.icons`, plus the tray icon. Vite's `server.fs.allow` is widened to the project root so files at the repo root can be served during dev.
+- `src/icons/` keeps the **desktop** icons at the project root — the OS taskbar/dock/window icon set referenced by electron-builder's `build.{win,mac,linux}.icon` in `package.json`, plus the tray icon. Vite's `server.fs.allow` is widened to the project root so files at the repo root can be served during dev.
 
 ## Build
 
 ```sh
-deno task maker dev      # vite build → src/ui/dist, then `deno desktop --hmr` (+ a vite watch build)
-deno task maker build    # vite build → src/ui/dist, then a `deno desktop` package
+npm run dev              # Vite dev server (HMR) + esbuild watch for main/preload + Electron
+npm run build            # Vite build → src/ui/dist, then esbuild main/preload bundles
 ```
 
-The backend serves `src/ui/dist` with `serveDir` from `@std/http/file-server` (`src/main.ts`), resolving it from the binary's virtual filesystem in packaged builds and from disk in dev. If no UI is built, `src/main.ts` serves a small JSON status instead (headless/tray mode).
+In dev, `src/main.ts` loads the renderer from the Vite dev server (`http://localhost:5173` + the preset's `route`) and Vite's HMR reloads it on every edit — no manual refresh. In a packaged build it loads `src/ui/dist/index.html` via `loadFile` (`app.getAppPath()/src/ui/dist/index.html`), so the SPA must be built first (`npm run build`). `npm run start` runs the built app against that folder.
 
-`dev` runs an extra `vite build --watch` in the background and sets `FRONTEND_WATCH=1`; the backend then watches `src/ui/dist` (`win.watchFrontend`) and reloads the open window whenever a rebuild lands — so editing SCSS/Vue files shows up in the desktop window without a manual refresh.
+If no UI is built, set `DESKAPP_UI=false` for headless/tray mode (see [No UI — run headless](#no-ui--run-headless)).
 
 ## Changing the frontend
 
 Vue is only the **default** — the backend never imports your UI code. It needs exactly three things from the frontend:
 
-1. a **static build** in `src/ui/dist` (an `index.html` plus assets), served for every route by `serveDir`;
+1. a **static build** in `src/ui/dist` (an `index.html` plus assets), loaded by the main process;
 2. the in-process **`bindings`** global mounted into the webview at boot — a runtime `Proxy`, therefore completely framework-agnostic;
-3. nothing else — windows just navigate to SPA routes (e.g. `route: "/"` in `src/window/config.ts`).
+3. nothing else — windows just load SPA routes (e.g. `route: "/"` in `src/config/winsetup.ts`).
 
 So any frontend that compiles to a static single-page app works (React, Svelte, Solid, vanilla TS, ...). These are the files that define the contract:
 
@@ -87,9 +86,9 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 | `src/ui/src/plugins/gum.ts`                                | Requests & forms (bindings or HTTP) + the `DataTable` component                                                                             | **Replace** with your framework's data-fetching layer, or keep both and call the backend via `bindings` anyway.                                                                  |
 | `src/ui/.vscode/extensions.json`                           | Recommends `Vue.volar`                                                                                                                      | Update to your framework's editor extension.                                                                                                                                     |
 | `src/ui/public/`                                           | Static assets copied verbatim into `dist`                                                                                                   | Keep / extend.                                                                                                                                                                   |
-| `deno.json` → `imports`                                    | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here (`npm:`).                                                                                                                              |
-| `deno.json` → `tasks` (`ui`, `build:ui`, `dev`, `build:*`) | Run the Vite build                                                                                                                          | **Keep** — they just invoke `vite`; only edit if you leave Vite.                                                                                                                 |
-| `src/main.ts`                                              | `resolveDistPath()` → `serveDir` of `src/ui/dist`                                                                                           | **Keep** — never framework-dependent.                                                                                                                                            |
+| `package.json` → `devDependencies`                         | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here.                                                                                                                                       |
+| `package.json` → `scripts` (`dev:ui`, `build:ui`, `dev`, `build`) | Run the Vite build                                                                                                                   | **Keep** — they just invoke `vite`; only edit if you leave Vite.                                                                                                                 |
+| `src/main.ts`                                              | `loadFile(src/ui/dist/index.html)` (dev: `loadURL(localhost:5173)`)                                                                         | **Keep** — never framework-dependent.                                                                                                                                            |
 | `.env` / `.env.example`                                    | `DESKAPP_UI`, `VITE_SOCKET_URL`, `VITE_API_URL`                                                                                             | Keep; `DESKAPP_UI=false` disables the UI at runtime.                                                                                                                             |
 
 ### Reference — full file contents
@@ -354,12 +353,12 @@ The socket client (`createPulse` → the exported `pulse` singleton) is framewor
 
 ### Switch to another Vite framework (e.g. React)
 
-1. `deno.json` → `imports`: add your framework's Vite plugin (e.g. `@vitejs/plugin-react`), keep `vite`. Drop `vue` / `@vitejs/plugin-vue` once nothing imports them.
+1. `package.json` → `devDependencies`: add your framework's Vite plugin (e.g. `@vitejs/plugin-react`), keep `vite`. Drop `vue` / `@vitejs/plugin-vue` once nothing imports them.
 2. `src/ui/vite.config.ts`: set `plugins: [react()]` instead of `[vue()]`. Leave aliases, `server.fs.allow`, `server.proxy`, and `build.outDir: "dist"` untouched.
 3. Replace `src/ui/src/app.ts` (→ `app.tsx`) with your framework's mount, and `App.vue` / `components/` with your components.
 4. `src/ui/index.html`: change the `/src/app.ts` script tag to `/src/app.tsx`.
 5. `src/ui/tsconfig.json`: keep the paths; add framework options like `"jsx": "react-jsx"` if needed.
-6. Run `deno task maker build` and confirm `src/ui/dist/index.html` regenerates, then `deno task dev`.
+6. Run `npm run build` and confirm `src/ui/dist/index.html` regenerates, then `npm run dev`.
 
 `bindings` keeps working identically — it's a `Proxy`, not a Vue API.
 
@@ -367,10 +366,10 @@ The socket client (`createPulse` → the exported `pulse` singleton) is framewor
 
 If the build still lands a static `index.html` at `src/ui/dist`, you can bring any tool:
 
-- The `vite build` step (in `src/core/maker/run/mod.ts`) runs your builder; point it at `src/ui/dist` output.
-- Keep the output directory `src/ui/dist` — that's the hard-coded path the backend checks in `resolveDistPath()`. If you move it, add your new path to that candidate list in `src/main.ts`.
+- The `build:ui` script (`vite build --config src/ui/vite.config.ts`) runs your builder; point it at the `src/ui/dist` output.
+- Keep the output directory `src/ui/dist` — that's the path `src/main.ts` loads (`app.getAppPath()/src/ui/dist/index.html`). If you move it, update `getRendererIndexPath()` in `src/main.ts`.
 
 ### No UI — run headless
 
-- At runtime: set `DESKAPP_UI=false` in `.env`. No window opens; the process runs as a tray service and the HTTP server returns a small JSON status.
-- For shipped builds: run `deno task maker bundle:win --ui=skip` to bundle with no UI embedded. Use `--ui=force` to fail the build if the UI is missing. See [Bundle](../cli/bundle).
+- At runtime: set `DESKAPP_UI=false` in `.env`. No window opens; the process runs as a tray service (`chrome.createHeadlessTray()`).
+- For shipped builds: skip `build:ui` (or ship with `DESKAPP_UI=false`) and package with `npm run package`; the app starts headless with the tray. See [Build & Package](../cli/bundle).

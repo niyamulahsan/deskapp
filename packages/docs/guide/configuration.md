@@ -1,6 +1,6 @@
 # Configuration
 
-Most configuration lives in `package.json`; window presets live in `src/window/config.ts`.
+Most configuration lives in `package.json`; window presets live in `src/config/winsetup.ts`.
 
 ## App Identity
 
@@ -36,7 +36,7 @@ Key parts:
 | `package`        | Builds and packages with electron-builder (outputs to `release/`).            |
 | `maker`          | Runs the maker CLI.                                                           |
 
-## Windows (`src/window/config.ts`)
+## Windows (`src/config/winsetup.ts`)
 
 Only presets declared in the `windows` map open at boot — the default template ships just `main`. You can open additional windows on demand with `win.openWindow()`.
 
@@ -53,7 +53,7 @@ export interface WindowPreset {
   noActivate?: boolean;
   transparentTitlebar?: boolean;
   route?: string;                // route to load in the renderer
-  chrome?: boolean;              // install default menu/context-menu/tray; false skips it
+  chrome?: boolean | ChromeParts; // install default menu/context-menu/tray; false skips it
 }
 
 export const windows: Record<string, WindowPreset> = {

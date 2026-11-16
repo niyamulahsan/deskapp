@@ -4,20 +4,20 @@ The `maker` CLI scaffolds source files, drives the database, and supports develo
 
 ```sh
 npm run maker            # list all commands
-# or
-npx deskapp maker
 npm run maker make:module blog
 npm run maker db:status
 ```
 
 ## make:* - scaffolding
 
-| Command           | Arguments                       | Options                | Creates                                                                |
-| ----------------- | ------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
-| `make:module`     | `<name:string>`                 | `--force`              | `src/modules/<name>/` with a model + seeder (plus controller + schema) |
-| `make:model`      | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/models/<snake>.model.ts`                |
-| `make:seeder`     | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/seeders/<snake>.seed.ts`                |
-| `make:controller` | `<module:string> <name:string>` | `--force`, `--dry-run` | controller + Zod schema pair in the module's `controllers/`            |
+| Command            | Arguments                       | Options                | Creates                                                                |
+| ------------------ | ------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| `make:module`      | `<name:string>`                 | `--force`              | `src/modules/<name>/` with a model + seeder (plus controller + schema) |
+| `make:model`       | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/models/<snake>.model.ts`                |
+| `make:seeder`      | `<module:string> <name:string>` | `--force`, `--dry-run` | `src/modules/<module>/database/seeders/<snake>.seed.ts`                |
+| `make:controller`  | `<module:string> <name:string>` | `--force`, `--dry-run` | controller + Zod schema pair in the module's `controllers/`            |
+| `make:test`        | `<module:string> [name:string]` | `--force`, `--dry-run` | a Vitest file in `src/modules/<module>/__tests__/`                     |
+| `module:make-test` | `<module:string> [name:string]` | `--force`, `--dry-run` | alias for `make:test`                                                  |
 
 After creating files, update the schema and run migrations as needed. See [Database Commands](./database.md).
 

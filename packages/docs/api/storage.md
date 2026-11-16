@@ -2,7 +2,7 @@
 
 Imported from the facade: `import { storage } from "@/core/facade.ts"`.
 
-The app's **own** internal state — settings, queue data, generated artifacts — kept out of the user's files. Two disks, rooted at `src/storage/app/` (redirect the root with the `APP_DATA_DIR` env var in packaged builds):
+The app's **own** internal state — settings, queue data, generated artifacts — kept out of the user's files. Two disks, rooted at the Electron `userData` folder (`<userData>/storage`; the CLI/dev fallback is `<project>/src/storage/app`). Redirect the root with the `APP_DATA_DIR` env var:
 
 - `private` — app-internal state that survives restarts.
 - `tmp` — transient artifacts (uploads, generated downloads).

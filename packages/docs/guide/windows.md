@@ -1,6 +1,6 @@
 # Windows & Native APIs
 
-Deskapp uses Electron's BrowserWindow. It wraps window creation behind `win` (from the facade), reads presets from `src/window/config.ts`, and adds native chrome plus dialogs.
+Deskapp uses Electron's BrowserWindow. It wraps window creation behind `win` (from the facade), reads presets from `src/config/winsetup.ts`, and adds native chrome plus dialogs.
 
 ## Window manager
 
@@ -17,7 +17,7 @@ Windows are independent. Closing a window closes only that window. On non-macOS 
 
 ## Window presets & on-demand windows
 
-Presets are declared in `src/window/config.ts` and opened at boot. Additional windows can be opened at runtime:
+Presets are declared in `src/config/winsetup.ts` and opened at boot. Additional windows can be opened at runtime:
 
 ```ts
 import { win } from "@/core/facade";
@@ -56,33 +56,31 @@ export const windows: Record<string, WindowPreset> = {
 
 | Method                               | Purpose                                                     | Usage                                               |
 | ------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------- |
-| `chrome.setupDesktopChrome(win)`     | One-call setup for main window (menu + context menu + tray) | Called automatically in `main.ts` if chrome enabled |
+| `chrome.setupDesktopChrome(win, parts?)` | One-call setup for main window (menu + context menu + tray) | Called automatically in `main.ts` if chrome enabled |
 | `chrome.installAppMenu(win)`         | Install application menu (`app-menu.ts`)                    | Manual control                                      |
 | `chrome.installContextMenu(win)`     | Install right-click context menu (`context-menu.ts`)        | Manual control                                      |
 | `chrome.createAppTray()`             | Create app tray with default menu/icon (`tray.ts`)          | Returns tray instance or undefined                  |
-| `chrome.createTray()`                | Create custom tray                                          | Returns tray instance                               |
+| `chrome.createTray()`                | Create custom tray                                          | Returns tray instance or undefined                  |
 | `chrome.createHeadlessTray()`        | Create tray for headless mode                               | Keeps app alive without window                      |
 | `chrome.hideDock()`                  | Hide macOS dock icon (for tray-only apps)                   | macOS only                                          |
-| `chrome.alertDialog(msg)`            | Show alert dialog (`dialogs.ts`)                            | Synchronous                                         |
-| `chrome.confirmDialog(msg)`          | Show confirm dialog (OK/Cancel)                             | Returns boolean                                     |
-| `chrome.promptDialog(msg, default?)` | Show prompt dialog                                          | Returns string or null if cancelled                 |
+| `chrome.alertDialog(msg)`            | Show alert dialog (`dialogs.ts`)                            | **Async** — `await` it                              |
+| `chrome.confirmDialog(msg)`          | Show confirm dialog (OK/Cancel)                             | **Async** — resolves `boolean`                      |
 | `chrome.defaultMenuItems()`          | Get default menu items array                                | For customization                                   |
-| `chrome.defaultContextMenuItems()`   | Get default context menu items                              | For customization                                   |
+| `chrome.resolveChrome(flag?)`        | Normalize a preset's `chrome` flag to `ChromeParts`         | `{ appMenu, contextMenu, tray }`                    |
 
 ### Using from UI (via bindings)
 
-Since `chrome` is backend-only, expose via controllers:
+Since `chrome` is backend-only, expose via controllers. Native dialogs are **async**, so `await` them:
 
 ```ts
 // src/modules/app/controllers/chrome.controller.ts
 import { chrome, win } from "@/core/facade";
 
-export const showAlert = async (msg: string) => { chrome.alertDialog(msg); return { ok: true }; };
-export const showConfirm = async (msg: string) => { return { confirmed: chrome.confirmDialog(msg) }; };
-export const showPrompt = async (msg: string, def?: string) => { return { value: chrome.promptDialog(msg, def) }; };
+export const showAlert = async (msg: string) => { await chrome.alertDialog(msg); return { ok: true }; };
+export const showConfirm = async (msg: string) => ({ confirmed: await chrome.confirmDialog(msg) });
 export const toggleTray = async () => { const tray = chrome.createAppTray(); return { ok: !!tray }; };
 
-export const handlers = { showAlert, showConfirm, showPrompt, toggleTray };
+export const handlers = { showAlert, showConfirm, toggleTray };
 ```
 
 ```vue
@@ -90,9 +88,9 @@ export const handlers = { showAlert, showConfirm, showPrompt, toggleTray };
 <button @click="async () => { const r = await md.app.chrome.showConfirm('Continue?'); console.log(r.confirmed); }">Confirm</button>
 ```
 
-## File pickers (`window/dialogs.ts`)
+## File pickers
 
-Native file dialogs via Electron's `dialog` module:
+Native file dialogs via Electron's `dialog` module (`src/window/dialogs.ts`):
 
 | Function                  | Description        |
 | ------------------------- | ------------------ |

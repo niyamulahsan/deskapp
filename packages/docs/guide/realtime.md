@@ -16,7 +16,7 @@ export { pulse };
 createApp(App).use(PulsePlugin).mount("#app");
 ```
 
-The full file is reproduced in [UI → Changing the frontend → Reference](./ui#changing-the-frontend).
+The full file is reproduced in [UI → Changing the frontend → Reference](./ui#reference--full-file-contents).
 
 In components, import the singleton directly (`@/ui/` maps to `src/ui/src/`):
 
@@ -54,7 +54,7 @@ ui.listen<{ ref: string; status: string }>("payment.status", async (payload) => 
 // on unmount: ui.stopListening("payment.status")
 ```
 
-`bindings` is the in-process bridge (a `Proxy`, typed by `src/ui/src/bindings.d.ts`) — available only under `deno desktop`. Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`.
+`bindings` is the in-process IPC bridge (typed by `src/ui/src/bindings.d.ts`) exposed by the preload script — available only inside the Electron renderer (a plain browser tab has no `bindings`). Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`.
 
 After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true`, `transports: ["websocket", "polling"]`, and a handshake `auth` callback that resolves the token set via `setToken()` (if any). It tracks joined rooms so it **re-emits `join` for each room on reconnect**; the engine authorizes each join - public rooms, your own `user:<id>` / `private:user:<id>`, and any `role:<name>` you hold are accepted, anything else is refused with `join:error`.
 

@@ -20,8 +20,6 @@ src/modules/<name>/
 
 ```sh
 npm run maker make:module blog
-# or
-npx deskapp maker make:module blog
 ```
 
 Creates `src/modules/blog/` with a sample model + seeder. Then add a controller:

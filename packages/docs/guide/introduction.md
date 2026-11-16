@@ -8,7 +8,7 @@
 - A two-layer storage API: unlimited user-file operations plus an app-managed private/tmp area
 - In-process job queue and cron scheduling
 - A Vue 3 + Vite frontend with Bootstrap, already wired to the `bindings` global
-- A maker CLI for scaffolding modules, models, seeders and controllers, and a bundler that ships a runnable app folder (plus optional bundled Chromium) for each OS
+- A maker CLI for scaffolding modules, models, seeders and controllers, plus electron-builder packaging that produces installers for each OS
 
 ::: warning Windows: Smart App Control
 On **Windows**, unpackaged/dev builds are typically unsigned. With Smart App Control (SAC) or SmartScreen enabled, Windows may warn about unsigned executables. If blocked, you can disable SAC (Settings → Privacy & Security → Windows Security → App & browser control → Smart App Control → Off) or use "More info → Run anyway" when prompted. For distribution, consider code signing your builds.
@@ -50,7 +50,8 @@ A scaffolded project is a complete, self-contained Electron app (based on the te
 .vscode/               editor settings
 scripts/               build scripts (esbuild for main/preload)
 src/
-  window/              window presets, manager, native chrome, dialogs
+  config/              app identity (app.ts) + window presets (winsetup.ts)
+  window/              window manager, native chrome, menus, tray, dialogs
   core/                framework: bindings registry, database,
                        queue, scheduler, storage, validation, password,
                        playwright, maker CLI
@@ -58,7 +59,7 @@ src/
   extensions/          holds extensions
   icons/               shared app icons (favicon, tray, png sets)
   modules/             your app's modules (controllers, models, seeders)
-  storage/             app-managed data (private, tmp) - gitignored
+  storage/             app-managed data (private, tmp) - dev/CLI fallback, gitignored
   ui/                  Vue 3 + Vite frontend
   main.ts              Electron main process entrypoint
   preload.ts           preload script exposing bindings to renderer

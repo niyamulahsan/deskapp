@@ -2,7 +2,7 @@
 
 Imported from the facade: `import { pickers } from "@/core/facade.ts"`.
 
-Real OS dialogs behind one cross-platform API (WinForms on Windows, NSOpenPanel/NSSavePanel on macOS, zenity/kdialog on Linux). All return the chosen absolute path, or `null` when the user cancels or the dialog fails. See [Windows & Native APIs](../guide/windows).
+Real OS dialogs behind one cross-platform API, built on Electron's `dialog` module (`showOpenDialog` / `showSaveDialog`). All return the chosen absolute path, or `null` when the user cancels or the dialog fails. See [Windows & Native APIs](../guide/windows).
 
 ## Signature
 
@@ -20,7 +20,7 @@ interface PickSaveOptions { title?: string; defaultName?: string; filter?: strin
 interface PickFolderOptions { title?: string; }
 ```
 
-`filter` uses WinForms syntax, e.g. `"Text files (*.txt)|*.txt|All files (*.*)|*.*"`; ignored on macOS/Linux where the OS provides its own filters.
+`filter` uses the classic `"Name|pattern"` syntax, e.g. `"Text files (*.txt)|*.txt|All files (*.*)|*.*"`. It is parsed into Electron's `filters` array, so it works on every platform.
 
 ## Use cases
 
