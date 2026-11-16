@@ -58,6 +58,7 @@ export default defineConfig({
             { text: label("world", "Environment"), link: "/guide/environment" },
             { text: label("settings", "Configuration"), link: "/guide/configuration" },
             { text: label("components", "Modules"), link: "/guide/modules" },
+            { text: label("book", "Conventions"), link: "/guide/conventions" },
             { text: label("plug", "Controllers & Bindings"), link: "/guide/controllers" },
             { text: label("device-desktop", "Windows & Native APIs"), link: "/guide/windows" },
             { text: label("database", "Database"), link: "/guide/database" },
@@ -76,6 +77,13 @@ export default defineConfig({
             { text: label("lock", "Password & Hashing"), link: "/guide/password" },
             { text: label("browser", "Playwright / Chromium"), link: "/guide/playwright" },
             { text: label("broadcast", "Realtime (Pulse)"), link: "/guide/realtime" },
+          ],
+        },
+        {
+          text: label("test-pipe", "Testing & Agents"),
+          items: [
+            { text: label("test-pipe", "Unit Testing"), link: "/guide/testing" },
+            { text: label("robot", "AI Agents"), link: "/guide/ai-agents" },
           ],
         },
         {

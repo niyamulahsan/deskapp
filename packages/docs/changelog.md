@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.6] - 2026-11-16
+
+### Fixed
+- **Scaffolder: sample tests now ship** - `scripts/sync-template.mjs` filtered out the `modules/*/__tests__` directory before it could keep the test files inside it, so scaffolded projects had no tests and `npm test` failed with "No test files found". The filter now mirrors `modules/*/__tests__` (the framework's own `*.test.ts` are still excluded).
+- **Docs: Deno-era drift removed** - `guide/ui.md`, `guide/quick-start.md`, `guide/modules.md`, and `cli/maker.md` no longer describe `serveDir`, `deno task`, `deno.json`/import maps, `FRONTEND_WATCH`, `resolveDistPath`, `bundle:win --ui=`, or `npx deskapp`; they now describe the Electron build (`vite` + esbuild + electron-builder, `loadFile(src/ui/dist/index.html)`, `npm run maker`).
+- **Docs: window preset path** - Every reference to `src/window/config.ts` corrected to `src/config/winsetup.ts` (the real preset map; `src/window/config.ts` is a back-compat re-export) across `guide/{windows,configuration,architecture,recipes,ui}.md` and `api/win.md`.
+- **Docs: storage API** - `guide/storage.md`, `guide/recipes.md`, and `api/storage.md` now use `storage.put`/`storage.get` and `storage.disk("private"|"tmp").path(...)` instead of the non-existent `storage.getAppDataDir()`/`getTmpDir()`, and document the real root (`<userData>/storage`; CLI/dev fallback `<project>/src/storage/app`).
+- **Docs: chrome/dialogs API** - Removed the non-existent `chrome.promptDialog` and `chrome.defaultContextMenuItems`; documented that `confirmDialog`/`alertDialog` are async and are also exported at the facade top level.
+- **Docs: queue & scheduler API** - `guide/{queue,recipes}.md` and `api/index.md` now show `queue.create({ concurrency })` then `q.add(fn)` (no global `queue.add`/`queue.process`) and `cron.schedule(name, expr, fn, { timezone })` with a handle `.stop()` (and `cron.stop()` for all).
+- **Docs: Chromium resolve** - `chromium.resolve()` documented as synchronous (returns `string | undefined`) in `guide/recipes.md` and `api/chromium.md`.
+- **Docs: pickers, database, bindings** - Pickers now describe Electron's `dialog` module + the `"Name|pattern"` filter syntax; `guide/database.md` documents the real default SQLite path; `guide/controllers.md` points at `src/ui/src/bindings.d.ts` and the `md` alias.
+- **Docs: paginate example** - Fixed a self-shadowing `const users = await paginate.model(...)` in `api/paginateModel.md`.
+- **Docs: broken anchor** - `guide/storage.md` → `guide/windows.md#file-pickers` now resolves.
+- **`template/.env.example`** - The realtime comment no longer claims a "local realtime" stack; Pulse is a client that connects out to a server engine.
+
+### Added
+- **`template/AGENTS.md` (ships to scaffolded apps)** - A rich, strict agent contract placed in the template root, so every project scaffolded by `create-deskapp` gets it at the project root. It documents the real Electron-era APIs and conventions — the non-negotiables (never edit `src/core/**`, never hand-edit generated files, directory = meaning, `handlers` map required, facade-only imports, renderer never imports backend), module anatomy, controllers/bindings, schemas/validation, database/pagination, the facade, queue/cron, storage/files, windows/chrome/dialogs/pickers, the `@/ui` alias, gum + DataTable, config, commands, testing, and a pre-done checklist. Modeled on the nexwire agreement and grounded in the real `template/` code; mirrored byte-identically into `packages/create-deskapp/template/AGENTS.md` by `npm run sync:template`.
+- **Docs: `llms.txt` + `llms-full.txt`** - The docs site now publishes an agent-readable index (`llms.txt` — every page with a one-line description) and a single-file dump (`llms-full.txt` — every page concatenated), generated from `packages/docs` at build time by `packages/docs/scripts/gen-llms.mjs` (wired as `prebuild`/`predev`, so they cannot drift from the published pages). They land at the site root and are linked from `template/AGENTS.md`.
+- **Docs: `guide/conventions.md`** - A reference for deskapp's real conventions: directory = meaning, the discovery table and module tree (no `routes/`, `services/`, `helpers/`, `schemas/` or per-module `facade.ts`), no location headers, the `@/*` / `@config/*` / `@/ui/*` aliases, the `handlers` map, schemas beside the controller, generated files, the renderer↔backend boundary, and naming.
+- **Docs: `guide/testing.md`** - The Vitest setup (real `vitest.config.ts`, aliases, `src/ui/**` excluded), where tests live, scaffolding with `make:test` / `module:make-test`, the facade-mocking pattern, scripts, and coverage guidance (no thresholds shipped by default).
+- **Docs: `guide/ai-agents.md`** - Explains the shipped `AGENTS.md` contract, the `llms.txt` / `llms-full.txt` files, and the short rules an agent follows; linked from the guide sidebar.
+
 ## [1.2.5] - 2026-11-11
 
 ### Fixed

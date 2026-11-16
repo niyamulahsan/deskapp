@@ -6,10 +6,14 @@ This file is the contract. Read it before writing any code and follow it exactly
 **A change that breaks a rule is wrong even if it compiles and every test passes.**
 
 - Docs: https://niyamulahsan.github.io/deskapp/
+- AI index (one file, every page): https://niyamulahsan.github.io/deskapp/llms.txt
+- Full docs (single file): https://niyamulahsan.github.io/deskapp/llms-full.txt
+- Conventions: https://niyamulahsan.github.io/deskapp/guide/conventions
 - Modules: https://niyamulahsan.github.io/deskapp/guide/modules
 - Controllers & bindings: https://niyamulahsan.github.io/deskapp/guide/controllers
 - Database: https://niyamulahsan.github.io/deskapp/guide/database
 - UI & gum: https://niyamulahsan.github.io/deskapp/guide/gum
+- Testing: https://niyamulahsan.github.io/deskapp/guide/testing
 - Facade / API reference: https://niyamulahsan.github.io/deskapp/api/
 
 If a rule here conflicts with something you "know" from another framework, this
