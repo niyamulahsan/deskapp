@@ -56,7 +56,7 @@ Each facade member below has its own page — every export linked here is a docu
 - **Data** — `db` holds the Drizzle client; `paginate` is the shared envelope, and you pick which flavor fits: [`paginateQuery`](./paginateQuery) for fully custom queries, [`paginateTable`](./paginateTable) for a whole table, [`paginateModel`](./paginateModel) for relational eager-loaded reads. `sql` writes `where` filters.
 - **Background work** — `queue` throttles async jobs; `cron` runs named schedules and stops them all on shutdown.
 - **Security & input** — `pass` hashes passwords; `validate` runs schemas and throws a structured 422-shaped failure.
-- **Network** — `http` calls a remote server API from the main process: a runtime `API_URL`, never throws, returns `{ ok, status, data, offline? }`. `session` keeps the per-user state that call needs (an auth token, a cache) in the main process, encrypted at rest when `safeStorage` is available.
+- **Network** — `http` calls a remote server API from the main process: a runtime `API_URL`, never throws, returns `{ ok, status, data, offline? }`. `session` keeps the per-user state that call needs (an auth token, a cache) in the main process, encrypted at rest when `safeStorage` is available. The shipped **bearer auth client** is app config, not a facade member — it lives in [`src/config/auth.ts`](./auth) and is installed by one import in `src/main.ts`.
 - **Files** — `files` touches the user's real file system anywhere; `storage` keeps the app's own state in `private`/`tmp` disks.
 - **Automation** — `chromium` locates the bundled browser binary and unpacked extensions for Playwright.
 

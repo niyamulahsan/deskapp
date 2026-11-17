@@ -2,6 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import "@config/auth";
 import { windowDev, windows } from "@config/winsetup";
 import { app, BrowserWindow, dialog } from "electron";
 import { bindAll } from "@/core/api/registry";

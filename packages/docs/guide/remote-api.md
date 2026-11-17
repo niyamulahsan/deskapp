@@ -250,10 +250,29 @@ The desktop app is not a browser tab: the main process has no origin, and a pack
 | `logout()`    | `app.auth.logout` | drop the session, best-effort revoke             |
 | `status()`    | `app.auth.status` | signed-in state, no network call                 |
 
-The token pair lives in the core [`session`](../api/session) store **in the main process only** — encrypted at rest with Electron's `safeStorage` when available — and never crosses to the renderer. On load the controller installs two axios interceptors on `http.client`:
+The controller is a thin binding surface. The actual client — the endpoints, the session keys, the header, the token shape and the two interceptors — lives in **[`src/config/auth.ts`](../api/auth)**, a file you own and edit. `src/main.ts` installs it with one import at boot:
 
-- a **request** interceptor attaches `Authorization: Bearer <access token>` to every `http` call (it never overrides an explicit header);
-- a **response** interceptor turns a `401` into one silent `POST /api/auth/refresh-token` + retry. The server rotates the pair, so both tokens are replaced; concurrent `401`s share a single rotation.
+```ts
+import "@config/auth"; // bearer + refresh interceptors on http.client
+```
+
+So a brand-new module needs **no auth code**: just call `http.get` / `http.post` and the token rides along.
+
+```ts
+// ./src/modules/wallet/controllers/api.controller.ts
+
+import { http } from "@/core/facade";
+
+export const balance = () => http.get("/api/wallet/balance");
+// -> Authorization: Bearer <stored token> is added for you,
+//    and a 401 triggers one silent refresh + retry.
+export const handlers = { balance };
+```
+
+The token pair lives in the core [`session`](../api/session) store **in the main process only** — encrypted at rest with Electron's `safeStorage` when available — and never crosses to the renderer. The interceptors:
+
+- a **request** interceptor attaches `<header.scheme> <access token>` to every `http` call (it never overrides an explicit header);
+- a **response** interceptor turns a `401` into one silent `POST <paths.refresh>` + retry. The server rotates the pair, so both tokens are replaced; concurrent `401`s share a single rotation.
 
 The renderer drives it through `src/ui/src/stores/auth.ts` — the store owns only the UI state, never a token:
 
@@ -265,7 +284,29 @@ auth.status();                     // signed in? no network
 await auth.logout();
 ```
 
-Server side, nexwire's guard reads the bearer header **before** the access cookie, and `login`/`register` return `{ access_token, refresh_token, token_type: "Bearer" }` in the body — so the guard was the only missing piece. See the nexwire [Auth guide](https://niyamulahsan.github.io/nexwire/guide/auth).
+Server side, nexwire's guard reads the bearer header **before** the access cookie, and `login`/`register` return `{ access_token, refresh_token, token_type: "Bearer" }` in the body. See the nexwire [Auth guide](https://niyamulahsan.github.io/nexwire/guide/auth).
+
+### Customizing the contract
+
+Change token field names, endpoints, the header, or the response shape by editing **only** `src/config/auth.ts`. The `AUTH` object at the top is the whole contract:
+
+```ts
+// ./src/config/auth.ts
+
+export const AUTH = {
+  paths: { login: "/api/auth/login", refresh: "/api/auth/refresh-token", logout: "/api/auth/logout", me: "/api/auth/me" },
+  keys: { access: "accessToken", refresh: "refreshToken", user: "user" },
+  header: { name: "Authorization", scheme: "Bearer" },
+  refreshBody: (refreshToken) => ({ refresh_token: refreshToken }),
+  readTokens: (payload) => ({
+    access: payload?.access_token ?? null,
+    refresh: payload?.refresh_token ?? null,
+    user: payload?.user ?? null
+  })
+};
+```
+
+Full reference: [`auth`](../api/auth).
 
 ### Logging out
 
@@ -273,7 +314,7 @@ Server side, nexwire's guard reads the bearer header **before** the access cooki
 
 ### Rolling your own
 
-Any server with a different contract follows the same shape: keep the token in [`session`](../api/session), attach it in a controller with `http.get(path, { token })`, and refresh on `401`. The walkthrough above is exactly that.
+Any server with a different contract follows the same shape: keep the token in [`session`](../api/session), attach it in a controller with `http.get(path, { token })`, and refresh on `401`. The walkthrough above is exactly that. More often you don't need to: change the [`AUTH`](../api/auth) contract in `src/config/auth.ts` and the shipped client follows.
 
 ### Cookie sessions
 
@@ -360,9 +401,10 @@ it("calls the balance endpoint with a bearer token", async () => {
 
 The template ships both halves of this: `src/core/utils/http.test.ts` covers the
 helper, and `src/modules/app/__tests__/net.controller.test.ts` covers the binding.
-The bearer client has its own coverage in
-`src/modules/app/__tests__/auth.controller.test.ts` (handlers plus both
-interceptors), and the store in `src/core/utils/session.test.ts`.
+The auth client has its own coverage in `src/config/auth.test.ts` (the contract,
+the session helpers and both interceptors), the `app.auth.*` handlers in
+`src/modules/app/__tests__/auth.controller.test.ts`, and the store in
+`src/core/utils/session.test.ts`.
 
 ## Alternative: renderer axios
 

@@ -56,4 +56,4 @@ plaintext.
 
 ## Related
 
-- [http](./http) · [Calling a Server API](../guide/remote-api)
+- [`http`](./http) · [`auth`](./auth) · [Calling a Server API](../guide/remote-api)

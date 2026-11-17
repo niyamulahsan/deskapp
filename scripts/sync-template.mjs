@@ -127,9 +127,14 @@ cpSync(SRC, DEST, {
       return parts.slice(idx + 2).some((p) => p === "__tests__" || p === "tests");
     })();
 
+    // Config is app-editable code too, so its tests ship. Framework `src/core/**`
+    // and framework internals (`src/window/**`) stay excluded.
+    const inConfigTests = relative(SRC, s).split(/[\\/]/).join("/").startsWith("src/config/");
+    const inAllowedTests = inAllowedModuleTests || inConfigTests;
+
     // Skip test files and test dirs unless they belong to a module's test area.
     const isTestFile = /\.(test|spec)\.(ts|js|tsx|jsx|mjs|cjs)$/i.test(basename_);
-    if (isTestFile && !inAllowedModuleTests) return false;
+    if (isTestFile && !inAllowedTests) return false;
     if ((basename_ === "__tests__" || basename_ === "tests") && !inAllowedModuleTests) return false;
 
     return !parts.some((p) => skipDirs.has(p))

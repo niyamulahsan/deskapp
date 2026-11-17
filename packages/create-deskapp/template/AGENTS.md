@@ -249,13 +249,20 @@ Full walkthrough (helper + controller + store + page, auth, offline, dev/prod):
 ### Auth: bearer tokens
 
 The desktop has no browser cookie jar, so a nexwire server is reached with a
-**bearer** token, not the login cookie. The template ships the client:
+**bearer** token, not the login cookie. The client is app config, not a module:
 
-- `app.auth.login` / `me` / `logout` / `status` —
-  `src/modules/app/controllers/auth.controller.ts`. The token pair is kept in the
-  main process in the `session` store (encrypted at rest with `safeStorage`) and
-  never crosses to the renderer; two interceptors on `http.client` attach
-  `Authorization: Bearer …` and turn a `401` into one silent refresh + retry.
+- `src/config/auth.ts` owns the whole client — the `AUTH` contract (endpoints,
+  session keys, header, `refreshBody`, `readTokens`) at the top, the mechanism
+  below. **Edit this file for your server** (token field names, routes, header,
+  response shape); nothing else changes.
+- `src/main.ts` installs it with one import: `import "@config/auth";` — two
+  interceptors on `http.client` attach `<scheme> <access token>` and turn a `401`
+  into one silent refresh + retry. So a new module needs **no auth code**: call
+  `http.get` / `http.post` and the token rides along.
+- `app.auth.login` / `me` / `logout` / `status`
+  (`src/modules/app/controllers/auth.controller.ts`) is the thin binding surface
+  on top. The token pair is kept in the main process in the `session` store
+  (encrypted at rest with `safeStorage`) and never crosses to the renderer.
 - The renderer half is `src/ui/src/stores/auth.ts` (login/me/status/logout, no
   token). The server side is nexwire's guard, which reads the bearer header before
   the access cookie.
@@ -263,7 +270,7 @@ The desktop has no browser cookie jar, so a nexwire server is reached with a
   renderer. `logout()` cannot revoke server-side (nexwire's logout reads the
   refresh cookie) — call `POST /api/auth/logout-all` to revoke for real.
 
-Details: `guide/remote-api.md` → Authentication.
+Details: `guide/remote-api.md` → Authentication; `api/auth.md`.
 
 ## 4. Schemas & validation
 
