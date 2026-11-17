@@ -7,7 +7,7 @@
   "scripts": {
     "prepare": "npm run config:sync && npm run db:schema && npm run bindings:gen",
     "config:sync": "tsx --tsconfig tsconfig.json src/core/maker/sync-config.ts",
-    "dev": "npm run config:sync && npm run db:schema && npm run bindings:gen && concurrently -k -n ui,main,electron \"npm run dev:ui\" \"npm run dev:main\" \"npm run dev:electron\"",
+    "dev": "npm run config:sync && npm run db:schema && npm run bindings:gen && concurrently -k --success command-electron -n ui,main,electron \"npm run dev:ui\" \"npm run dev:main\" \"npm run dev:electron\"",
     "dev:ui": "vite --config src/ui/vite.config.ts",
     "dev:main": "node scripts/build-electron.mjs --watch",
     "dev:electron": "wait-on tcp:5173 out/main/index.cjs && cross-env NODE_ENV=development electron out/main/index.cjs",
