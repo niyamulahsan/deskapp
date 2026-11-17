@@ -1,4 +1,5 @@
 import { ipcMain } from "electron";
+import { toBindingErrorEnvelope } from "@/core/api/binding-error";
 import { GENERATED_CONTROLLERS } from "@/core/api/bindings.generated";
 
 /** A callable handler registered for the frontend. */
@@ -35,7 +36,14 @@ export function bindAll(): void {
   const handlers = collectHandlers();
   for (const [name, fn] of handlers) {
     ipcMain.handle(`deskapp:${name}`, async (_event, ...args: unknown[]) => {
-      return await fn(...args);
+      try {
+        return await fn(...args);
+      } catch (error) {
+        // Electron drops a thrown value's properties across IPC (only a string
+        // message survives), so return a tagged envelope the preload bridge
+        // turns back into a rejection. See `@/core/api/binding-error`.
+        return toBindingErrorEnvelope(error);
+      }
     });
   }
   // Sync channel so preload can expose a concrete, cloneable bindings object.

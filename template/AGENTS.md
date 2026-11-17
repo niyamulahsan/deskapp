@@ -27,8 +27,11 @@ if it compiles and every test passes.
 
 1. **Never edit `src/core/**`.** It is the framework, not your application. Your
    code lives in `src/modules/**`, `src/config/**`, `src/ui/**`, `src/main.ts`
-   and `src/preload.ts`. `src/window/**` and `src/core/**` are framework
-   internals — consume them through the facade, do not rewrite them.
+   and `src/preload.ts`. `src/window/**` is framework internals too — consume it
+   through the facade — **except** the desktop-chrome files
+   `src/window/app-menu.ts`, `src/window/context-menu.ts` and `src/window/tray.ts`,
+   which are the intended place to customize the app menu, right-click menu and
+   tray.
 2. **Never hand-edit generated files.** These are produced by the maker and are
    overwritten without warning:
    - `src/core/api/bindings.generated.ts` (`npm run maker -- bindings:gen`)
@@ -83,7 +86,8 @@ src/
     database/{connection,paginate,config,...}.ts
     utils/{queue,scheduler,storage,validation,password,playwright}.ts
     maker/**                      # the `npm run maker` CLI
-  window/                         # framework window manager / native chrome / dialogs
+  window/                         # window manager / native chrome / dialogs
+    app-menu.ts, context-menu.ts, tray.ts  # menu & tray — edit these to customize desktop chrome
   database/
     schema.ts                     # GENERATED — aggregates every model
     migrations/                   # GENERATED
@@ -299,11 +303,11 @@ type PaginatedResult<T> = {
 };
 ```
 
-| Use | Method |
-| --- | --- |
-| Whole table, optional `where`/`orderBy` | `paginate.table(posts, { page, perPage, where, orderBy, path })` |
-| Eager-loaded relations (`db.query.<t>`) | `paginate.model({ table, query: db.query.posts, with, columns, path })` |
-| Full control (`total()` + `data(limit, offset)`) | `paginate.query({ total, data, path })` |
+| Use                                              | Method                                                                  |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Whole table, optional `where`/`orderBy`          | `paginate.table(posts, { page, perPage, where, orderBy, path })`        |
+| Eager-loaded relations (`db.query.<t>`)          | `paginate.model({ table, query: db.query.posts, with, columns, path })` |
+| Full control (`total()` + `data(limit, offset)`) | `paginate.query({ total, data, path })`                                 |
 
 `page`/`perPage` are normalized and clamped (`perPage` default 15, `maxPerPage`
 default 100). A list handler that the UI can bind to looks like:
@@ -342,21 +346,21 @@ fallback for CLI/dev. `DATABASE_URL` overrides both.
 `src/core/facade.ts` is the **only** surface app modules import framework code
 from. Everything is re-exported there:
 
-| Export | What it is |
-| --- | --- |
-| `db` | Drizzle client + `db.init()` / `db.close()` |
-| `paginate`, `sql` | nexgen-style pagination + Drizzle `sql` helper |
-| `validate` | Zod re-export (`validate.z`) + `validate.run` |
-| `pass` | `hashPassword` / `verifyPassword` (bcrypt) |
-| `queue` | Bounded in-process async queue |
-| `cron` | Named cron schedules (croner) |
-| `storage` | App-managed disks (`private` / `tmp`) |
-| `files` | User-file layer (any picked absolute path) |
-| `pickers` | Native open / save / folder dialogs |
-| `alertDialog`, `confirmDialog` | Native message dialogs (async) |
-| `win` | Window lifecycle |
-| `chrome` | Menus, tray, native chrome |
-| `chromium` | Playwright/Chromium locator |
+| Export                         | What it is                                     |
+| ------------------------------ | ---------------------------------------------- |
+| `db`                           | Drizzle client + `db.init()` / `db.close()`    |
+| `paginate`, `sql`              | nexgen-style pagination + Drizzle `sql` helper |
+| `validate`                     | Zod re-export (`validate.z`) + `validate.run`  |
+| `pass`                         | `hashPassword` / `verifyPassword` (bcrypt)     |
+| `queue`                        | Bounded in-process async queue                 |
+| `cron`                         | Named cron schedules (croner)                  |
+| `storage`                      | App-managed disks (`private` / `tmp`)          |
+| `files`                        | User-file layer (any picked absolute path)     |
+| `pickers`                      | Native open / save / folder dialogs            |
+| `alertDialog`, `confirmDialog` | Native message dialogs (async)                 |
+| `win`                          | Window lifecycle                               |
+| `chrome`                       | Menus, tray, native chrome                     |
+| `chromium`                     | Playwright/Chromium locator                    |
 
 ```ts
 import { db, paginate, sql, validate, pass, queue, cron, storage, files, pickers, win, chrome } from "@/core/facade";
@@ -458,6 +462,12 @@ win.getWindowCount();
 - `win.getWindow()` / `win.getWindowCount()` are read-only and safe anywhere;
   creating a window needs the real Electron runtime — guard it in tests/CLI.
 - App menu, context menu and tray apply to the **main window only**.
+- To change the app menu, right-click menu or tray, edit
+  `src/window/app-menu.ts` (`defaultMenuItems` / `toElectronMenu` /
+  `installAppMenu`), `src/window/context-menu.ts` (`installContextMenu`) and
+  `src/window/tray.ts` (`createTray` / `createAppTray`) directly — these are
+  app-shipped, not framework. A menu item's `id` reaches the renderer via
+  `webContents.send("menu-click", id)`.
 
 `chrome` (menus, tray, dialogs) is **backend-only** — the renderer can never
 import it. Bridge it through a controller if the UI needs it.
@@ -500,11 +510,12 @@ Rule: the renderer **never** imports `@/core/**`, `@/modules/**`, `electron`, or
 ## 11. Frontend data: gum & DataTable
 
 `gum` (`src/ui/src/plugins/gum.ts`) is the request/form helper. It has two
-interchangeable transports — `"bindings"` (default; in-process, no HTTP) and
-`"http"`. Over bindings the "URL" **is** the binding name:
+interchangeable transports — `"bindings"` (in-process, no HTTP; auto-detected
+when the Electron bridge is present) and `"http"`. Over bindings the "URL" **is**
+the binding name:
 
 ```ts
-import { useGum, useGumForm, useGumRemember } from "@/ui/plugins/gum.ts";
+import { useGum, useGumRemember } from "@/ui/plugins/gum.ts";
 
 const gum = useGum();
 
@@ -512,8 +523,8 @@ const gum = useGum();
 const res = await gum.get("app.demo.table", { navigate: false, query: { page: 2, size: 15 } });
 res.data.total;
 
-// submit a form over bindings
-const form = useGumForm({ name: "", email: "" });
+// submit a form over bindings — pass defaults to useGum to also get `form`
+const { form } = useGum({ name: "", email: "" });
 await form.post("users.users.store");
 form.errors;               // { field: "first message" }
 form.processing;           // boolean
@@ -523,13 +534,16 @@ form.processing;           // boolean
 - Payload contract matches the generated handlers: `index()` → `undefined`,
   `show(params)`/`destroy(params)` → query/data, `store(body)` → data,
   `update({ params, body })` → both. `gum.patch("users.users.update", body, { query: { id } })`.
-- `useGumForm` returns reactive `data`, `errors`, `processing`,
+- `useGum(defaults).form` returns reactive `data`, `errors`, `processing`,
   `wasSuccessful`, `recentlySuccessful`, `isDirty` plus `setError` / `clearErrors`
-  / `reset` and `post`/`put`/`patch`/`delete`.
+  / `reset` and `post`/`put`/`patch`/`delete` (plus the `*With` fetcher variants).
+  `useGumForm` is **deprecated** — use `useGum(defaults).form`.
 - `useGumRemember(key, defaults)` is a localStorage ref scoped to the current route.
 - Errors are normalized: Zod `flatten` from `validate.run` becomes per-field
-  errors (form-level errors under `$root`). This is why backend handlers must
-  validate with `validate.run`.
+  errors (form-level errors under `$root`). Thrown handler errors survive Electron
+  IPC — `bindAll` returns a tagged envelope and the preload bridge rethrows it with
+  `.response.data` — so `form.errors` populates over bindings too. This is why
+  backend handlers must validate with `validate.run`.
 
 **DataTable** (`src/ui/src/components/datatable/index.vue`) is the gum-powered
 table. Point `path` at a binding (or REST endpoint) that returns the `paginate`

@@ -68,6 +68,47 @@ export const windows: Record<string, WindowPreset> = {
 | `chrome.defaultMenuItems()`          | Get default menu items array                                | For customization                                   |
 | `chrome.resolveChrome(flag?)`        | Normalize a preset's `chrome` flag to `ChromeParts`         | `{ appMenu, contextMenu, tray }`                    |
 
+### Modifying menus & tray
+
+Default desktop chrome is installed from `main.ts` through `chrome.setupDesktopChrome(win, parts?)`, but it is ordinary app code — edit these three files directly to change it:
+
+| File                         | Controls                | Key exports                                                                                  |
+| ---------------------------- | ----------------------- | -------------------------------------------------------------------------------------------- |
+| `src/window/app-menu.ts`     | Application menu bar    | `defaultMenuItems()`, `toElectronMenu(items)`, `installAppMenu(win)`, `removeAppMenu(win)`   |
+| `src/window/context-menu.ts` | Right-click menu        | `installContextMenu(win)`, `disableContextMenu(win)`                                         |
+| `src/window/tray.ts`         | System tray icon + menu | `createTray()`, `createAppTray()`, `createHeadlessTray()`, `hideDock()`, `isTrayAvailable()` |
+
+`defaultMenuItems()` returns a small typed template. Edit it — or call `installAppMenu` with your own `toElectronMenu(...)` template — to add or remove items:
+
+```ts
+// src/window/app-menu.ts
+export function defaultMenuItems(): MenuItem[] {
+  return [
+    {
+      submenu: {
+        label: "File",
+        items: [
+          { item: { label: "New", id: "new", accelerator: "CmdOrCtrl+N", enabled: true } },
+          "separator",
+          { role: { role: "quit" } }
+        ]
+      }
+    }
+  ];
+}
+```
+
+Each `MenuItem` is one of:
+
+- `{ item: { label, id?, accelerator?, enabled? } }` — a clickable item. Its `id` is forwarded to the renderer as `webContents.send("menu-click", id)`, so a page listens with `ipcRenderer.on("menu-click", …)`.
+- `{ submenu: { label, items } }` — a nested submenu.
+- `"separator"` — a divider.
+- `{ role: { role: "undo" } }` — a built-in Electron role (`copy`, `paste`, `quit`, …).
+
+The context menu builds its template inline in `installContextMenu` (`context-menu.ts`), and the tray builds its right-click menu inline in `createAppTray` (`tray.ts`) — edit those templates to change the entries, and swap the icon via `createTray()`.
+
+> Menu, context menu and tray apply to the **main window only**. Set `chrome: false` in `src/config/winsetup.ts` to skip them entirely, or pass `parts` to `setupDesktopChrome` to disable just one (`{ appMenu, contextMenu, tray }`).
+
 ### Using from UI (via bindings)
 
 Since `chrome` is backend-only, expose via controllers. Native dialogs are **async**, so `await` them:

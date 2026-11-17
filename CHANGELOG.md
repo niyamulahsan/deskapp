@@ -1,6 +1,6 @@
 # Changelog
 
-## [1.2.6] - 2026-11-16
+## [1.2.6] - 2026-11-17
 
 ### Fixed
 - **Scaffolder: sample tests now ship** - `scripts/sync-template.mjs` filtered out the `modules/*/__tests__` directory before it could keep the test files inside it, so scaffolded projects had no tests and `npm test` failed with "No test files found". The filter now mirrors `modules/*/__tests__` (the framework's own `*.test.ts` are still excluded).
@@ -14,6 +14,10 @@
 - **Docs: paginate example** - Fixed a self-shadowing `const users = await paginate.model(...)` in `api/paginateModel.md`.
 - **Docs: broken anchor** - `guide/storage.md` → `guide/windows.md#file-pickers` now resolves.
 - **`template/.env.example`** - The realtime comment no longer claims a "local realtime" stack; Pulse is a client that connects out to a server engine.
+- **Bindings: thrown errors now survive Electron IPC** - `bindAll` catches a handler throw and returns a tagged error envelope (`src/core/api/binding-error.ts`); the preload bridge rethrows it as an `Error` carrying `.response.data`. Electron's `ipcRenderer.invoke` drops every custom property of a thrown value — a `validate.run` 422 arrived as `Error("Error invoking remote method '…': [object Object]")` — so `form.errors.<field>` never populated under the `bindings` transport. It does now, `try/catch` still works, and `gum.normalizeValidationErrors` unwraps the nested zod `flatten()` output (`errors.fieldErrors` / `errors.formErrors`, plus top-level, flat maps and raw `error.issues`) into per-field messages. New `src/core/api/binding-error.test.ts` and an extended `registry.test.ts` cover it.
+
+### Changed
+- **Docs: `guide/gum.md` corrected to the real gum** - Removed the non-existent `GumRequestError` class and `invokeHttp` helper; switched `useGumForm` to `useGum(defaults).form` (the former is deprecated); documented the transport as auto-detected (`"bindings"` when the Electron bridge is present, else `"http"`) instead of a fixed `"bindings"` default; corrected `progress` (0–100 upload progress, `null` when the size is unknown) and DataTable `disabled` (disables the selection checkboxes, not "while loading"); noted `DataTableSkeleton` `col`/`row` default to `1`.
 
 ### Added
 - **`template/AGENTS.md` (ships to scaffolded apps)** - A rich, strict agent contract placed in the template root, so every project scaffolded by `create-deskapp` gets it at the project root. It documents the real Electron-era APIs and conventions — the non-negotiables (never edit `src/core/**`, never hand-edit generated files, directory = meaning, `handlers` map required, facade-only imports, renderer never imports backend), module anatomy, controllers/bindings, schemas/validation, database/pagination, the facade, queue/cron, storage/files, windows/chrome/dialogs/pickers, the `@/ui` alias, gum + DataTable, config, commands, testing, and a pre-done checklist. Modeled on the nexwire agreement and grounded in the real `template/` code; mirrored byte-identically into `packages/create-deskapp/template/AGENTS.md` by `npm run sync:template`.
@@ -21,6 +25,7 @@
 - **Docs: `guide/conventions.md`** - A reference for deskapp's real conventions: directory = meaning, the discovery table and module tree (no `routes/`, `services/`, `helpers/`, `schemas/` or per-module `facade.ts`), no location headers, the `@/*` / `@config/*` / `@/ui/*` aliases, the `handlers` map, schemas beside the controller, generated files, the renderer↔backend boundary, and naming.
 - **Docs: `guide/testing.md`** - The Vitest setup (real `vitest.config.ts`, aliases, `src/ui/**` excluded), where tests live, scaffolding with `make:test` / `module:make-test`, the facade-mocking pattern, scripts, and coverage guidance (no thresholds shipped by default).
 - **Docs: `guide/ai-agents.md`** - Explains the shipped `AGENTS.md` contract, the `llms.txt` / `llms-full.txt` files, and the short rules an agent follows; linked from the guide sidebar.
+- **Docs: modifying menus & tray** - `guide/windows.md` gains a "Modifying menus & tray" section naming `src/window/app-menu.ts` (`defaultMenuItems` / `toElectronMenu` / `installAppMenu` / `removeAppMenu`), `src/window/context-menu.ts` (`installContextMenu` / `disableContextMenu`) and `src/window/tray.ts` (`createTray` / `createAppTray` / `createHeadlessTray` / `hideDock`), with the `MenuItem` shape and the `webContents.send("menu-click", id)` contract. `guide/architecture.md` and `guide/ai-agents.md` list these files as app-editable, and `template/AGENTS.md` §0/§1/§9 carve them out of the "do not edit `src/window/**`" rule (§11 now shows `useGum(defaults).form`).
 
 ## [1.2.5] - 2026-11-11
 

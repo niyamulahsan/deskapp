@@ -34,6 +34,9 @@ There is a process boundary between UI and backend enforced by Electron. The `bi
 | `src/config/winsetup.ts`             | `windows` preset map (add a key = add a window).                                                                                                             |
 | `src/window/manager.ts`              | `win` namespace (`createWindow` / `openWindow` / `getWindow` / `getWindowCount`), window lifecycle + close-to-quit logic.                                    |
 | `src/window/native.ts`               | `chrome` namespace (tray, menus, dialogs, setup).                                                                                                            |
+| `src/window/app-menu.ts`             | Application menu template (`defaultMenuItems` / `toElectronMenu` / `installAppMenu`) — **edit to customize**.                                                |
+| `src/window/context-menu.ts`         | Right-click menu (`installContextMenu` / `disableContextMenu`) — **edit to customize**.                                                                      |
+| `src/window/tray.ts`                 | System tray (`createTray` / `createAppTray` / `createHeadlessTray` / `hideDock`) — **edit to customize**.                                                    |
 | `src/window/dialogs.ts`              | `pickers` namespace (`open` / `save` / `folder`).                                                                                                            |
 | `src/core/facade.ts`                 | **The public API surface.** Everything app code imports it through — one import, no reaching into internals.                                                 |
 | `src/core/api/registry.ts`           | Reads each controller's `handlers` map and binds every entry over IPC as `<module>.<controller>.<handler>`.                                                  |

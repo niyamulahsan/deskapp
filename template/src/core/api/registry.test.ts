@@ -18,7 +18,19 @@ const mocks = vi.hoisted(() => {
 vi.mock("electron", () => ({ ipcMain: mocks.ipcMain }));
 vi.mock("@/core/api/bindings.generated", () => ({
   GENERATED_CONTROLLERS: [
-    { module: "app", controller: "demo", mod: { handlers: { ping: () => "pong", add: (a: number, b: number) => a + b } } },
+    {
+      module: "app",
+      controller: "demo",
+      mod: {
+        handlers: {
+          ping: () => "pong",
+          add: (a: number, b: number) => a + b,
+          boom: () => {
+            throw { status: 422, message: "nope", errors: { fieldErrors: { email: ["bad"] } } };
+          },
+        },
+      },
+    },
     { module: "app", controller: "empty", mod: {} },
   ],
 }));
@@ -34,7 +46,7 @@ describe("api registry", () => {
 
   it("collectHandlers flattens generated controller handlers", () => {
     const map = collectHandlers();
-    expect([...map.keys()].sort()).toEqual(["app.demo.add", "app.demo.ping"]);
+    expect([...map.keys()].sort()).toEqual(["app.demo.add", "app.demo.boom", "app.demo.ping"]);
     expect(map.get("app.demo.ping")?.()).toBe("pong");
   });
 
@@ -47,9 +59,18 @@ describe("api registry", () => {
 
     const event: any = {};
     mocks.onHandlers["deskapp:__list__"](event);
-    expect((event.returnValue as string[]).sort()).toEqual(["app.demo.add", "app.demo.ping"]);
+    expect((event.returnValue as string[]).sort()).toEqual(["app.demo.add", "app.demo.boom", "app.demo.ping"]);
 
     const list = await mocks.handlers["deskapp:__list__"]({});
-    expect((list as string[]).sort()).toEqual(["app.demo.add", "app.demo.ping"]);
+    expect((list as string[]).sort()).toEqual(["app.demo.add", "app.demo.boom", "app.demo.ping"]);
+  });
+
+  it("wraps a thrown handler error in the tagged envelope (survives IPC)", async () => {
+    bindAll();
+    const res: any = await mocks.handlers["deskapp:app.demo.boom"]({});
+    expect(res.__deskappError).toBe(true);
+    expect(res.status).toBe(422);
+    expect(res.message).toBe("nope");
+    expect(res.errors).toEqual({ fieldErrors: { email: ["bad"] } });
   });
 });

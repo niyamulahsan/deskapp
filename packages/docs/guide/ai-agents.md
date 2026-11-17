@@ -46,7 +46,9 @@ These are the conventions described in [Conventions](/guide/conventions) and
 
 1. **Never edit `src/core/**`.** It is the framework, not your application. Your
    code lives in `src/modules/**`, `src/config/**`, `src/ui/**`, `src/main.ts`
-   and `src/preload.ts`.
+   and `src/preload.ts`. `src/window/**` is app-shipped too, but the menu/tray
+   files (`src/window/app-menu.ts`, `context-menu.ts`, `tray.ts`) are the
+   intended place to customize desktop chrome.
 2. **Never hand-edit generated files** — `bindings.generated.ts`,
    `src/database/schema.ts`, `src/database/migrations/**`. Regenerate them with
    the maker.
@@ -89,11 +91,15 @@ drifts most:
 - **`@/ui/*` is `src/ui/src/*`** — a different root from backend code, where
   `@/*` is `src/`. A page imports `@/ui/components/...`; it never imports
   `@/modules/...`.
-- **Requests go through `gum`** (`@/ui/plugins/gum.ts`) — `useGum` for one-off
-  calls and `useGumForm` for forms — not a raw `bindings[...]` call sprinkled
-  through a template. See [Gum](/guide/gum).
+- **Requests go through `gum`** (`@/ui/plugins/gum.ts`) — `useGum()` for one-off
+  calls and `useGum(defaults).form` for forms — not a raw `bindings[...]` call
+  sprinkled through a template. See [Gum](/guide/gum).
 - **Lists use `DataTable`** (`@/ui/components/datatable/index.vue`) pointed at a
   binding that returns the paginate envelope, with `#thead` / `#tbody` slots.
+- **Menus & tray are app code.** To change the application menu, right-click menu
+  or system tray, edit `src/window/app-menu.ts`, `src/window/context-menu.ts` and
+  `src/window/tray.ts` directly. See
+  [Windows & Native APIs](/guide/windows#modifying-menus--tray).
 - **Register the route.** A page lives at `pages/<name>/index.vue` and is added
   to `router/index.ts` as a lazy import.
 - **Realtime goes through `@/ui/plugins/pulse.ts`**, cleaned up on unmount —

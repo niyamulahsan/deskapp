@@ -71,9 +71,16 @@ type FormErrors<T> = Partial<Record<keyof T | string, string>>;
 export type NormalizedErrors = Record<string, string[] | string>;
 
 type ValidationErrorPayload = {
-  errors?: Record<string, string[] | string>;
+  /** Flat map (`{ field: "message" }`) or zod `flatten()` output. */
+  errors?:
+    | Record<string, string[] | string>
+    | {
+        fieldErrors?: Record<string, string[] | string>;
+        formErrors?: string[] | string;
+        [key: string]: unknown;
+      };
   error?: { issues?: Array<{ path?: Array<string | number>; message?: string }> };
-  // bindings/zod-flatten style
+  // bindings/zod-flatten style, top-level
   fieldErrors?: Record<string, string[] | string>;
   formErrors?: string[] | string;
   message?: string;
@@ -141,16 +148,34 @@ function trackEnd() {
 export function normalizeValidationErrors(payload?: unknown): NormalizedErrors {
   if (!payload || typeof payload !== "object") return {};
   const p = payload as ValidationErrorPayload;
-  const normalized: NormalizedErrors = { ...(p.errors ?? {}) };
+  const normalized: NormalizedErrors = {};
 
-  if (p.fieldErrors && typeof p.fieldErrors === "object") {
-    for (const [k, v] of Object.entries(p.fieldErrors)) {
-      if (k !== "_errors") normalized[k] = v;
+  const errors = (p.errors && typeof p.errors === "object" ? p.errors : undefined) as
+    | Record<string, unknown>
+    | undefined;
+
+  // Flat map: `errors: { field: "message" }`.
+  if (errors) {
+    for (const [key, value] of Object.entries(errors)) {
+      if (key === "fieldErrors" || key === "formErrors") continue;
+      normalized[key] = value as string[] | string;
     }
   }
-  if (p.formErrors) {
-    normalized.$root ??= Array.isArray(p.formErrors) ? p.formErrors : [p.formErrors];
+
+  // Zod `flatten()` output — either top-level or nested under `errors`.
+  const fieldErrors = (p.fieldErrors ?? errors?.fieldErrors) as
+    | Record<string, string[] | string>
+    | undefined;
+  if (fieldErrors && typeof fieldErrors === "object") {
+    for (const [key, value] of Object.entries(fieldErrors)) {
+      if (key !== "_errors") normalized[key] = value;
+    }
   }
+  const formErrors = (p.formErrors ?? errors?.formErrors) as string[] | string | undefined;
+  if (formErrors) {
+    normalized.$root ??= Array.isArray(formErrors) ? formErrors : [formErrors];
+  }
+
   const issues = p.error?.issues;
   if (Array.isArray(issues)) {
     issues.forEach((issue) => {

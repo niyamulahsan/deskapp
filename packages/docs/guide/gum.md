@@ -6,12 +6,12 @@ It exists to answer one question: **"how do I talk to the backend from the UI?"*
 
 ## Transports
 
-| Transport                  | When                                                  | The "url" is…                                                           | Under the hood                                          |
-| -------------------------- | ----------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
-| `"bindings"` **(default)** | Desktop app, backend runs in-process                  | a binding name `<module>.<controller>.<handler>`, e.g. `app.demo.table` | `bindings[name](...args)` → no HTTP, no CORS, no server |
-| `"http"`                   | Web build / remote API, backend is a separate process | a REST endpoint, e.g. `/api/users`                                      | `axios` calls                                           |
+| Transport    | When                                                                  | The "url" is…                                                           | Under the hood                                          |
+| ------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------- |
+| `"bindings"` | Desktop app, backend runs in-process — the **auto-detected default**   | a binding name `<module>.<controller>.<handler>`, e.g. `app.demo.table` | `bindings[name](...args)` → no HTTP, no CORS, no server |
+| `"http"`     | Web build / remote API, backend is a separate process                  | a REST endpoint, e.g. `/api/users`                                      | `axios` calls                                           |
 
-The transport is chosen **per app** in `GumPlugin` options, and can be overridden **per call or per table** — so one UI can mix SQLite bindings and a remote API:
+The transport is **auto-detected**: `"bindings"` when the Electron bridge (`globalThis.bindings`) is present, otherwise `"http"`. Override it **per app** in `GumPlugin` options, or **per call or per table** — so one UI can mix SQLite bindings and a remote API:
 
 ```ts
 app.use(GumPlugin, { transport: "bindings" });            // global default
@@ -37,12 +37,12 @@ createApp(App)
 
 ### Plugin options
 
-| Option                       | Default      | Meaning                                                        |
-| ---------------------------- | ------------ | -------------------------------------------------------------- |
-| `rememberPrefix`             | `"gum"`      | localStorage key prefix for `useGumRemember`                   |
-| `recentlySuccessfulDuration` | `2000`       | how long `useGumForm`'s `recentlySuccessful` stays `true` (ms) |
-| `transport`                  | `"bindings"` | default transport: `"bindings"` or `"http"`                    |
-| `baseURL`                    | `""`         | base URL prepended to every HTTP request                       |
+| Option                       | Default       | Meaning                                                          |
+| ---------------------------- | ------------- | ---------------------------------------------------------------- |
+| `rememberPrefix`             | `"gum"`       | localStorage key prefix for `useGumRemember`                     |
+| `recentlySuccessfulDuration` | `2000`        | how long `useGum(defaults).form`'s `recentlySuccessful` stays `true` (ms) |
+| `transport`                  | auto-detected | default transport: `"bindings"` (desktop) or `"http"`            |
+| `baseURL`                    | `""`          | base URL prepended to every HTTP request                         |
 
 `gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`). It also needs the `bindings` global, which the preload script exposes only inside the Electron renderer — the demo table in the starter dashboard runs through `npm run dev`.
 
@@ -139,7 +139,7 @@ await gum.patch("users.users.update", { name: "Ava" }, { query: { id: 10 } });
 
 ### Error normalization
 
-A failed visit throws (or calls `onError`) a `GumRequestError`. gum normalizes it into a per-field map so you can render errors next to inputs:
+A failed visit calls `onError(errors, error)` — or throws the original `error` when no `onError` hook is given. Either way `normalizeValidationErrors` turns the failure into a per-field map so you can render errors next to inputs:
 
 ```ts
 type NormalizedErrors = Record<string, string[] | string>;
@@ -148,17 +148,22 @@ type NormalizedErrors = Record<string, string[] | string>;
 
 Handled shapes (all from the same backend family):
 
-- Zod `flatten` output from `validate.run` — `{ errors: { fieldErrors: { field: [...] }, formErrors: [...] } }` → per-field arrays, form errors under `$root`.
+- Zod `flatten` output from `validate.run` — `{ errors: { fieldErrors: { field: [...] }, formErrors: [...] } }`, or the same `fieldErrors` / `formErrors` keys at the top level → per-field arrays, form errors under `$root`.
 - A flat `{ errors: { field: "message" } }` map.
-- A bare `{ message: "..." }` → `$root`.
-- HTTP 422 responses re-thrown identically (axios failures are normalized in `invokeHttp`).
+- Zod's raw `error.issues` → one entry per issue path.
+- A bare `{ message: "..." }` → `$root` (only when nothing else matched).
+- HTTP 422 responses carrying the same body (axios failures expose it on `error.response.data`).
 
-## `useGumForm()` — forms with state
+> Under the `bindings` transport a thrown handler error **survives the Electron IPC boundary**: `bindAll` returns a tagged envelope and the preload bridge rethrows it as an `Error` with `.response.data` set, so `form.errors.<field>` populates from `validate.run` exactly as it does over HTTP.
+
+## `useGum(defaults).form` — forms with state
+
+Pass an object of defaults to `useGum` and it also returns a reactive `form`:
 
 ```ts
-import { useGumForm } from "@/ui/plugins/gum.ts";
+import { useGum } from "@/ui/plugins/gum.ts";
 
-const form = useGumForm({
+const { form } = useGum({
   name: "",
   email: "",
   role: "viewer",
@@ -167,6 +172,8 @@ const form = useGumForm({
 await form.post("users.users.store");   // send `data` as the store body
 ```
 
+> `useGumForm(defaults)` still works but is **deprecated** — use `useGum(defaults).form` instead.
+
 State returned:
 
 | Property             | Meaning                                                    |
@@ -174,18 +181,18 @@ State returned:
 | `data`               | reactive form values (a structured clone of your defaults) |
 | `errors`             | `Partial<Record<key, string>>` — first error per field     |
 | `processing`         | submitting in progress                                     |
-| `progress`           | reserved (upload) — currently `null`                       |
+| `progress`           | upload progress `0`–`100` (HTTP transport); `null` before start, after finish, or when the total size is unknown |
 | `wasSuccessful`      | last submit succeeded                                      |
 | `recentlySuccessful` | true for `recentlySuccessfulDuration` ms after success     |
 | `isDirty`            | data changed since init (deep JSON compare)                |
 
-Helpers: `setError(field, msg)`, `clearErrors(...fields)`, `reset(...fields)` (restores the original defaults), and submit methods `post` / `put` / `patch` / `delete(url, payload?, options?)`, each taking `onStart` / `onSuccess` / `onError(errors, error)` / `onFinish` hooks.
+Helpers: `setError(field, msg)`, `clearErrors(...fields)`, `reset(...fields)` (restores the original defaults), and submit methods `post` / `put` / `patch` / `delete(url, payload?, options?)` — plus `postWith` / `putWith` / `patchWith` / `deleteWith({ fetcher, ... })` to submit through a store action instead of a URL — each taking `onStart` / `onSuccess` / `onError(errors, error)` / `onFinish` hooks.
 
 A full create flow with a real controller:
 
 ```ts
 // ui/pages/Users/Create.vue
-const form = useGumForm({ name: "", email: "", role: "viewer" });
+const { form } = useGum({ name: "", email: "", role: "viewer" });
 
 const submit = () => form.post('users.users.store', undefined, {
   onSuccess: () => { router.push({ path: "/users" }); },
@@ -206,7 +213,7 @@ export const store = async (body?: { name?: string; email?: string; role?: strin
 };
 ```
 
-> **Note:** `useGumForm.submit` uses the **plugin-wide** transport. To use forms against a REST API, register with `app.use(GumPlugin, { transport: "http", baseURL: "/api" })` — then every `form.post`/`put`/… hits the HTTP endpoint. Validation failures arriving as 422 with `{ errors: {...} }` populate `form.errors` exactly like bindings.
+> **Note:** `form.submit` uses the **plugin-wide** transport. To use forms against a REST API, register with `app.use(GumPlugin, { transport: "http", baseURL: "/api" })` — then every `form.post`/`put`/… hits the HTTP endpoint. Validation failures arriving as 422 with `{ errors: {...} }` populate `form.errors` exactly like bindings.
 
 ## `useGumRemember()` — page state that survives reloads
 
@@ -237,7 +244,7 @@ The starter ships a ready-made, gum-powered table at `src/ui/src/components/data
 | `countable`       | `true`         | show the `#` index column                              |
 | `searchable`      | `true`         | show the search box                                    |
 | `optionable`      | `true`         | show the "Show N entries" select                       |
-| `disabled`        | `false`        | disable selection while loading                        |
+| `disabled`        | `false`        | disable the selection checkboxes (header "select all" + rows) |
 | `transport`       | plugin default | per-table `"bindings"` or `"http"`                     |
 | `baseURL`         | plugin default | HTTP base URL for `path`                               |
 
@@ -367,3 +374,5 @@ While a page loads, render the shipped skeleton with matching columns/rows:
 ```vue
 <DataTableSkeleton :col="5" :row="8" />
 ```
+
+`col` and `row` both default to `1`; pass the column/row counts you expect.
