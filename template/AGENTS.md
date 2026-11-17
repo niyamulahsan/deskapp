@@ -96,7 +96,7 @@ src/
     vite.config.ts
     tsconfig.json
     src/
-      app.ts                      # createApp + plugins (Pulse, Gum, router)
+      app.ts                      # createApp + plugins (head, Pinia, Pulse, Gum, router)
       App.vue                     # <router-view/>
       router/index.ts             # routes
       pages/<name>/index.vue      # pages
@@ -497,9 +497,12 @@ these aliases; use them everywhere.
 - **Shared components** go in `src/ui/src/components/`. The starter ships
   `components/datatable/` (DataTable + `Pagination.vue`, `SelectOpption.vue`,
   `DataTableSkeleton.vue` and the small `Button`/`Input`/`Checkbox` controls).
-- **Stores** are Pinia: `src/ui/src/stores/<name>.ts`, `defineStore(...)`.
+- **Stores** are Pinia: `src/ui/src/stores/<name>.ts`, `defineStore(...)`. Pinia is
+  installed in `src/ui/src/app.ts` (`createPinia()`), so `useStore()` works in any
+  component setup.
 - `App.vue` is just `<router-view />`. Bootstrap CSS + Bootstrap Icons + the SCSS
-  are imported once in `src/ui/src/app.ts`.
+  are imported once in `src/ui/src/app.ts`, which also installs `@unhead/vue`
+  (`createHead()`) — call `useHead({ title })` from a page to set the window title.
 - Global type shims live in `src/ui/src/{bindings.d.ts,env.d.ts,global.d.ts}` —
   keep `global.d.ts` a global **script** (no top-level `import`/`export`), or its
   `declare module` shims become augmentations and break.
@@ -544,6 +547,10 @@ form.processing;           // boolean
   IPC — `bindAll` returns a tagged envelope and the preload bridge rethrows it with
   `.response.data` — so `form.errors` populates over bindings too. This is why
   backend handlers must validate with `validate.run`.
+- `useGum()` reads the router (`useRouter`/`useRoute`), so call it in a component
+  setup, never at module scope. In a Pinia store call the binding directly
+  (`bindings["users.users.store"](payload)`) or pass a `fetcher` to `gum.postWith`
+  / `useGum(...).form.postWith`.
 
 **DataTable** (`src/ui/src/components/datatable/index.vue`) is the gum-powered
 table. Point `path` at a binding (or REST endpoint) that returns the `paginate`
@@ -571,7 +578,10 @@ row needs `td.id` for selection. The table sends `?page=&size=&search=` and
 expects `{ data, current_page, last_page, per_page, total, from, to, path }`.
 
 Realtime (`pulse`, Socket.IO) is in `src/ui/src/plugins/pulse.ts`; it only
-activates when `VITE_SOCKET_URL` / `VITE_API_URL` is set.
+activates when `VITE_SOCKET_URL` / `VITE_API_URL` is set. `pulse` is a plain
+singleton (not a composable), so import it anywhere — including a Pinia store.
+Nothing is offline-aware: `bindings` are in-process (work offline by nature), but
+HTTP and pulse need the network — guard them with `navigator.onLine`.
 
 ## 12. Config: app identity & windows
 

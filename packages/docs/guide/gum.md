@@ -29,6 +29,8 @@ Regardless of transport every call returns the same envelope: **`{ data }`** —
 import { GumPlugin } from "@/ui/plugins/gum.ts";
 
 createApp(App)
+  .use(createHead())
+  .use(createPinia())
   .use(PulsePlugin)
   .use(GumPlugin, options)   // options optional
   .use(router)
@@ -44,7 +46,9 @@ createApp(App)
 | `transport`                  | auto-detected | default transport: `"bindings"` (desktop) or `"http"`            |
 | `baseURL`                    | `""`          | base URL prepended to every HTTP request                         |
 
-`gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`). It also needs the `bindings` global, which the preload script exposes only inside the Electron renderer — the demo table in the starter dashboard runs through `npm run dev`.
+`gum` requires **Vue Router to be installed** (`useRouter`/`useRoute`) and must be called **inside a component setup** — `useGum()` runs `useRouter()`/`useRoute()` eagerly. It also needs the `bindings` global, which the preload script exposes only inside the Electron renderer — the demo table in the starter dashboard runs through `npm run dev`.
+
+> **From a Pinia store**, prefer calling the binding directly (`bindings["users.users.store"](payload)`) or passing a `fetcher` to `gum.postWith` / `useGum(...).form.postWith({ fetcher })`. `useGum()` only works when the store is first instantiated inside a component setup, so the direct/fetcher path is the reliable one.
 
 ## Payload conventions
 
@@ -214,6 +218,34 @@ export const store = async (body?: { name?: string; email?: string; role?: strin
 ```
 
 > **Note:** `form.submit` uses the **plugin-wide** transport. To use forms against a REST API, register with `app.use(GumPlugin, { transport: "http", baseURL: "/api" })` — then every `form.post`/`put`/… hits the HTTP endpoint. Validation failures arriving as 422 with `{ errors: {...} }` populate `form.errors` exactly like bindings.
+
+### Submitting through a Pinia store action
+
+The `*With` variants take a `fetcher` instead of a URL — hand it a store action so the request logic (and the state) lives in the store:
+
+```ts
+// src/ui/src/stores/users.ts
+import { defineStore } from "pinia";
+
+export const useUsers = defineStore("users", () => {
+  const store = async (payload: Record<string, unknown>) => bindings["users.users.store"](payload);
+  return { store };
+});
+```
+
+```ts
+// component setup
+import { useGum } from "@/ui/plugins/gum.ts";
+import { useUsers } from "@/ui/stores/users";
+
+const users = useUsers();
+const { form } = useGum({ name: "", email: "" });
+
+await form.postWith({ fetcher: (payload) => users.store(payload) });
+// form.errors still populates from a thrown validate.run failure
+```
+
+This keeps `form` (and its `errors`/`processing`) in the component while the backend call lives in the store — no router-injection requirement on the store.
 
 ## `useGumRemember()` — page state that survives reloads
 

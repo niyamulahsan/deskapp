@@ -1,3 +1,5 @@
+import { createHead } from "@unhead/vue/client";
+import { createPinia } from "pinia";
 import { createApp } from "vue";
 import App from "@/ui/App.vue";
 import faviconUrl from "@/ui/assets/images/favicon/favicon.ico";
@@ -20,4 +22,4 @@ favicon.href = faviconUrl;
 
 export { pulse };
 
-createApp(App).use(PulsePlugin).use(GumPlugin).use(router).mount("#app");
+createApp(App).use(createHead()).use(createPinia()).use(PulsePlugin).use(GumPlugin).use(router).mount("#app");

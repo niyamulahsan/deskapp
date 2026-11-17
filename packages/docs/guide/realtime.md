@@ -123,6 +123,33 @@ Conventions to follow in components:
 - Register listeners on a channel and drop them when the component is destroyed — `onUnmounted`/`beforeUnmount` in Vue, the `useEffect` cleanup in React (reconnect re-joins rooms, but a destroyed component must not keep firing).
 - Reads are safe even with no socket backend: when `__SOCKET_ENABLED__` is false, `pulse` is a no-op and every call above returns immediately — so you can wire realtime code without guarding it.
 
+### Realtime in a Pinia store
+
+`pulse` is a plain singleton (not a composable), so it can be imported anywhere — including a store. Unlike gum, it does **not** read the router, so there is no setup-context requirement:
+
+```ts
+// src/ui/src/stores/payments.ts
+import { defineStore } from "pinia";
+import { ref } from "vue";
+import { pulse } from "@/ui/plugins/pulse.ts";
+
+export const usePayments = defineStore("payments", () => {
+  const status = ref("PENDING");
+  const channel = pulse.channel("payments"); // auto-connects, joins "payments"
+  channel.listen<{ ref: string; status: string }>("payment.status", (p) => (status.value = p.status));
+  function dispose() {
+    channel.stopListening("payment.status");
+  }
+  return { status, dispose };
+});
+```
+
+A store lives for the whole app session, so subscribe **once** when it is first used and unsubscribe from a component's `onUnmounted` (or on sign-out) — not on every component mount.
+
+### Offline & reconnects
+
+`bindings` are in-process, so the desktop backend keeps working offline; only HTTP and the socket need the network. Socket.IO **reconnects on its own** and re-emits `join` for every tracked room on each `connect`, but events emitted while the socket was down are **lost** unless the engine replays them — keep the poll/HTTP fallback for anything critical. Nothing is `navigator.onLine`-aware, so gate outbound calls yourself (see [UI → Offline & online](./ui#offline-online)).
+
 ### Usage — React components (after switching)
 
 If you switched the UI to React, the client side still works unchanged: `pulse.ts`'s socket logic (`pulse`, `createPulse`) is framework-agnostic. The Vue-only bottom of the file (`import type { App } from "vue"`, the `PulsePlugin` install block, and the `declare module "vue"` augmentation) can be deleted — React just imports the singleton and uses it inside a hook:

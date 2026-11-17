@@ -41,6 +41,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.7",
     "@types/node": "^22.20.5",
+    "@unhead/vue": "^3.4.3",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-v8": "^5.1.0",
     "bootstrap": "^5.3.8",

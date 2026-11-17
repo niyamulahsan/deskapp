@@ -7,16 +7,81 @@ The **default** frontend is a **Vue 3** single-page app built with **Vite**, sty
 - Vue 3 (`createApp`) mounted into `src/ui/index.html`
 - TypeScript SFCs, Vite + `@vitejs/plugin-vue`
 - Bootstrap 5 (CSS + JS bundle) + Bootstrap Icons + custom SCSS at `src/ui/src/assets/scss/custom.scss` (dark dashboard theme by default)
-- Axios, Vue Router, Pinia, socket.io-client and Playwright are declared in `package.json` — usable on demand
+- Axios, Vue Router, Pinia, `@unhead/vue` (document title/meta), socket.io-client and Playwright are declared in `package.json` — Pinia and `@unhead/vue` are already installed in `app.ts`, the rest are usable on demand
 - **gum** (`src/ui/src/plugins/gum.ts`) — Inertia-style request/form helpers over the `bindings` global **or** HTTP/axios, plus the `DataTable` component — see [gum (Requests & Forms)](./gum)
 
 ## Entrypoints
 
-- `src/ui/src/app.ts` — createApp, Bootstrap + SCSS imports, sets the favicon from `@/ui/assets/images/favicon/favicon.ico`, installs Router, Pulse, Gum
+- `src/ui/src/app.ts` — createApp, Bootstrap + SCSS imports, sets the favicon from `@/ui/assets/images/favicon/favicon.ico`, installs `@unhead/vue` (document head), Pinia, Router, Pulse, Gum
 - `src/ui/src/bindings.d.ts` — types the global `bindings`
 - `src/ui/src/router/index.ts` — Vue Router (dashboard route at `/`)
 - `src/ui/src/pages/**` — routed pages (the starter dashboard lives in `pages/dashboard/index.vue`)
 - `src/ui/src/components/**` — components for your app (includes `datatable/`, plus `Button`, `Input`, `Checkbox` used by it)
+- `src/ui/src/stores/**` — Pinia stores (`defineStore`)
+
+## App plugins: state & document head
+
+`src/ui/src/app.ts` installs the shared app plugins, so pages use them with no extra wiring:
+
+```ts
+import { createHead } from "@unhead/vue/client";
+import { createPinia } from "pinia";
+import { createApp } from "vue";
+
+createApp(App)
+  .use(createHead())   // @unhead/vue — document title / meta
+  .use(createPinia())  // Pinia — defineStore()
+  .use(PulsePlugin)    // realtime (see guide/realtime)
+  .use(GumPlugin)      // requests & forms (see guide/gum)
+  .use(router)
+  .mount("#app");
+```
+
+### Pinia stores
+
+Define a store with `defineStore` and use it from any component setup:
+
+```ts
+// src/ui/src/stores/users.ts
+import { defineStore } from "pinia";
+import { ref } from "vue";
+
+export const useUsers = defineStore("users", () => {
+  const rows = ref<Array<{ id: number; name: string }>>([]);
+  async function load() {
+    // backend work goes through the in-process binding, not HTTP
+    const res = await bindings["users.users.index"]();
+    rows.value = (res as { data: Array<{ id: number; name: string }> }).data;
+  }
+  return { rows, load };
+});
+```
+
+```vue
+<script setup lang="ts">
+import { useUsers } from "@/ui/stores/users";
+const users = useUsers();
+await users.load();
+</script>
+```
+
+> `useGum()` reads the router (`useRouter`/`useRoute`), so call it inside a component setup, not at module scope or from a store action. A store that needs a request calls the binding directly (above), or accepts a `fetcher` (`useGum(...).form.postWith({ fetcher })`). `pulse` is a plain singleton, so it can be imported into a store as-is.
+
+### Document title & meta (`useHead`)
+
+The backend can set the window title (`app.window.setTitle`), but `@unhead/vue` lets any page drive `document.title` and `<meta>`/`<link>` tags from the renderer. Electron mirrors `document.title` to the native window title, so `useHead` is the per-page way to do it:
+
+```vue
+<script setup lang="ts">
+import { useHead } from "@unhead/vue";
+import { ref } from "vue";
+
+const title = ref("Users");
+useHead({ title: () => `${title.value} · Deskapp` });
+</script>
+```
+
+`useHead` accepts `title`, `titleTemplate`, `meta`, `link`, `script`, and more. Use `useHeadSafe` when the values come from untrusted input.
 
 ## The `bindings` global
 
@@ -44,6 +109,29 @@ For browser-based UI development, `src/ui/vite.config.ts` proxies a backend HTTP
 ```
 
 There is no HTTP backend in the desktop build — the proxy is a placeholder so a future "call backend from a browser tab" flow can be added. The desktop app talks exclusively via in-process bindings.
+
+## Offline & online
+
+The desktop app's backend is **in-process**: `bindings` run in the same Electron process as the UI, so `bindings["<module>.<controller>.<handler>"]()` keeps working with **no network at all**. Database, files, native APIs, queue and cron are local and unaffected offline. Only what leaves the machine needs connectivity:
+
+| Call                                                    | Offline behavior                                                                 |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `bindings` (gum's auto-detected transport)              | Works — in-process IPC, no network                                               |
+| gum `"http"` transport (axios)                          | Fails — no retry/queue built in                                                  |
+| `pulse` (Socket.IO)                                     | Auto-reconnects; events emitted while offline are lost unless the engine replays |
+
+Neither gum nor pulse checks `navigator.onLine` or queues requests, so **you** decide the offline UX:
+
+```ts
+window.addEventListener("online", () => pulse.connect());
+window.addEventListener("offline", () => pulse.disconnect());
+
+if (!navigator.onLine) {
+  // show an offline banner, skip HTTP calls, ...
+}
+```
+
+For HTTP retries, use gum's `onError` hook and re-issue the request when the browser fires `online`. Prefer the `bindings` transport for anything that can run in-process — it is the offline-friendly path by design. See [Realtime → Offline & reconnects](./realtime#offline-reconnects).
 
 ## Icons
 
@@ -86,7 +174,7 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 | `src/ui/src/plugins/gum.ts`                                | Requests & forms (bindings or HTTP) + the `DataTable` component                                                                             | **Replace** with your framework's data-fetching layer, or keep both and call the backend via `bindings` anyway.                                                                  |
 | `src/ui/.vscode/extensions.json`                           | Recommends `Vue.volar`                                                                                                                      | Update to your framework's editor extension.                                                                                                                                     |
 | `src/ui/public/`                                           | Static assets copied verbatim into `dist`                                                                                                   | Keep / extend.                                                                                                                                                                   |
-| `package.json` → `devDependencies`                         | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `lodash-es`, ... | Add/remove your framework's packages here.                                                                                                                                       |
+| `package.json` → `devDependencies`                         | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `@unhead/vue`, `lodash-es`, ... | Add/remove your framework's packages here.                                                                                                                                       |
 | `package.json` → `scripts` (`dev:ui`, `build:ui`, `dev`, `build`) | Run the Vite build                                                                                                                   | **Keep** — they just invoke `vite`; only edit if you leave Vite.                                                                                                                 |
 | `src/main.ts`                                              | `loadFile(src/ui/dist/index.html)` (dev: `loadURL(localhost:5173)`)                                                                         | **Keep** — never framework-dependent.                                                                                                                                            |
 | `.env` / `.env.example`                                    | `DESKAPP_UI`, `VITE_SOCKET_URL`, `VITE_API_URL`                                                                                             | Keep; `DESKAPP_UI=false` disables the UI at runtime.                                                                                                                             |
