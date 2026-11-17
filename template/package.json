@@ -23,6 +23,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "format:check": "biome format .",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p src/ui/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"

@@ -105,10 +105,10 @@ describe("app storage.controller", () => {
   });
 
   it("app-managed helpers", async () => {
-    expect(await ctrl.appSave({})).toMatchObject({ ok: true });
+    expect(await ctrl.appSave()).toMatchObject({ ok: true });
     expect(await ctrl.appLoad()).toMatchObject({ ok: true });
     expect(await ctrl.appList()).toMatchObject({ ok: true });
-    expect(await ctrl.appExport({})).toMatchObject({ ok: true });
+    expect(await ctrl.appExport()).toMatchObject({ ok: true });
     expect(await ctrl.appDelete()).toMatchObject({ ok: true });
   });
 });

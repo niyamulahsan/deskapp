@@ -121,6 +121,7 @@ yourself:
 
 ```bash
 npm test            # vitest
+npm run typecheck   # tsc (backend + UI)
 npm run lint        # biome
 npm run build       # config:sync + db:schema + bindings:gen + vite + esbuild
 ```

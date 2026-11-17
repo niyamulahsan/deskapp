@@ -145,6 +145,7 @@ Notes:
 | `npm test`          | Run all tests once (`vitest run`)    |
 | `npm run test:watch`| Re-run on change (`vitest`)          |
 | `npm run test:coverage` | Run once and print a coverage report |
+| `npm run typecheck` | Type-check the backend and UI (`tsc --noEmit`) |
 
 Filter a file or a test name with the Vitest CLI:
 

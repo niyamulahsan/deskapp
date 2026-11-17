@@ -658,6 +658,7 @@ npm start                   # run the built app (out/main/index.cjs)
 npm run maker               # list all maker commands
 npm run maker -- <command>  # run one (make:*, db:*, bindings:gen, codegen, config:sync, ...)
 npm test                    # Vitest (node env; src/ui/** excluded)
+npm run typecheck           # tsc --noEmit (backend tsconfig + UI tsconfig)
 npm run lint                # Biome
 ```
 
@@ -688,8 +689,9 @@ npm run lint                # Biome
    - Added/removed/renamed a controller → `npm run maker -- bindings:gen`.
    - Added/changed a model → `npm run maker -- db:generate` (or `db:migrate`).
    - Changed app identity → `npm run config:sync`.
-2. **Verify, don't assume:** run `npm test` and `npm run lint`; for anything that
-   touches boot, windows, IPC or the DB, run `npm run dev` and exercise it.
+2. **Verify, don't assume:** run `npm test`, `npm run typecheck` and `npm run lint`;
+   for anything that touches boot, windows, IPC or the DB, run `npm run dev` and
+   exercise it.
 3. **Check the rules:** no edits under `src/core/**`; no hand-edited generated
    files; every new file opens with its location header; every new handler is in
    its controller's `handlers` map; cross-module imports go through a module
