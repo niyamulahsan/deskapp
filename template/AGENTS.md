@@ -221,21 +221,29 @@ Rules:
 
 ### Calling a remote server API
 
-Remote HTTP calls belong in a controller (main process): no CORS, and the base URL
-comes from the runtime `.env`, so one build works for local and production.
+Remote HTTP calls run in the main process: no CORS, and the base URL comes from
+the runtime `.env`, so one build works for local and production.
 
-- `src/modules/app/controllers/net.controller.ts` ships `app.net.apiBase` and
-  `app.net.apiFetch`. Call `bindings["app.net.apiFetch"]("/api/…", { token })`;
-  `apiFetch` never throws — a network failure returns
-  `{ ok: false, offline: true }`, so branch instead of catching.
+- Import the helper from the facade: `import { http } from "@/core/facade";` then
+  `const res = await http.get("/api/wallet/balance", { token });` (also
+  `http.post` / `http.put` / `http.patch` / `http.delete`, `http.request`,
+  `http.client` for interceptors).
+- `http` never throws — an unreachable server returns
+  `{ ok: false, offline: true }`, so branch instead of catching. It JSON-encodes
+  an object `body`, sets `Authorization: Bearer <token>` from `token`, and fills
+  in a missing scheme (`localhost:3000` → `http://localhost:3000`).
 - The base URL is `API_URL` in `.env`, read at runtime by `src/main.ts`. Leave it
-  empty to run fully offline.
-- The UI reaches it through a Pinia store (`src/ui/src/stores/server.ts`), never
-  from a page directly.
+  empty to run fully offline. (`VITE_API_URL` / `VITE_SOCKET_URL` are renderer
+  build-time vars — not for server calls.)
+- To reach the server from the **UI**, expose a handler: the module's controller
+  returns `http.…` and the renderer calls
+  `bindings["<module>.<controller>.<handler>"]`. The template ships a generic one
+  (`app.net.apiFetch`) plus a store example (`src/ui/src/stores/server.ts`); pages
+  never call it directly.
 - Do not call the server from the renderer with `axios`/`fetch` unless you accept
   the CORS + third-party-cookie + build-time-URL trade-offs.
 
-Full walkthrough (controller + store + page, auth, offline, dev/prod):
+Full walkthrough (helper + controller + store + page, auth, offline, dev/prod):
 `guide/remote-api.md`.
 
 ## 4. Schemas & validation

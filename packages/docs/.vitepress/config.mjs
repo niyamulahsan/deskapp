@@ -140,6 +140,12 @@ export default defineConfig({
           ],
         },
         {
+          text: label("cloud", "Network"),
+          items: [
+            { text: label("cloud", "http"), link: "/api/http" },
+          ],
+        },
+        {
           text: label("folder", "Storage"),
           items: [
             { text: label("folder", "files"), link: "/api/files" },

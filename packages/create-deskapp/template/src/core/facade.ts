@@ -23,6 +23,8 @@ export {
   paginate,
   sql
 } from "@/core/database/paginate";
+// Remote HTTP client (runtime `API_URL`; never throws)
+export { type HttpOptions, type HttpResult, http } from "@/core/utils/http";
 // Security / hashing utilities
 export { pass } from "@/core/utils/password";
 // Browser automation (Playwright): locate the bundled Chromium + extensions

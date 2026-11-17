@@ -21,28 +21,55 @@ The renderer's own `fetch`/`axios` runs in a Chromium window whose origin is `ht
 
 Calling the API **in a controller** removes all three: the main process has no origin (no CORS, no third-party cookie rule) and it reads `.env` at **runtime**. That is the recommended route here — it is also the one the template ships.
 
-## The built-in primitives (`app.net`)
+## The one helper: `http` (from the facade)
 
-The starter already contains everything you need in `src/modules/app/controllers/net.controller.ts`, exposed as bindings:
+Every remote call goes through **`http`**, a small axios-based helper exported from the framework facade. Import it once and use it — no `fetch`, no `JSON.stringify`, no `res.json()`:
+
+```ts
+import { http } from "@/core/facade";
+
+// in a controller, job, schedule, or any main-process code
+const res = await http.get("/api/wallet/balance", { token });
+if (!res.ok) return res;   // { ok: false, offline: true } when the server is unreachable
+console.log(res.data);     // the parsed JSON body
+```
+
+| Call | What it does |
+| --- | --- |
+| `http.get(path, options?)` | `GET` |
+| `http.post` / `http.put` / `http.patch` / `http.delete` | the matching verb |
+| `http.request(path, options)` | any method (`options.method`) |
+| `http.baseUrl()` | the runtime `API_URL` (or `""`) |
+| `http.client` | the raw axios instance (interceptors, `defaults`) |
+
+`options` is `{ body?, token?, headers?, query?, timeout? }`:
+
+- `body` — an object is JSON-encoded and `Content-Type` set for you.
+- `token` — sets `Authorization: Bearer <token>` (unless you pass that header yourself).
+- `query` — query-string params.
+
+Three things it does so you don't have to:
+
+- **Absolute URLs pass through.** `http.get("https://other.example/x")` ignores the base.
+- **The scheme is filled in.** `API_URL=localhost:3000` → `http://localhost:3000`; `API_URL=wallet.example.com` → `https://wallet.example.com`.
+- **It never throws.** A network failure returns `{ ok: false, offline: true }` — branch, don't catch.
+
+See the [`http` API reference](../api/http) for the full surface.
+
+### The shipped binding (`app.net`)
+
+The UI can't import the facade — the renderer never imports backend code — so the template also exposes `http` as bindings through `src/modules/app/controllers/net.controller.ts`:
 
 | Binding | Signature | Purpose |
 | --- | --- | --- |
 | `app.net.apiBase` | `() => { ok, url, configured }` | Reports the runtime `API_URL`. |
-| `app.net.apiFetch` | `(path, init?) => { ok, status, data, offline?, error? }` | Calls `${API_URL}${path}` via axios. Never throws. |
-| `app.net.fetchJson` | `(url) => { ok, status, data }` | Fetches any absolute `http(s)` URL. |
+| `app.net.apiFetch` | `(path, init?) => { ok, status, data, offline?, error? }` | The same call as `http.request`, for the renderer. |
+| `app.net.fetchJson` | `(url) => { ok, status, data }` | Fetches any absolute `http(s)` URL as text/JSON. |
 | `app.net.placeholder` | `() => { ... }` | One-click JSONPlaceholder demo. |
 
-`apiFetch`'s `init` is `{ method?, body?, headers?, token? }` — `body` is JSON-encoded for you, and `token` sets `Authorization: Bearer <token>`.
+`net.controller.ts` is a thin wrapper — it only re-exposes `http`. You can try it live from the dashboard **Network** card (`API base` / `API fetch` buttons).
 
-It is backed by a **shared axios instance** (`axios` is already a dependency — `gum` uses it), so object bodies, JSON parsing and `Content-Type` are handled for you. The instance is exported from the controller as `http`, so you can attach interceptors or set a timeout (`http.defaults.timeout = 30_000`) without touching `apiFetch`.
-
-```ts
-// in any component or store (Electron renderer only)
-const res = await bindings["app.net.apiFetch"]("/api/wallet/balance", { token });
-// res = { ok: true, status: 200, url: "https://wallet.example/api/wallet/balance", data: { ... } }
-```
-
-You can try it live from the dashboard **Network** card — it has `API base` and `API fetch` buttons.
+> **Which do I use?** Main-process code (controllers, jobs, schedules) → `http` from the facade. Renderer code (pages, stores) → a binding: the generic `app.net.apiFetch`, or your own module controller (see the walkthrough).
 
 ## Configure the base URL (`API_URL`)
 
@@ -54,9 +81,21 @@ API_URL=http://localhost:3000        # dev
 # API_URL=https://wallet.example.com # production
 ```
 
-Leave it empty to run fully offline — `apiFetch` then returns `{ ok: false, offline: true }`.
+Leave it empty to run fully offline — a relative call then returns `{ ok: false, offline: true }`.
 
-> `VITE_API_URL` / `VITE_SOCKET_URL` are a **different** pair: they are Vite build-time variables for the renderer bundle (the dev proxy and the Pulse socket). See [Dev vs production](#dev-vs-production). Prefer `API_URL` for the server base.
+> `VITE_API_URL` / `VITE_SOCKET_URL` are a **different** pair: they are Vite build-time variables for the renderer bundle (the dev proxy and the Pulse socket). See [Dev vs production](#dev-vs-production). For a server call, always use `API_URL`.
+
+## Calling from a module
+
+If the call happens in the **main process** — a controller handler, a queued job, a schedule, an automation step — you don't need a binding at all:
+
+```ts
+import { http } from "@/core/facade";
+
+const res = await http.get("/api/wallet/balance", { token });
+```
+
+The base URL is read from `API_URL` on every call, so the same code works in dev and production. If the result must reach the **UI**, wrap it in a controller with a `handlers` map (the walkthrough below) — the renderer then calls it through `bindings`.
 
 ## Walkthrough: a wallet module
 
@@ -73,53 +112,34 @@ npm run maker -- bindings:gen      # register the new controller
 
 ### 2. Write the controller
 
-Handlers run in the main process, so they can read `process.env` and use `axios` (already a dependency). Validate input, return a JSON-safe envelope, and never throw — return `offline: true` instead.
+A handler that calls the server is one line — `http` does the rest:
 
 ```ts
 // ./src/modules/wallet/controllers/api.controller.ts
 
-import axios from "axios";
-import { validate } from "@/core/facade";
+import { http, validate } from "@/core/facade";
 import { LoginSchema } from "@/modules/wallet/controllers/api.schema";
-
-const base = () => (process.env.API_URL || "").replace(/\/+$/, "");
-// HTTP errors resolve instead of throw, so the envelope stays uniform.
-const http = axios.create({ validateStatus: () => true });
-
-async function call(path: string, config: { method?: string; data?: unknown } = {}, token?: string | null) {
-  if (!base()) return { ok: false, offline: true, error: "API_URL is not set" };
-  try {
-    const res = await http.request({
-      url: `${base()}${path}`,
-      method: (config.method ?? "GET").toUpperCase(),
-      data: config.data, // axios JSON-encodes an object and sets Content-Type
-      headers: {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-      }
-    });
-    return { ok: res.status >= 200 && res.status < 300, status: res.status, data: res.data };
-  } catch (error) {
-    return { ok: false, offline: true, error: error instanceof Error ? error.message : String(error) };
-  }
-}
 
 export const login = async (body: unknown) => {
   const data = await validate.run(LoginSchema, body);
-  return call("/api/auth/login", { method: "POST", data });
+  return http.post("/api/auth/login", { body: data });
 };
 
-export const me = async (token: string) => call("/api/auth/me", {}, token);
+export const me = (token: string) => http.get("/api/auth/me", { token });
 
-export const balance = async (token: string) => call("/api/wallet/balance", {}, token);
+export const balance = (token: string) => http.get("/api/wallet/balance", { token });
 
 /** Handlers exposed to the frontend via the bindings registry. */
 export const handlers = { login, me, balance };
 ```
 
-This creates `wallet.api.login`, `wallet.api.me` and `wallet.api.balance`.
+This creates `wallet.api.login`, `wallet.api.me` and `wallet.api.balance`. Each
+returns the same envelope (`{ ok, status, data, offline?, error? }`), so the store
+in step 3 branches instead of catching.
 
-> If you would rather not write a controller at all, skip this step and call the shipped `app.net.apiFetch` from the store in step 3. A dedicated controller is worth it when you want validation, a typed surface, or to hide token handling from the UI.
+> No controller needed? For a one-off call the UI can use the shipped
+> `app.net.apiFetch` binding directly. A dedicated controller is worth it when you
+> want validation, a typed surface, or to hide token handling from the UI.
 
 ### 3. Call it from a store
 
@@ -266,32 +286,40 @@ if (res.offline) showBanner("Server unreachable — using cached balance");
 
 Nothing is queued automatically. For the wallet example, decide the policy for a run that cannot verify the balance: block it, or allow it against a **cached last-known balance** stored locally in SQLite. See [UI → Offline & online](./ui#offline--online) for the `navigator.onLine` patterns.
 
-## Testing the controller
+## Testing a server call
 
-Backend handlers are tested with Vitest (the UI is excluded). Mock `fetch` and assert the URL, method and envelope:
+Backend handlers are tested with Vitest (the UI is excluded). Spy on the shared
+axios instance and assert the URL, method and envelope:
 
 ```ts
 // ./src/modules/wallet/__tests__/api.controller.test.ts
 
 import { afterEach, expect, it, vi } from "vitest";
+import { http } from "@/core/facade";
 import { balance } from "@/modules/wallet/controllers/api.controller";
 
-const orig = globalThis.fetch;
-afterEach(() => { globalThis.fetch = orig; process.env.API_URL = ""; });
+afterEach(() => {
+  process.env.API_URL = "";
+  vi.restoreAllMocks();
+});
 
 it("calls the balance endpoint with a bearer token", async () => {
   process.env.API_URL = "http://localhost:3000";
-  const spy = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: { balance: 5 } }) }));
-  globalThis.fetch = spy as any;
+  const spy = vi.spyOn(http.client, "request").mockResolvedValue({ status: 200, data: { data: { balance: 5 } } } as any);
 
   const res = await balance("tok");
   expect(res).toMatchObject({ ok: true, status: 200 });
   expect(spy).toHaveBeenCalledWith(
-    "http://localhost:3000/api/wallet/balance",
-    expect.objectContaining({ headers: expect.objectContaining({ Authorization: "Bearer tok" }) })
+    expect.objectContaining({
+      url: "http://localhost:3000/api/wallet/balance",
+      headers: expect.objectContaining({ Authorization: "Bearer tok" })
+    })
   );
 });
 ```
+
+The template ships both halves of this: `src/core/utils/http.test.ts` covers the
+helper, and `src/modules/app/__tests__/net.controller.test.ts` covers the binding.
 
 ## Alternative: renderer axios
 

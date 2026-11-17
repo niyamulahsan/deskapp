@@ -15,6 +15,8 @@ describe("core facade exports", () => {
     expect(mod.cron).toBeTruthy();
     expect(mod.storage).toBeTruthy();
     expect(mod.files).toBeTruthy();
+    expect(typeof mod.http.get).toBe("function");
+    expect(typeof mod.http.request).toBe("function");
     expect(mod.paginate).toBeTruthy();
     expect(mod.win).toBeTruthy();
     expect(mod.chrome).toBeTruthy();

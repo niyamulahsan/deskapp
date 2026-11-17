@@ -83,7 +83,7 @@ export const handlers = { fetchJson };
 const data = await bindings["app.net.fetchJson"]("https://api.example.com/items");
 ```
 
-The starter ships this proxy already: `app.net.fetchJson` for any absolute URL, and `app.net.apiFetch` for calls against a **runtime base URL** (`API_URL` in `.env`). For the full walkthrough — a controller + store + page against your own server, auth, offline and dev/prod config — see [Calling a Server API](./remote-api).
+To call a server from the **main process**, import the facade helper — `import { http } from "@/core/facade"`, then `await http.get("/api/…", { token })`. The starter also ships generic bindings: `app.net.fetchJson` for any absolute URL and `app.net.apiFetch` for calls against a **runtime base URL** (`API_URL` in `.env`). For the full walkthrough — helper + controller + store + page, auth, offline and dev/prod — see [Calling a Server API](./remote-api).
 
 ## The facade
 

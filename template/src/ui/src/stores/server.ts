@@ -10,6 +10,9 @@ import { ref } from "vue";
  * bindings - no CORS, the base URL comes from the runtime `API_URL` in `.env`,
  * and a failed call returns `{ ok: false, offline: true }` instead of throwing.
  * The store only owns state and the call surface. See guide/remote-api.md.
+ *
+ * Backend code (a controller, job or schedule) skips this and calls the facade
+ * helper directly: `import { http } from "@/core/facade"; await http.get(...)`.
  */
 export const useServerStore = defineStore("server", () => {
   const base = ref("");
