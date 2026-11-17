@@ -246,6 +246,25 @@ the runtime `.env`, so one build works for local and production.
 Full walkthrough (helper + controller + store + page, auth, offline, dev/prod):
 `guide/remote-api.md`.
 
+### Auth: bearer tokens
+
+The desktop has no browser cookie jar, so a nexwire server is reached with a
+**bearer** token, not the login cookie. The template ships the client:
+
+- `app.auth.login` / `me` / `logout` / `status` —
+  `src/modules/app/controllers/auth.controller.ts`. The token pair is kept in the
+  main process in the `session` store (encrypted at rest with `safeStorage`) and
+  never crosses to the renderer; two interceptors on `http.client` attach
+  `Authorization: Bearer …` and turn a `401` into one silent refresh + retry.
+- The renderer half is `src/ui/src/stores/auth.ts` (login/me/status/logout, no
+  token). The server side is nexwire's guard, which reads the bearer header before
+  the access cookie.
+- Keep per-user state (a token, a wizard step, a cache) in `session`, not in the
+  renderer. `logout()` cannot revoke server-side (nexwire's logout reads the
+  refresh cookie) — call `POST /api/auth/logout-all` to revoke for real.
+
+Details: `guide/remote-api.md` → Authentication.
+
 ## 4. Schemas & validation
 
 Schemas are Zod and are the **single source of truth for input and its type**.

@@ -5,6 +5,7 @@ import { ref } from "vue";
 import deskapp from "@/ui/assets/images/deskapp.png";
 import DataTable from "@/ui/components/datatable/index.vue";
 import { useGum } from "@/ui/plugins/gum";
+import { useAuthStore } from "@/ui/stores/auth";
 import { useServerStore } from "@/ui/stores/server";
 
 interface LogEntry {
@@ -18,9 +19,12 @@ const apiUrl = ref("https://jsonplaceholder.typicode.com/todos/1");
 const apiPath = ref("/api/auth/login");
 const siteUrl = ref("https://vuejs.org");
 const windowTitle = ref("Deskapp · Recipe Demo");
+const authEmail = ref("demo@example.com");
+const authPassword = ref("password");
 
 const gum = useGum();
 const server = useServerStore();
+const auth = useAuthStore();
 const table = ref<InstanceType<typeof DataTable> | null>(null);
 
 function push(kind: LogEntry["kind"], text: string) {
@@ -193,6 +197,39 @@ async function apiFetch() {
   }
 }
 
+/* app.auth.* (bearer) */
+async function authLogin() {
+  try {
+    const user = await auth.login(authEmail.value, authPassword.value);
+    push("ok", `app.auth.login → ${JSON.stringify(user)}`);
+  } catch (e) {
+    push("err", `app.auth.login → ${String(e)}`);
+  }
+}
+async function authMe() {
+  try {
+    const res = await auth.me();
+    push(res.ok ? "ok" : "warn", `app.auth.me → ${JSON.stringify(res)}`);
+  } catch (e) {
+    push("err", `app.auth.me → ${String(e)}`);
+  }
+}
+async function authStatus() {
+  try {
+    push("info", `app.auth.status → ${JSON.stringify(await auth.status())}`);
+  } catch (e) {
+    push("err", `app.auth.status → ${String(e)}`);
+  }
+}
+async function authLogout() {
+  try {
+    await auth.logout();
+    push("ok", "app.auth.logout → signed out");
+  } catch (e) {
+    push("err", `app.auth.logout → ${String(e)}`);
+  }
+}
+
 /* app.playwright.* */
 async function play() {
   push("info", "Starting Playwright…");
@@ -334,6 +371,33 @@ const res = await md.app.hello.greet('World');</pre>
         <p class="hint">
           Server API base:
           <code>{{ server.configured ? server.base : "not set — add API_URL to .env" }}</code>
+        </p>
+      </article>
+
+      <article class="card">
+        <header>
+          <i class="bi bi-shield-lock"></i>
+          <div>
+            <h2>Auth (bearer)</h2>
+            <p><code>md.app.auth.*</code></p>
+          </div>
+        </header>
+        <div class="row">
+          <input v-model="authEmail" type="text" placeholder="email" autocomplete="username">
+        </div>
+        <div class="row">
+          <input v-model="authPassword" type="password" placeholder="password" autocomplete="current-password">
+        </div>
+        <div class="actions">
+          <button class="act accent" @click="authLogin">Login</button>
+          <button class="act" @click="authMe">Me</button>
+          <button class="act" @click="authStatus">Status</button>
+          <button class="act danger" @click="authLogout">Logout</button>
+        </div>
+        <p class="hint">
+          Token pair stays in the main process (<code>session</code>, encrypted with <code>safeStorage</code>) and rides every
+          <code>http</code>
+          call as <code>Authorization: Bearer …</code>. A <code>401</code> triggers one silent refresh + retry.
         </p>
       </article>
 

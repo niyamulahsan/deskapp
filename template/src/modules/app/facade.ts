@@ -3,7 +3,7 @@
 /**
  * Public API for the app module.
  *
- * The sample module ships five controllers and no model. Each controller is
+ * The sample module ships six controllers and no model. Each controller is
  * re-exported under its own namespace, so other modules can call it without
  * reaching into `controllers/` directly:
  *
@@ -14,6 +14,7 @@
  * facade.
  */
 
+export * as auth from "./controllers/auth.controller";
 export * as demo from "./controllers/demo.controller";
 export * as net from "./controllers/net.controller";
 export * as playwright from "./controllers/playwright.controller";

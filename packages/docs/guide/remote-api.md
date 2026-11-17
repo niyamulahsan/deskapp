@@ -117,25 +117,37 @@ A handler that calls the server is one line — `http` does the rest:
 ```ts
 // ./src/modules/wallet/controllers/api.controller.ts
 
-import { http, validate } from "@/core/facade";
+import { http, session, validate } from "@/core/facade";
 import { LoginSchema } from "@/modules/wallet/controllers/api.schema";
+
+const TOKEN = "walletToken";
 
 export const login = async (body: unknown) => {
   const data = await validate.run(LoginSchema, body);
-  return http.post("/api/auth/login", { body: data });
+  const res = await http.post("/api/auth/login", { body: data });
+  const payload = (res.data as { data?: { access_token?: string; user?: unknown } } | null)?.data;
+  if (res.ok && payload?.access_token) session.set(session.DEFAULT, TOKEN, payload.access_token);
+  // Return the user, never the tokens — the renderer has no business seeing them.
+  return { ok: res.ok, status: res.status, user: payload?.user ?? null, offline: res.offline, error: res.error };
 };
 
-export const me = (token: string) => http.get("/api/auth/me", { token });
+export const me = () => http.get("/api/auth/me", { token: session.get<string>(session.DEFAULT, TOKEN) });
 
-export const balance = (token: string) => http.get("/api/wallet/balance", { token });
+export const balance = () => http.get("/api/wallet/balance", { token: session.get<string>(session.DEFAULT, TOKEN) });
 
 /** Handlers exposed to the frontend via the bindings registry. */
 export const handlers = { login, me, balance };
 ```
 
-This creates `wallet.api.login`, `wallet.api.me` and `wallet.api.balance`. Each
-returns the same envelope (`{ ok, status, data, offline?, error? }`), so the store
-in step 3 branches instead of catching.
+The token is kept in the main process, in the [`session`](../api/session) store —
+it never reaches the renderer. This creates `wallet.api.login`, `wallet.api.me` and
+`wallet.api.balance`. Each returns the same envelope
+(`{ ok, status, data, offline?, error? }`), so the store in step 3 branches instead
+of catching.
+
+> This is the manual form. For a nexwire server you do not write it: the template
+> already ships a bearer client — `app.auth.*` plus the `session`-backed
+> `src/ui/src/stores/auth.ts` — see [Authentication](#authentication) below.
 
 > No controller needed? For a one-off call the UI can use the shipped
 > `app.net.apiFetch` binding directly. A dedicated controller is worth it when you
@@ -159,15 +171,20 @@ export const useWalletStore = defineStore("wallet", () => {
   const offline = ref(false);
 
   async function login(email: string, password: string) {
-    const res = (await bindings["wallet.api.login"]({ email, password })) as Envelope;
+    const res = (await bindings["wallet.api.login"]({ email, password })) as {
+      ok: boolean;
+      user?: any;
+      offline?: boolean;
+      error?: string;
+    };
     if (!res.ok) throw Object.assign(new Error(res.error || "Login failed"), { response: res });
-    return res.data; // { user, access_token, refresh_token, ... }
+    return res.user;
   }
 
-  async function loadBalance(token: string) {
+  async function loadBalance() {
     loading.value = true;
     try {
-      const res = (await bindings["wallet.api.balance"](token)) as Envelope;
+      const res = (await bindings["wallet.api.balance"]()) as Envelope;
       offline.value = Boolean(res.offline);
       balance.value = res.ok ? (res.data?.data?.balance ?? null) : null;
       return res;
@@ -194,13 +211,10 @@ import { useWalletStore } from "@/ui/stores/wallet";
 const wallet = useWalletStore();
 const email = ref("");
 const password = ref("");
-const token = ref(localStorage.getItem("token") || "");
 
 async function submit() {
-  const data = await wallet.login(email.value, password.value);
-  token.value = data.access_token;
-  localStorage.setItem("token", token.value);
-  await wallet.loadBalance(token.value);
+  await wallet.login(email.value, password.value);
+  await wallet.loadBalance();
 }
 </script>
 
@@ -225,24 +239,50 @@ async function submit() {
 
 ## Authentication
 
-The desktop app is not a browser tab, so decide how the server recognises the client.
+The desktop app is not a browser tab: the main process has no origin, and a packaged renderer runs from `file://`, so an `httpOnly` login cookie will not stick. The template therefore ships a **bearer** auth client, pointed at a nexwire server (or any server with the same contract).
 
-### Bearer tokens (recommended for desktop)
+### The shipped bearer client
 
-The main process keeps a token and sends `Authorization: Bearer <token>`. This is stateless, survives `file://`, and works from any origin. The store holds the token (in memory, or `localStorage`/secure storage); the controller passes it on:
+| Handler       | Binding           | Does                                             |
+| ------------- | ----------------- | ------------------------------------------------ |
+| `login(body)` | `app.auth.login`  | `POST /api/auth/login`, store the token pair     |
+| `me()`        | `app.auth.me`     | `GET /api/auth/me` (refreshes silently on `401`) |
+| `logout()`    | `app.auth.logout` | drop the session, best-effort revoke             |
+| `status()`    | `app.auth.status` | signed-in state, no network call                 |
+
+The token pair lives in the core [`session`](../api/session) store **in the main process only** — encrypted at rest with Electron's `safeStorage` when available — and never crosses to the renderer. On load the controller installs two axios interceptors on `http.client`:
+
+- a **request** interceptor attaches `Authorization: Bearer <access token>` to every `http` call (it never overrides an explicit header);
+- a **response** interceptor turns a `401` into one silent `POST /api/auth/refresh-token` + retry. The server rotates the pair, so both tokens are replaced; concurrent `401`s share a single rotation.
+
+The renderer drives it through `src/ui/src/stores/auth.ts` — the store owns only the UI state, never a token:
 
 ```ts
-await bindings["wallet.api.balance"](token);
+const auth = useAuthStore();
+await auth.login(email, password); // the pair is stored in the main process
+await auth.me();                   // refreshes silently on 401
+auth.status();                     // signed in? no network
+await auth.logout();
 ```
+
+Server side, nexwire's guard reads the bearer header **before** the access cookie, and `login`/`register` return `{ access_token, refresh_token, token_type: "Bearer" }` in the body — so the guard was the only missing piece. See the nexwire [Auth guide](https://niyamulahsan.github.io/nexwire/guide/auth).
+
+### Logging out
+
+`logout()` clears the local session and makes a best-effort `POST /api/auth/logout`. nexwire's shipped logout revokes the **refresh cookie**, so a bearer client's call returns `200` but does not revoke the token server-side. To revoke for real, call `POST /api/auth/logout-all` (which revokes the refresh token) before clearing the session.
+
+### Rolling your own
+
+Any server with a different contract follows the same shape: keep the token in [`session`](../api/session), attach it in a controller with `http.get(path, { token })`, and refresh on `401`. The walkthrough above is exactly that.
 
 ### Cookie sessions
 
-If your server is **cookie-only** (as nexwire's HTTP guard is — it reads a signed `httpOnly` cookie, not the `Authorization` header), then a cross-origin cookie is the problem. Two settings make it work:
+If your server is **cookie-only**, a cross-origin cookie is the problem. Two settings make it work:
 
 - The server must mark the cookie `SameSite=None; Secure` when the API origin differs from the client origin. In nexwire that happens automatically when `FRONTEND_URL` differs from `APP_URL` (see `src/framework/support/cookie.ts`).
 - The request must be credentialed. The main process `fetch` does **not** keep a browser cookie jar, so for cookie sessions use Electron's session-bound `net.fetch` instead of the global `fetch` — then the cookie persists in the Electron session.
 
-Bearer is simpler and is what this guide recommends for a desktop client.
+Bearer is simpler and is what this guide recommends for a desktop client. nexwire supports both: its guard accepts the bearer header first and falls back to the access cookie for the browser SPA.
 
 ### Redirect on `401`
 
@@ -320,6 +360,9 @@ it("calls the balance endpoint with a bearer token", async () => {
 
 The template ships both halves of this: `src/core/utils/http.test.ts` covers the
 helper, and `src/modules/app/__tests__/net.controller.test.ts` covers the binding.
+The bearer client has its own coverage in
+`src/modules/app/__tests__/auth.controller.test.ts` (handlers plus both
+interceptors), and the store in `src/core/utils/session.test.ts`.
 
 ## Alternative: renderer axios
 

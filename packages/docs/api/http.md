@@ -114,7 +114,8 @@ Leave it empty to run fully offline — a relative call then returns
 - `http` is **main-process only**. The renderer (a page or store) reaches the server through a binding — see [Controllers & Bindings](../guide/controllers).
 - HTTP errors (4xx/5xx) **resolve**; `ok` is `false` but the response body is in `data`. Only a network failure sets `offline: true`.
 - The template exposes `http` to the UI as `app.net.apiFetch` in `src/modules/app/controllers/net.controller.ts`.
+- The template ships a bearer auth client built on `http.client` interceptors and the [`session`](./session) store — see [Calling a Server API](../guide/remote-api#authentication).
 
 ## Related
 
-- [queue](./queue) · [validate](./validate) · [Calling a Server API](../guide/remote-api)
+- [session](./session) · [queue](./queue) · [validate](./validate) · [Calling a Server API](../guide/remote-api)

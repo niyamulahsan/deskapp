@@ -16,6 +16,7 @@ import {
   pass,           // bcrypt hashing
   validate,       // Zod schemas + runner
   http,           // remote HTTP(S) client (runtime API_URL; never throws)
+  session,        // main-process key/value session store (in-memory + safeStorage)
   files,          // operate on any path the user picks
   storage,        // the app's own private/tmp disks
   alertDialog,    // top-level OS alert dialog (also chrome.alertDialog)
@@ -43,6 +44,7 @@ Each facade member below has its own page — every export linked here is a docu
 | [`pass`](./pass)                   | bcrypt hash / verify                                                          | [Password](../guide/password)     |
 | [`validate`](./validate)           | Zod schemas + `run` with a 422-shaped failure                                 | [Validation](../guide/validation) |
 | [`http`](./http)                   | Remote HTTP(S) client: `get` / `post` / … against a runtime base URL          | [Calling a Server API](../guide/remote-api) |
+| [`session`](./session)             | Main-process key/value session store (in-memory + `safeStorage`)              | [Calling a Server API](../guide/remote-api) |
 | [`files`](./files)                 | Open / save / upload / download / remove on any user-picked path              | [Storage](../guide/storage)       |
 | [`storage`](./storage)             | The app's own `private` / `tmp` disks                                         | [Storage](../guide/storage)       |
 | [`alertDialog`](./chrome)          | Top-level OS alert dialog (same function as `chrome.alertDialog`)             | [Windows](../guide/windows)       |
@@ -54,7 +56,7 @@ Each facade member below has its own page — every export linked here is a docu
 - **Data** — `db` holds the Drizzle client; `paginate` is the shared envelope, and you pick which flavor fits: [`paginateQuery`](./paginateQuery) for fully custom queries, [`paginateTable`](./paginateTable) for a whole table, [`paginateModel`](./paginateModel) for relational eager-loaded reads. `sql` writes `where` filters.
 - **Background work** — `queue` throttles async jobs; `cron` runs named schedules and stops them all on shutdown.
 - **Security & input** — `pass` hashes passwords; `validate` runs schemas and throws a structured 422-shaped failure.
-- **Network** — `http` calls a remote server API from the main process: a runtime `API_URL`, never throws, returns `{ ok, status, data, offline? }`.
+- **Network** — `http` calls a remote server API from the main process: a runtime `API_URL`, never throws, returns `{ ok, status, data, offline? }`. `session` keeps the per-user state that call needs (an auth token, a cache) in the main process, encrypted at rest when `safeStorage` is available.
 - **Files** — `files` touches the user's real file system anywhere; `storage` keeps the app's own state in `private`/`tmp` disks.
 - **Automation** — `chromium` locates the bundled browser binary and unpacked extensions for Playwright.
 

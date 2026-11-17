@@ -33,6 +33,8 @@ export { chromium } from "@/core/utils/playwright";
 export { type Queue, type QueueTask, queue } from "@/core/utils/queue";
 // Cron scheduling (backed by croner)
 export { type CronHandle, cron } from "@/core/utils/scheduler";
+// Session store (main-process key/value; in-memory + safeStorage when available)
+export { type SessionData, type SessionFacade, session } from "@/core/utils/session";
 // File / storage utilities
 // 1) User-file layer: operate on ANY path the user picks
 // 2) App-managed layer: the app's own internal state (private + tmp)

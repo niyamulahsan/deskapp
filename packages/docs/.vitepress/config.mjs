@@ -143,6 +143,7 @@ export default defineConfig({
           text: label("cloud", "Network"),
           items: [
             { text: label("cloud", "http"), link: "/api/http" },
+            { text: label("key", "session"), link: "/api/session" },
           ],
         },
         {
