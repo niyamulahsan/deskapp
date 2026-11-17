@@ -5,8 +5,7 @@
     <div class="card-header" :class="{ 'd-none': !(props.removable || props.searchable || props.optionable) }">
       <div class="row align-items-center gx-1">
         <div class="col-12 col-md-3">
-          <SelectOption :is-options="props.optionable" :option="props.option" :selectedoption="selectedoption"
-            @change="handleSizeChange" />
+          <SelectOption :is-options="props.optionable" :option="props.option" :selectedoption="selectedoption" @change="handleSizeChange" />
         </div>
         <div class="col-12 col-md-9">
           <slot name="extra-tools"></slot>
@@ -20,8 +19,15 @@
               <Button class="btn btn-outline-secondary rounded-0 rounded-start" type="button" @click="searchMe">
                 <i class="bi bi-search"></i>
               </Button>
-              <Input v-model="searchdata" type="text" class="w-auto shadow-none rounded-0 rounded-end" topclass="mb-0"
-                placeholder="Search..." @keyup.enter="searchMe" @keyup.delete="searchMe" />
+              <Input
+                v-model="searchdata"
+                type="text"
+                class="w-auto shadow-none rounded-0 rounded-end"
+                topclass="mb-0"
+                placeholder="Search..."
+                @keyup.enter="searchMe"
+                @keyup.delete="searchMe"
+              />
             </div>
           </div>
         </div>
@@ -30,14 +36,12 @@
     <div class="card-body">
       <slot name="extra"></slot>
       <div class="table-responsive">
-        <table
-          class="table table-bordered table-striped border-custom table-sm align-middle m-0 datatable no-shrink-table">
+        <table class="table table-bordered table-striped border-custom table-sm align-middle m-0 datatable no-shrink-table">
           <slot name="customhead"></slot>
           <thead :class="{ 'd-none': slots.customhead }">
             <tr>
-              <th class="align-middle" :class="{ 'd-none': !props.removable || !state.current_page }">
-                <Checkbox v-model="checked.check" topclass="ms-2" :value="checked.check" :disabled="props.disabled"
-                  @click="checkAll" />
+              <th class="align-middle" :class="{ 'd-none': !props.removable || !view.current_page }">
+                <Checkbox v-model="checked.check" topclass="ms-2" :value="checked.check" :disabled="props.disabled" @click="checkAll" />
               </th>
               <th class="text-center align-middle" :class="{ 'd-none': !props.countable }">#</th>
               <slot name="thead"></slot>
@@ -47,16 +51,11 @@
           <slot name="custombody"></slot>
           <tbody :class="{ 'd-none': slots.custombody }">
             <tr v-for="(dt, i) in tableRows" :key="`${dt.id}-${i}`">
-              <td class="align-middle" :class="{ 'd-none': !props.removable || !state.current_page }">
-                <Checkbox v-model="checked.checkcolumn" topclass="ms-2" :value="dt.id" :disabled="props.disabled"
-                  @change="updateChecked" />
+              <td class="align-middle" :class="{ 'd-none': !props.removable || !view.current_page }">
+                <Checkbox v-model="checked.checkcolumn" topclass="ms-2" :value="dt.id" :disabled="props.disabled" @change="updateChecked" />
               </td>
               <td class="text-center align-middle" :class="{ 'd-none': !props.countable }">
-                {{
-                  state.current_page
-                    ? state.per_page * (state.current_page - 1) + (i + 1)
-                    : i + 1
-                }}
+                {{ view.current_page ? view.per_page * (view.current_page - 1) + (i + 1) : i + 1 }}
               </td>
               <slot name="tbody" :td="dt"></slot>
             </tr>
@@ -64,21 +63,21 @@
         </table>
       </div>
     </div>
-    <div class="card-footer" :class="{ 'd-none': state.total <= state.data.length }">
-      <Pagination :data="state" @change="handlePageChange" />
+    <div class="card-footer" :class="{ 'd-none': view.total <= view.data.length }">
+      <Pagination :data="view" @change="handlePageChange" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { debounce } from "lodash-es";
-import SelectOption from "./SelectOpption.vue";
+import { computed, reactive, ref, useSlots, watch, watchEffect } from "vue";
 import Button from "@/ui/components/Button.vue";
-import Input from "@/ui/components/Input.vue";
 import Checkbox from "@/ui/components/Checkbox.vue";
+import Input from "@/ui/components/Input.vue";
+import { type GumTransport, useGum } from "@/ui/plugins/gum";
 import Pagination from "./Pagination.vue";
-import { computed, reactive, ref, useSlots, watchEffect } from "vue";
-import { useGum, type GumTransport } from "@/ui/plugins/gum";
+import SelectOption from "./SelectOpption.vue";
 
 interface DataRow {
   id: string | number;
@@ -97,7 +96,26 @@ interface DataPageState {
 }
 
 interface DataTableProps {
-  path: string;
+  /**
+   * Self-fetch mode: binding name (`app.demo.table`) or REST endpoint that returns
+   * the paginate envelope. The table owns its state and reloads when `path` changes.
+   */
+  path?: string;
+  /**
+   * Parent-owned mode: the paginate envelope (e.g. a Pinia store's list). When set,
+   * the table renders it instead of fetching `path`, so the page owns the rows.
+   */
+  data?: Partial<DataPageState> | null;
+  /**
+   * Fetcher mode: the built-in controls (search, size, page) call this instead of
+   * self-fetching `path` — e.g. `:fetcher="store.index"`. Called through `gum.getWith`.
+   */
+  fetcher?: (params: Record<string, unknown>) => Promise<unknown>;
+  /**
+   * Extra query params merged into every fetch/control call, so filters in the URL
+   * or on the page survive a search or a page change.
+   */
+  filters?: Record<string, unknown>;
   search?: string;
   loop?: DataRow[] | false;
   option?: Array<string | number>;
@@ -113,6 +131,7 @@ interface DataTableProps {
 }
 
 const props = withDefaults(defineProps<DataTableProps>(), {
+  filters: () => ({}),
   search: "",
   loop: false,
   option: () => [10, 25, 50],
@@ -126,8 +145,9 @@ const gum = useGum();
 
 const slots = useSlots();
 
-const emit = defineEmits<{ (event: "remove", value: Array<string | number>): void; }>();
+const emit = defineEmits<(event: "remove", value: Array<string | number>) => void>();
 
+// Internal envelope for self-fetch mode; `view` falls back to the parent's `data` when given.
 const state = reactive<DataPageState>({
   data: [],
   current_page: 1,
@@ -136,19 +156,19 @@ const state = reactive<DataPageState>({
   total: 0,
   from: null,
   to: null,
-  path: props.path
+  path: props.path ?? ""
 });
 
 const loading = ref(false);
 
 // checkbox select
-let checked = reactive<{ check: boolean; checkcolumn: Array<string | number>; }>({
+let checked = reactive<{ check: boolean; checkcolumn: Array<string | number> }>({
   check: false,
   checkcolumn: []
 });
 const checkAll = () => {
   if (!checked.check) {
-    state.data.forEach((dt: DataRow) => {
+    view.value.data.forEach((dt: DataRow) => {
       if (!checked.checkcolumn.includes(dt.id)) {
         checked.checkcolumn.push(dt.id);
       }
@@ -157,7 +177,7 @@ const checkAll = () => {
     checked.checkcolumn = [];
   }
 };
-const updateChecked = () => checked.checkcolumn.length === state.data.length ? (checked.check = true) : (checked.check = false);
+const updateChecked = () => (checked.checkcolumn.length === view.value.data.length ? (checked.check = true) : (checked.check = false));
 
 // remove from parent
 const remove = () => {
@@ -167,7 +187,35 @@ const remove = () => {
 
 // for change data size show
 const selectedoption = ref<string | number | undefined>(Number(props.option[0]));
-const tableRows = computed<DataRow[]>(() => (props.loop ? props.loop : state.data));
+
+/** Normalize any paginate envelope (the parent's `data` or a fetch result) into a full `DataPageState`. */
+const toEnvelope = (d: Partial<DataPageState>): DataPageState => ({
+  data: Array.isArray(d.data) ? d.data : [],
+  current_page: Number(d.current_page) || 1,
+  last_page: Number(d.last_page) || 1,
+  per_page: Number(d.per_page) || Number(selectedoption.value) || 15,
+  total: Number(d.total) || 0,
+  from: d.from ?? null,
+  to: d.to ?? null,
+  path: d.path ?? props.path ?? ""
+});
+
+/** Pull the paginate envelope out of a fetch result, tolerating a `{ data }` wrapper. */
+const readEnvelope = (value: unknown): Partial<DataPageState> | null => {
+  if (!value || typeof value !== "object") return null;
+  const v = value as Record<string, unknown>;
+  if (Array.isArray(v.data)) return v as Partial<DataPageState>;
+  const inner = v.data;
+  if (inner && typeof inner === "object" && Array.isArray((inner as Record<string, unknown>).data)) {
+    return inner as Partial<DataPageState>;
+  }
+  return null;
+};
+
+/** What the table renders: the parent's `data` when provided, else the internal self-fetch `state`. */
+const view = computed<DataPageState>(() => (props.data ? toEnvelope(props.data) : state));
+
+const tableRows = computed<DataRow[]>(() => (props.loop ? props.loop : view.value.data));
 
 // search data
 const searchdata = ref(props.search || "");
@@ -175,29 +223,45 @@ const searchMe = debounce(() => {
   load(1);
 }, 500);
 
-// fetch directly in-process; no router navigation/scroll restore (gum `navigate: false`)
+/** Extra query params merged last, so a caller-supplied filter survives a search/page/size change. */
+const buildQuery = (page?: number): Record<string, unknown> => ({
+  page: page ?? view.value.current_page,
+  size: selectedoption.value,
+  search: searchdata.value,
+  ...props.filters
+});
+
+/**
+ * One entry point for every built-in control (search, size, page).
+ *
+ * - Fetcher mode (`:fetcher`): calls the parent's fetcher through `gum.getWith` and
+ *   adopts the envelope it returns (or lets the parent's `data` prop drive the view).
+ * - Path mode (default): fetches the binding/endpoint in-process with
+ *   `gum.get(path, { navigate: false })` and fills the internal `state`.
+ */
 const load = async (page?: number) => {
+  const query = buildQuery(page);
   loading.value = true;
   try {
-    const res = await gum.get(props.path, {
-      navigate: false,
-      transport: props.transport,
-      baseURL: props.baseURL,
-      query: {
-        page: page ?? state.current_page,
-        size: selectedoption.value,
-        search: searchdata.value
-      }
-    });
-    const envelope = (res?.data ?? {}) as Partial<DataPageState>;
-    state.data = envelope.data ?? [];
-    state.current_page = Number(envelope.current_page) || 1;
-    state.last_page = Number(envelope.last_page) || 1;
-    state.per_page = Number(envelope.per_page) || Number(selectedoption.value) || 15;
-    state.total = Number(envelope.total) || 0;
-    state.from = envelope.from ?? null;
-    state.to = envelope.to ?? null;
-    if (envelope.path) state.path = envelope.path;
+    if (props.fetcher) {
+      const fetcher = props.fetcher;
+      const res = await gum.getWith({
+        fetcher: () => fetcher(query),
+        query,
+        navigate: false,
+        transport: props.transport,
+        baseURL: props.baseURL
+      });
+      if (!props.data) Object.assign(state, toEnvelope(readEnvelope(res) ?? {}));
+    } else if (props.path) {
+      const res = await gum.get(props.path, {
+        navigate: false,
+        transport: props.transport,
+        baseURL: props.baseURL,
+        query
+      });
+      Object.assign(state, toEnvelope(readEnvelope(res) ?? {}));
+    }
     checked.checkcolumn = [];
     checked.check = false;
   } finally {
@@ -213,25 +277,37 @@ const handleSizeChange = (value: string | number) => {
 const handlePageChange = (pageNo: string | number) => {
   let p = parseInt(String(pageNo), 10);
   if (Number.isNaN(p) || p < 1) p = 1;
-  if (p > state.last_page) p = state.last_page;
+  if (p > view.value.last_page) p = view.value.last_page;
   load(p);
 };
 
 // watch instance
 watchEffect(() => {
   if (props.option.length) {
-    const match = props.option.find((x) => Number(x) === Number(state.per_page)) ?? props.option[0];
+    const match = props.option.find((x) => Number(x) === Number(view.value.per_page)) ?? props.option[0];
     selectedoption.value = match;
   }
   searchdata.value = props.search || "";
 });
 
-// initial + subsequent loads when path changes
-watchEffect(() => {
-  if (props.path) load();
-});
+// initial + subsequent loads when `path` changes (self-fetch mode only)
+watch(
+  () => props.path,
+  () => {
+    if (props.path && !props.data && !props.loop) load();
+  },
+  { immediate: true }
+);
 
-defineExpose({ load, state, loading });
+// external search term change re-queries from page 1 (self-fetch mode only)
+watch(
+  () => props.search,
+  () => {
+    if (props.path && !props.data && !props.loop) load(1);
+  }
+);
+
+defineExpose({ load, state, view, loading });
 </script>
 
 <style lang="scss" scoped>

@@ -38,7 +38,7 @@ const EXAMPLE = "https://example.com";
 const DEFAULT_SECONDS = 5;
 
 function extensionArgs(extensions: string[]): string[] {
-  return ["--disable-extensions-except=" + extensions.join(","), ...extensions.map((e) => `--load-extension=${e}`)];
+  return [`--disable-extensions-except=${extensions.join(",")}`, ...extensions.map((e) => `--load-extension=${e}`)];
 }
 
 export const play = async (opts?: {

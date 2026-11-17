@@ -231,7 +231,8 @@ async function removeRows(ids: Array<string | number>) {
       <h1>Call the backend with <span class="grad">bindings</span></h1>
       <p class="sub">
         Logical form: <code>await md.app.window.focus()</code> — <b>bindings</b> → <b>module</b> (<code>app</code>) →
-        <b>controller</b> (<code>window</code>) → <b>handler</b> (<code>focus</code>). Works for any module you create.
+        <b>controller</b>
+        (<code>window</code>) → <b>handler</b> (<code>focus</code>). Works for any module you create.
       </p>
       <pre class="snippet">// controller: src/modules/app/controllers/hello.controller.ts
 export const greet = async (name: string) => ({ message: `Hello, ${name}!` });
@@ -381,7 +382,7 @@ const res = await md.app.hello.greet('World');</pre>
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .app {
   min-height: 100vh;
   display: flex;

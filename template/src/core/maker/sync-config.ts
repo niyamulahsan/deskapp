@@ -55,10 +55,7 @@ function syncPackageJson(): boolean {
 function renderInstallerNsh(): string {
   const product = appConfig.productName;
   const folders = Array.from(new Set(appConfig.uninstallDataFolders.filter(Boolean)));
-  const rmLines = folders.flatMap((f) => [
-    `    RMDir /r "$APPDATA\\${f}"`,
-    `    RMDir /r "$LOCALAPPDATA\\${f}"`,
-  ]);
+  const rmLines = folders.flatMap((f) => [`    RMDir /r "$APPDATA\\${f}"`, `    RMDir /r "$LOCALAPPDATA\\${f}"`]);
   return [
     "; Custom NSIS include for electron-builder (generated from src/config/app.ts via config:sync)",
     "; Adds an uninstall choice: full uninstall (remove user data) or just uninstall (keep user data).",
@@ -69,7 +66,7 @@ function renderInstallerNsh(): string {
     ...rmLines,
     "  keepData:",
     "!macroend",
-    "",
+    ""
   ].join("\n");
 }
 

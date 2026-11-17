@@ -2,12 +2,7 @@
 
 <template>
   <div class="form-check mb-0" :class="props.topclass">
-    <input
-      :id="String(props.id)"
-      v-model="model"
-      class="form-check-input shadow-none border-secondary"
-      type="checkbox"
-      v-bind="$attrs" />
+    <input :id="String(props.id)" v-model="model" class="form-check-input shadow-none" type="checkbox" v-bind="$attrs">
     <label v-if="props.label" class="form-check-label" :for="String(props.id)">{{ props.label }}</label>
   </div>
 </template>

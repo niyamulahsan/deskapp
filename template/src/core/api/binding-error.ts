@@ -29,11 +29,7 @@ export type BindingErrorEnvelope = BindingErrorPayload & { __deskappError: true 
 
 /** True when a handler's resolved value is actually a serialized error. */
 export function isBindingErrorEnvelope(value: unknown): value is BindingErrorEnvelope {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as Record<string, unknown>)[BINDING_ERROR] === true
-  );
+  return typeof value === "object" && value !== null && (value as Record<string, unknown>)[BINDING_ERROR] === true;
 }
 
 /** Flatten any thrown value into a cloneable payload (own props + message/stack). */

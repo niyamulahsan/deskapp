@@ -11,8 +11,8 @@ import router from "@/ui/router/index.ts";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "@/ui/assets/scss/custom.scss";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 
 let favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
 if (!favicon) {
@@ -24,4 +24,15 @@ favicon.href = faviconUrl;
 
 export { pulse };
 
-createApp(App).use(createHead()).use(createPinia()).use(PulsePlugin).use(GumPlugin).use(router).mount("#app");
+const app = createApp(App);
+const pinia = createPinia();
+const head = createHead({
+  init: [{ titleTemplate: (title) => (title ? `${title} | deskapp` : "deskapp") }]
+});
+
+app.use(pinia);
+app.use(router);
+app.use(head);
+app.use(GumPlugin);
+app.use(PulsePlugin);
+app.mount("#app");

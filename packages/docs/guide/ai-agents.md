@@ -100,8 +100,11 @@ drifts most:
 - **Requests go through `gum`** (`@/ui/plugins/gum.ts`) — `useGum()` for one-off
   calls and `useGum(defaults).form` for forms — not a raw `bindings[...]` call
   sprinkled through a template. See [Gum](/guide/gum).
-- **Lists use `DataTable`** (`@/ui/components/datatable/index.vue`) pointed at a
-  binding that returns the paginate envelope, with `#thead` / `#tbody` slots.
+- **Lists use `DataTable`** (`@/ui/components/datatable/index.vue`) with `#thead` /
+  `#tbody` slots. Point it at a binding that returns the paginate envelope
+  (`:path`), or pass the page's own envelope with `:data` and wire its controls to
+  a store action with `:fetcher`; `:loop` renders a static list. See
+  [Gum](/guide/gum#datatable--the-gum-component).
 - **Menus & tray are app code.** To change the application menu, right-click menu
   or system tray, edit `src/window/app-menu.ts`, `src/window/context-menu.ts` and
   `src/window/tray.ts` directly. See

@@ -22,7 +22,7 @@ function run(cmd: string, args: string[], env: Record<string, string> = {}): voi
     cwd: PROJECT_ROOT,
     stdio: "inherit",
     shell: false,
-    env: { ...process.env, ...env },
+    env: { ...process.env, ...env }
   });
   if (r.error) throw r.error;
   if (r.status !== 0) process.exit(r.status ?? 1);
@@ -67,11 +67,7 @@ export async function ensureMigrationMeta(): Promise<void> {
   const journalPath = path.join(metaRoot, "_journal.json");
   fs.mkdirSync(metaRoot, { recursive: true });
   if (!fs.existsSync(journalPath)) {
-    fs.writeFileSync(
-      journalPath,
-      `{\n  "version": "7",\n  "dialect": "sqlite",\n  "entries": []\n}\n`,
-      "utf8",
-    );
+    fs.writeFileSync(journalPath, `{\n  "version": "7",\n  "dialect": "sqlite",\n  "entries": []\n}\n`, "utf8");
     console.log(`[db:migrate] created migration journal: ${journalPath}`);
   }
 }
@@ -84,9 +80,7 @@ export async function hasExistingAppTables(): Promise<boolean> {
     const instance = new DatabaseSync(file);
     try {
       const rows = instance
-        .prepare(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__drizzle_migrations'",
-        )
+        .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != '__drizzle_migrations'")
         .all() as unknown[];
       return rows.length > 0;
     } finally {

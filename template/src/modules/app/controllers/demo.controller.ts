@@ -67,7 +67,7 @@ interface DemoRow {
 
 const demoSeed = Array.from({ length: 137 }, (_, i) => ({
   id: i + 1,
-  name: ["Ava", "Leo", "Mia", "Noah", "Zara", "Ivan", "Eli", "Ruth", "Omar", "Nia"][i % 10] + ` ${i + 1}`,
+  name: `${["Ava", "Leo", "Mia", "Noah", "Zara", "Ivan", "Eli", "Ruth", "Omar", "Nia"][i % 10]} ${i + 1}`,
   email: `user${i + 1}@example.com`,
   role: ["admin", "editor", "viewer"][i % 3],
   created: `2026-${String((i % 12) + 1).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}`

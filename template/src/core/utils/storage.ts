@@ -9,7 +9,7 @@ import { appBaseDir } from "@/core/env";
 function getElectronApp(): { getPath: (name: string) => string; isPackaged: boolean } | undefined {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const e = (typeof require !== "undefined" ? require : createRequire(process.cwd() + "/"))("electron") as any;
+    const e = (typeof require !== "undefined" ? require : createRequire(`${process.cwd()}/`))("electron") as any;
     if (e && typeof e.app?.getPath === "function") return e.app;
   } catch {}
   return undefined;

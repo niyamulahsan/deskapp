@@ -263,13 +263,22 @@ When a GET visit runs with `preserveState: false` (the default), gum clears all 
 
 ## `DataTable` — the gum component
 
-The starter ships a ready-made, gum-powered table at `src/ui/src/components/datatable/index.vue` (with `Pagination.vue`, `SelectOpption.vue`, `DataTableSkeleton.vue`, and the small `Button`/`Input`/`Checkbox` controls it needs). It talks to **any** backend that returns the paginate envelope and drives the whole flow — search (debounced 500ms), size, pagination, row selection, delete — through gum. The scaffold dashboard already demonstrates it against `app.demo.table`.
+The starter ships a ready-made, gum-powered table at `src/ui/src/components/datatable/index.vue` (with `Pagination.vue`, `SelectOpption.vue`, `DataTableSkeleton.vue`, and the small `Button`/`Input`/`Checkbox` controls it needs). It talks to **any** source that yields the paginate envelope and drives the whole flow — search (debounced 500ms), size, pagination, row selection, delete — through gum. The scaffold dashboard already demonstrates it against `app.demo.table`.
+
+It works in three modes, so it fits any case:
+
+- **Path mode** (default) — give it `path`, a binding or REST endpoint that returns the envelope; the table fetches it and owns its state.
+- **Parent-owned mode** — give it `data` (e.g. a Pinia store's list) and optionally `fetcher`; the page owns the rows and the built-in controls call the fetcher.
+- **Static mode** — give it `loop`; the table renders the rows you pass and fetches nothing.
 
 ### Props
 
 | Prop              | Default        | Meaning                                                |
 | ----------------- | -------------- | ------------------------------------------------------ |
-| `path` (required) | —              | binding name **or** REST endpoint                      |
+| `path`            | —              | **path mode**: binding name **or** REST endpoint returning the envelope |
+| `data`            | —              | **parent-owned mode**: the paginate envelope to render (e.g. `:data="store.items"`); overrides `path` |
+| `fetcher`         | —              | **fetcher mode**: the built-in controls call this (`:fetcher="store.index"`) instead of self-fetching `path` |
+| `filters`         | `{}`           | extra query params merged into every fetch/control call, so filters survive search & paging |
 | `search`          | `""`           | external search term                                   |
 | `loop`            | `false`        | static rows instead of fetching (e.g. a computed list) |
 | `option`          | `[10, 25, 50]` | page-size choices                                      |
@@ -281,17 +290,19 @@ The starter ships a ready-made, gum-powered table at `src/ui/src/components/data
 | `transport`       | plugin default | per-table `"bindings"` or `"http"`                     |
 | `baseURL`         | plugin default | HTTP base URL for `path`                               |
 
+Exactly one data source is required: `path`, `data`, or `loop`. `path` and `data` are alternatives; `fetcher` refines `data` (or stands alone) so the table's own controls drive the fetch. When the fetcher returns the envelope and no `:data` is bound, the table adopts the result itself.
+
 ### Slots & events
 
 - `#thead` — column header cells.
 - `#tbody="{ td }"` — one row; `td` is the record (needs `td.id` for selection).
 - `#customhead`, `#custombody`, `#extra`, `#extra-tools` — escape hatches.
 - `@remove="handlers(ids)"` — emitted with the selected ids when the trash icon is clicked.
-- Exposed on the ref: `load(page?)` (reload, `page` optional), `state`, `loading`.
+- Exposed on the ref: `load(page?)` (reload, `page` optional), `state` (the internal self-fetch envelope), `view` (what is actually rendered — `data` when bound, else `state`), `loading`.
 
 ### Envelope contract
 
-On load the table sends `?page=&size=&search=` and expects the same envelope the backend pagination helpers produce (`src/core/database/paginate.ts`):
+On load (path or fetcher mode) the table sends `?page=&size=&search=` plus any `:filters`, and expects the same envelope the backend pagination helpers produce (`src/core/database/paginate.ts`):
 
 ```ts
 {
@@ -377,6 +388,43 @@ export const handlers = { table, destroy };
 ```
 
 Run it: `npm run dev`, open the dashboard, tick rows, trash them. The console prints the `app.demo.destroy` response.
+
+### Usage — parent-owned (`data` + `fetcher`)
+
+When the page already owns the rows — the usual Pinia-store pattern — pass the envelope as `:data` and hand the table the store action as `:fetcher`. The page fetches once; the table's own search, size and page controls call the fetcher, and the page's `data` updates in place:
+
+```vue
+<script setup lang="ts">
+import { storeToRefs } from "pinia";
+import { onMounted, ref } from "vue";
+import DataTable from "@/ui/components/datatable/index.vue";
+import { usePostStore } from "@/ui/stores/post";
+
+const store = usePostStore();
+const { posts } = storeToRefs(store);
+const table = ref<InstanceType<typeof DataTable> | null>(null);
+
+onMounted(() => store.index());
+</script>
+
+<template>
+  <DataTable
+    ref="table"
+    :data="posts"
+    :option="[10, 25, 50]"
+    :fetcher="store.index"
+    :filters="{ status: 'published' }"
+    @remove="store.destroy">
+    <template #thead><th>Name</th><th>Email</th></template>
+    <template #tbody="{ td }"><td>{{ td.name }}</td><td>{{ td.email }}</td></template>
+  </DataTable>
+</template>
+```
+
+- `data` must be the paginator's envelope (`{ data, current_page, last_page, per_page, total, path }`), never a bare array — the table reads `current_page`, `per_page` and `total` to drive the size select and pagination.
+- `fetcher` receives the built query (`{ page, size, search, ...filters }`) and returns the envelope; it is called through `gum.getWith`. If no `:data` is bound, the table adopts whatever the fetcher returns.
+- `filters` is merged into every call, so a filter that lives in the page state or the URL survives a search or a page change.
+- Static lists skip fetching entirely with `:loop="rows"`.
 
 ### Usage — HTTP / REST (or mixing both)
 

@@ -20,7 +20,7 @@ export const appConfig = {
   /** Deep-link/protocol scheme (lowercase, no spaces) */
   protocol: "deskapp",
   /** Folders used by the NSIS "Full uninstall" option (user data). Keep in sync with actual storage/userData names. */
-  uninstallDataFolders: ["Deskapp", "deskapp", "com.deskapp.app"],
+  uninstallDataFolders: ["Deskapp", "deskapp", "com.deskapp.app"]
 } as const;
 
 export type AppConfig = typeof appConfig;

@@ -587,11 +587,23 @@ form.processing;           // boolean
   / `useGum(...).form.postWith`.
 
 **DataTable** (`src/ui/src/components/datatable/index.vue`) is the gum-powered
-table. Point `path` at a binding (or REST endpoint) that returns the `paginate`
-envelope and drive it with slots:
+table. It has three modes — pick one:
+
+- **Path mode** (default) — point `path` at a binding (or REST endpoint) that
+  returns the `paginate` envelope; the table fetches it and owns its state.
+- **Parent-owned mode** — pass the page's envelope with `:data` and wire the
+  built-in controls to a store action with `:fetcher`; the page owns the rows.
+- **Static mode** — pass `:loop="rows"` and fetch nothing.
 
 ```vue
+<!-- path mode: the table fetches the binding itself -->
 <DataTable ref="table" path="blog.post.index" :option="[10, 25, 50]" @remove="removeRows">
+  <template #thead><th>Name</th><th>Email</th></template>
+  <template #tbody="{ td }"><td>{{ td.name }}</td><td>{{ td.email }}</td></template>
+</DataTable>
+
+<!-- parent-owned mode: the page's store owns the envelope; the table drives the fetches -->
+<DataTable :data="posts" :option="[10, 25, 50]" :fetcher="postStore.index" :filters="{ status: 'published' }" @remove="removeRows">
   <template #thead><th>Name</th><th>Email</th></template>
   <template #tbody="{ td }"><td>{{ td.name }}</td><td>{{ td.email }}</td></template>
 </DataTable>
@@ -601,12 +613,16 @@ envelope and drive it with slots:
 const table = ref<InstanceType<typeof DataTable> | null>(null);
 async function removeRows(ids: Array<string | number>) {
   await gum.delete("blog.post.destroy", { query: { ids } });
-  await table.value?.load(1);   // exposed: load(page?), state, loading
+  await table.value?.load(1);   // exposed: load(page?), state, view, loading
 }
 ```
 
-Props: `path` (required), `search`, `loop`, `option`, `removable`, `countable`,
-`searchable`, `optionable`, `disabled`, `transport`, `baseURL`. Slots: `#thead`,
+Props: `path`, `data`, `fetcher`, `filters`, `search`, `loop`, `option`,
+`removable`, `countable`, `searchable`, `optionable`, `disabled`, `transport`,
+`baseURL`. Exactly one data source is required: `path`, `data` or `loop`.
+`fetcher` receives the built query (`{ page, size, search, ...filters }`) and
+returns the envelope; it is called through `gum.getWith`. `filters` is merged
+into every call so filters survive a search or a page change. Slots: `#thead`,
 `#tbody="{ td }"`, `#customhead`, `#custombody`, `#extra`, `#extra-tools`. Each
 row needs `td.id` for selection. The table sends `?page=&size=&search=` and
 expects `{ data, current_page, last_page, per_page, total, from, to, path }`.

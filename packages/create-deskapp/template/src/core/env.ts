@@ -14,7 +14,7 @@ import { config as loadDotenv } from "dotenv";
 
 function getElectronApp(): any {
   try {
-    const req = typeof require !== "undefined" ? require : createRequire(process.cwd() + "/");
+    const req = typeof require !== "undefined" ? require : createRequire(`${process.cwd()}/`);
     const e = req("electron");
     if (e && typeof e === "object" && typeof e.app?.getPath === "function") return e.app;
   } catch {}
