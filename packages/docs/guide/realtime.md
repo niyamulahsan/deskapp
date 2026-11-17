@@ -54,7 +54,7 @@ ui.listen<{ ref: string; status: string }>("payment.status", async (payload) => 
 // on unmount: ui.stopListening("payment.status")
 ```
 
-`bindings` is the in-process IPC bridge (typed by `src/ui/src/bindings.d.ts`) exposed by the preload script — available only inside the Electron renderer (a plain browser tab has no `bindings`). Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`.
+`bindings` is the in-process IPC bridge (typed by `src/ui/src/bindings.d.ts`) exposed by the preload script — available only inside the Electron renderer (a plain browser tab has no `bindings`). Pure display updates can stay local; server-side work (persisting, reconciling, fetching details) should route through a backend controller via `bindings`. See [Calling a Server API](./remote-api) for the full controller + store + page pattern.
 
 After the first `channel()`/`private()`, the client connects to `socket.io-client` with `withCredentials: true`, `transports: ["websocket", "polling"]`, and a handshake `auth` callback that resolves the token set via `setToken()` (if any). It tracks joined rooms so it **re-emits `join` for each room on reconnect**; the engine authorizes each join - public rooms, your own `user:<id>` / `private:user:<id>`, and any `role:<name>` you hold are accepted, anything else is refused with `join:error`.
 

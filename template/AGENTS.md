@@ -219,6 +219,25 @@ Rules:
 - Adding/removing a controller is **not** live until you regenerate the manifest:
   `npm run maker -- bindings:gen`, then restart Electron.
 
+### Calling a remote server API
+
+Remote HTTP calls belong in a controller (main process): no CORS, and the base URL
+comes from the runtime `.env`, so one build works for local and production.
+
+- `src/modules/app/controllers/net.controller.ts` ships `app.net.apiBase` and
+  `app.net.apiFetch`. Call `bindings["app.net.apiFetch"]("/api/…", { token })`;
+  `apiFetch` never throws — a network failure returns
+  `{ ok: false, offline: true }`, so branch instead of catching.
+- The base URL is `API_URL` in `.env`, read at runtime by `src/main.ts`. Leave it
+  empty to run fully offline.
+- The UI reaches it through a Pinia store (`src/ui/src/stores/server.ts`), never
+  from a page directly.
+- Do not call the server from the renderer with `axios`/`fetch` unless you accept
+  the CORS + third-party-cookie + build-time-URL trade-offs.
+
+Full walkthrough (controller + store + page, auth, offline, dev/prod):
+`guide/remote-api.md`.
+
 ## 4. Schemas & validation
 
 Schemas are Zod and are the **single source of truth for input and its type**.

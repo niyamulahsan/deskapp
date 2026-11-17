@@ -107,9 +107,12 @@ For browser-based UI development, `src/ui/vite.config.ts` proxies a backend HTTP
 
 ```
 /__invoke     → http://localhost:8000
+/api          → VITE_API_URL   (only when VITE_API_URL is set)
 ```
 
-There is no HTTP backend in the desktop build — the proxy is a placeholder so a future "call backend from a browser tab" flow can be added. The desktop app talks exclusively via in-process bindings.
+`/__invoke` is a placeholder for a future "call backend from a browser tab" flow. The optional `/api` proxy forwards same-origin requests to your server in dev so the renderer-axios route works without CORS; it is off unless `VITE_API_URL` is set in `.env`. The desktop app itself talks to a remote server through in-process bindings — see [Calling a Server API](./remote-api).
+
+`envDir` points Vite at the project-root `.env`, so `import.meta.env.VITE_*` (used by Pulse) matches what the main process reads.
 
 ## Offline & online
 
@@ -118,6 +121,7 @@ The desktop app's backend is **in-process**: `bindings` run in the same Electron
 | Call                                                    | Offline behavior                                                                 |
 | ------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | `bindings` (gum's auto-detected transport)              | Works — in-process IPC, no network                                               |
+| `app.net.apiFetch` (remote server API)                  | Returns `{ ok: false, offline: true }` — branch, don't catch                     |
 | gum `"http"` transport (axios)                          | Fails — no retry/queue built in                                                  |
 | `pulse` (Socket.IO)                                     | Auto-reconnects; events emitted while offline are lost unless the engine replays |
 

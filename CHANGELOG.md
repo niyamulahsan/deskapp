@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0] - 2026-11-17
+
+### Added
+- **Calling a server API from the desktop** - `src/modules/app/controllers/net.controller.ts` gains `app.net.apiBase` (reports the runtime API base URL) and `app.net.apiFetch(path, { method, body, headers, token })`, which calls `${API_URL}${path}` in the main process - no CORS, no third-party-cookie problem, and the URL is read from `.env` at runtime so one build works for local and production. `apiFetch` is **axios-backed** (axios is already a dependency - `gum` uses it): it runs on a shared, exported `http = axios.create({ validateStatus: () => true })` instance, so an object `body` is JSON-encoded and the response parsed for you, `Content-Type` is set automatically, and non-2xx responses still resolve (one uniform envelope). `apiFetch` never throws: a network failure returns `{ ok: false, offline: true }`, so the UI branches instead of catching. `API_URL` is documented in `.env`/`.env.example`; the dashboard "Network" card demos both handlers, and `src/ui/src/stores/server.ts` is a runnable store example. New guide page `guide/remote-api.md` (controller + store + page, auth, offline, dev/prod, testing, and the renderer-axios alternative) with cross-links from `guide/controllers.md`, `guide/recipes.md`, `guide/ui.md` and `guide/realtime.md`.
+- **Vite reads the project-root `.env`** - `src/ui/vite.config.ts` sets `envDir` to the project root and uses `loadEnv`, so `import.meta.env.VITE_*` (used by Pulse) and `__SOCKET_ENABLED__` reflect `.env` instead of only the shell environment. An optional `/api` dev proxy (same-origin forwarding for the renderer-axios route) is added only when `VITE_API_URL` is set.
+
 ## [1.2.6] - 2026-11-17
 
 ### Fixed

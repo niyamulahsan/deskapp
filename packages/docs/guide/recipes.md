@@ -744,6 +744,8 @@ async function load() {
 <template><button @click="load">Fetch</button><pre>{{ data }}</pre></template>
 ```
 
+> For calling **your own** server (runtime `API_URL`, auth, offline, dev/prod), see [Calling a Server API](./remote-api).
+
 ### Storage
 
 Two layers - use as appropriate:

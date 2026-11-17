@@ -5,6 +5,7 @@ import { ref } from "vue";
 import deskapp from "@/ui/assets/images/deskapp.png";
 import DataTable from "@/ui/components/datatable/index.vue";
 import { useGum } from "@/ui/plugins/gum";
+import { useServerStore } from "@/ui/stores/server";
 
 interface LogEntry {
   kind: "info" | "ok" | "warn" | "err";
@@ -14,10 +15,12 @@ interface LogEntry {
 const log = ref<LogEntry[]>([]);
 const downloadUrl = ref("https://jsonplaceholder.typicode.com/todos/1");
 const apiUrl = ref("https://jsonplaceholder.typicode.com/todos/1");
+const apiPath = ref("/api/auth/login");
 const siteUrl = ref("https://vuejs.org");
 const windowTitle = ref("Deskapp · Recipe Demo");
 
 const gum = useGum();
+const server = useServerStore();
 const table = ref<InstanceType<typeof DataTable> | null>(null);
 
 function push(kind: LogEntry["kind"], text: string) {
@@ -173,6 +176,22 @@ async function fetchJson() {
     push("err", `app.net.fetchJson → ${String(e)}`);
   }
 }
+async function apiBase() {
+  try {
+    const res = await server.init();
+    push(res.configured ? "ok" : "warn", `app.net.apiBase → ${JSON.stringify(res)}`);
+  } catch (e) {
+    push("err", `app.net.apiBase → ${String(e)}`);
+  }
+}
+async function apiFetch() {
+  try {
+    const res = await server.call(apiPath.value);
+    push(res.ok ? "ok" : "warn", `app.net.apiFetch ${apiPath.value} → ${JSON.stringify(res)}`);
+  } catch (e) {
+    push("err", `app.net.apiFetch → ${String(e)}`);
+  }
+}
 
 /* app.playwright.* */
 async function play() {
@@ -305,8 +324,17 @@ const res = await md.app.hello.greet('World');</pre>
         <div class="actions">
           <button class="act" @click="fetchPlaceholder">Placeholder</button>
           <button class="act accent" @click="fetchJson">Fetch JSON</button>
+          <button class="act" @click="apiBase">API base</button>
         </div>
         <div class="row"><input v-model="apiUrl" type="url" placeholder="https://api.github.com/zen"></div>
+        <div class="row">
+          <input v-model="apiPath" type="text" placeholder="/api/auth/login">
+          <button class="act accent" @click="apiFetch">API fetch</button>
+        </div>
+        <p class="hint">
+          Server API base:
+          <code>{{ server.configured ? server.base : "not set — add API_URL to .env" }}</code>
+        </p>
       </article>
 
       <article class="card">

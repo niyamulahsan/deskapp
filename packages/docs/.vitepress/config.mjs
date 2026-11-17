@@ -65,6 +65,7 @@ export default defineConfig({
             { text: label("device-floppy", "Storage"), link: "/guide/storage" },
             { text: label("photo", "UI (Vue 3)"), link: "/guide/ui" },
             { text: label("send", "Gum (Requests & Forms)"), link: "/guide/gum" },
+            { text: label("cloud", "Calling a Server API"), link: "/guide/remote-api" },
             { text: label("code", "Recipes & Examples"), link: "/guide/recipes" },
           ],
         },
