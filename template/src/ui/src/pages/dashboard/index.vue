@@ -1,3 +1,5 @@
+<!-- ./src/ui/src/pages/dashboard/index.vue -->
+
 <script setup lang="ts">
 import { ref } from "vue";
 import deskapp from "@/ui/assets/images/deskapp.png";

@@ -18,7 +18,8 @@ npm run maker codegen  # schema + bindings
 ## Writing a controller
 
 ```ts
-// src/modules/blog/controllers/post.controller.ts
+// ./src/modules/blog/controllers/post.controller.ts
+
 import { db, paginate, validate } from "@/core/facade";
 import { posts } from "@/modules/blog/database/models/post.model";
 
@@ -65,7 +66,8 @@ The bindings are exposed by the preload script. Type declarations live in `src/u
 Proxy external requests through a backend controller:
 
 ```ts
-// controller
+// ./src/modules/app/controllers/net.controller.ts
+
 export const fetchJson = async (url: string) => {
   const res = await fetch(url);
   if (!res.ok) return { ok: false, status: res.status };
@@ -76,7 +78,8 @@ export const handlers = { fetchJson };
 ```
 
 ```ts
-// UI
+// ./src/ui/src/pages/example/index.vue (script setup)
+
 const data = await bindings["app.net.fetchJson"]("https://api.example.com/items");
 ```
 
@@ -109,3 +112,7 @@ import {
 - **`files` / `storage`** - Storage APIs
 - **`pass` / `validate`** - Password hashing and validation
 - **`chromium`** - Playwright/Chromium utilities
+
+`@/core/facade` is the **framework's** facade. Each module also has its own
+`facade.ts` — its public API for other modules. See
+[Modules → Cross-module access](./modules.md#cross-module-access-the-facade).

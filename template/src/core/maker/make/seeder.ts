@@ -1,3 +1,5 @@
+// ./src/core/maker/make/seeder.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import type { MakerOptions } from "@/core/maker/make/helpers";

@@ -1,3 +1,5 @@
+<!-- ./src/ui/src/components/TextArea.vue -->
+
 <template>
   <div :class="wrapperClass">
     <div class="position-relative">

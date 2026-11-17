@@ -1,7 +1,9 @@
+// ./src/core/maker/make/module.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import type { MakerOptions } from "@/core/maker/make/helpers";
-import { assertName, controllerContent, modelContent, modulesRoot, schemaContent, seederContent, writeFile } from "./helpers";
+import { assertName, controllerContent, facadeContent, modelContent, modulesRoot, schemaContent, seederContent, writeFile } from "./helpers";
 
 export function makeModule(name: string, options: MakerOptions = {}): void {
   const moduleName = assertName(name, "Module name");
@@ -15,6 +17,7 @@ export function makeModule(name: string, options: MakerOptions = {}): void {
     console.log(`[dry-run]  - database/seeders/${moduleName}.seed.ts`);
     console.log(`[dry-run]  - controllers/${moduleName}.controller.ts`);
     console.log(`[dry-run]  - controllers/${moduleName}.schema.ts`);
+    console.log("[dry-run]  - facade.ts");
     return;
   }
 
@@ -31,9 +34,11 @@ export function makeModule(name: string, options: MakerOptions = {}): void {
     "Controller file"
   );
   writeFile(path.join(root, "controllers", `${moduleName}.schema.ts`), schemaContent(moduleName, moduleName), options, "Schema file");
+  writeFile(path.join(root, "facade.ts"), facadeContent(moduleName), options, "Facade file");
 
   console.log(`Module ready: ${path.resolve(root)}`);
   console.log("Database files: database/models/{name}.model.ts, database/seeders/{name}.seed.ts");
   console.log("Controller + schema: controllers/{name}.controller.ts, controllers/{name}.schema.ts");
+  console.log("Public API: facade.ts (re-exports controllers + models for other modules)");
   console.log("Next: `npm run maker -- db:generate` (or `db:migrate`), then `npm run maker -- bindings:gen` and rebuild Electron.");
 }

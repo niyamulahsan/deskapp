@@ -1,3 +1,5 @@
+// ./src/core/database/seed.ts
+
 // deno-lint-ignore-file no-explicit-any
 import fs from "node:fs";
 import path from "node:path";

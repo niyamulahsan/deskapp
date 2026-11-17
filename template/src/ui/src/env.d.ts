@@ -1,3 +1,5 @@
+// ./src/ui/src/env.d.ts
+
 /// <reference types="vite/client" />
 
 declare const md: any & {

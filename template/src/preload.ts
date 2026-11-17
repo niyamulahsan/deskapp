@@ -1,3 +1,5 @@
+// ./src/preload.ts
+
 import { contextBridge, ipcRenderer } from "electron";
 import { isBindingErrorEnvelope } from "@/core/api/binding-error";
 

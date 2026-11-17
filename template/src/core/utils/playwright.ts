@@ -1,3 +1,5 @@
+// ./src/core/utils/playwright.ts
+
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";

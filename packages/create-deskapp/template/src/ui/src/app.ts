@@ -1,3 +1,5 @@
+// ./src/ui/src/app.ts
+
 import { createHead } from "@unhead/vue/client";
 import { createPinia } from "pinia";
 import { createApp } from "vue";

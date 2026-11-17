@@ -1,3 +1,5 @@
+// ./src/modules/{{module}}/database/seeders/{{name}}.seed.ts
+
 import { db } from "@/core/database/connection";
 import { {{tableVariable}} } from "@/modules/{{module}}/database/models/{{name}}.model";
 

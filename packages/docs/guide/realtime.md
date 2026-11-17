@@ -128,7 +128,8 @@ Conventions to follow in components:
 `pulse` is a plain singleton (not a composable), so it can be imported anywhere — including a store. Unlike gum, it does **not** read the router, so there is no setup-context requirement:
 
 ```ts
-// src/ui/src/stores/payments.ts
+// ./src/ui/src/stores/payments.ts
+
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { pulse } from "@/ui/plugins/pulse.ts";

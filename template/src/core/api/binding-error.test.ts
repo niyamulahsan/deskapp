@@ -1,3 +1,5 @@
+// ./src/core/api/binding-error.test.ts
+
 import { describe, expect, it } from "vitest";
 import {
   BINDING_ERROR,

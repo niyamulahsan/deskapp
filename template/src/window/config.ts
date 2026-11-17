@@ -1,3 +1,5 @@
+// ./src/window/config.ts
+
 /**
  * Backward-compat re-export. Window base setup lives in src/config/winsetup.ts.
  */

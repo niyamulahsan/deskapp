@@ -1,3 +1,5 @@
+// ./src/core/api/registry.test.ts
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => {

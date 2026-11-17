@@ -1,3 +1,5 @@
+// ./src/core/database/paginate.ts
+
 /**
  * database/paginate.ts - nexgen-style pagination, mirroring nexgen's
  * framework/database/paginate.ts but without a request/HTTP context (bindings

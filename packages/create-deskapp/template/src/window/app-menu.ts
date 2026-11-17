@@ -1,3 +1,5 @@
+// ./src/window/app-menu.ts
+
 import { Menu } from "electron";
 import { type DesktopWindow, win as winApi } from "@/window/manager";
 

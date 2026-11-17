@@ -1,3 +1,5 @@
+// ./src/ui/src/plugins/gum.ts
+
 import axios, { type AxiosError, type AxiosProgressEvent, type AxiosResponse } from "axios";
 import type { App } from "vue";
 import { computed, nextTick, reactive, ref, toRaw, watch } from "vue";

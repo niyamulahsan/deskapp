@@ -1,3 +1,5 @@
+// ./src/core/maker/help.ts
+
 export interface CommandDef {
   name: string;
   usage?: string;

@@ -1,3 +1,5 @@
+// ./src/core/maker/db/migrate.ts
+
 import {
   ensureMigrationMeta,
   generateMigrations,

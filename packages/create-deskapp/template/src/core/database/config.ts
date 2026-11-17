@@ -1,3 +1,5 @@
+// ./src/core/database/config.ts
+
 import { isAbsolute, join } from "node:path";
 import { config } from "@/core/config";
 import { appBaseDir } from "@/core/env";

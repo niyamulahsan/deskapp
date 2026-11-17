@@ -22,14 +22,15 @@ const rows = await db.select().from(users);
 
 ## Schema
 
-Models are defined in `modules/*/database/models/*.model.ts`. The maker CLI aggregates them into `src/database/schema.ts`. Import models directly from their module files in app code.
+Models are defined in `modules/*/database/models/*.model.ts`. The maker CLI aggregates them into `src/database/schema.ts`. Reach a module's tables through that module's `facade.ts` in app code; import the model file directly only for a Drizzle `relations()` reference.
 
 Migrations are generated to `src/database/migrations/sqlite/` by the maker CLI.
 
 ## Models
 
 ```ts
-// src/modules/blog/database/models/post.model.ts
+// ./src/modules/blog/database/models/post.model.ts
+
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const posts = sqliteTable("posts", {
@@ -65,6 +66,8 @@ await paginate.model({
 Seeders live at `modules/*/database/seeders/*.seed.ts`. Each exports `table` and a default async runner:
 
 ```ts
+// ./src/modules/auth/database/seeders/user.seed.ts
+
 import { users } from "@/modules/auth/database/models/user.model";
 
 export const table = users;

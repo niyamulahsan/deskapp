@@ -1,3 +1,5 @@
+// ./src/core/maker/make/model.ts
+
 import path from "node:path";
 import type { MakerOptions } from "@/core/maker/make/helpers";
 import { assertModuleExists, assertName, modelContent, moduleDir, writeFile } from "./helpers";

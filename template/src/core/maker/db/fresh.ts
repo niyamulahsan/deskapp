@@ -1,3 +1,5 @@
+// ./src/core/maker/db/fresh.ts
+
 import { runScript } from "@/core/maker/db/helpers";
 import { migrate } from "@/core/maker/db/migrate";
 

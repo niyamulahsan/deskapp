@@ -1,3 +1,5 @@
+// ./src/core/utils/playwright.test.ts
+
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({

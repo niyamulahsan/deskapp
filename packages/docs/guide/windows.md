@@ -81,7 +81,8 @@ Default desktop chrome is installed from `main.ts` through `chrome.setupDesktopC
 `defaultMenuItems()` returns a small typed template. Edit it — or call `installAppMenu` with your own `toElectronMenu(...)` template — to add or remove items:
 
 ```ts
-// src/window/app-menu.ts
+// ./src/window/app-menu.ts
+
 export function defaultMenuItems(): MenuItem[] {
   return [
     {
@@ -114,7 +115,8 @@ The context menu builds its template inline in `installContextMenu` (`context-me
 Since `chrome` is backend-only, expose via controllers. Native dialogs are **async**, so `await` them:
 
 ```ts
-// src/modules/app/controllers/chrome.controller.ts
+// ./src/modules/app/controllers/chrome.controller.ts
+
 import { chrome, win } from "@/core/facade";
 
 export const showAlert = async (msg: string) => { await chrome.alertDialog(msg); return { ok: true }; };

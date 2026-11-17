@@ -1,3 +1,5 @@
+// ./src/core/database/config.test.ts
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/core/config", () => ({

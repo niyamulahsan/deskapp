@@ -42,7 +42,8 @@ createApp(App)
 Define a store with `defineStore` and use it from any component setup:
 
 ```ts
-// src/ui/src/stores/users.ts
+// ./src/ui/src/stores/users.ts
+
 import { defineStore } from "pinia";
 import { ref } from "vue";
 

@@ -55,8 +55,12 @@ if it compiles and every test passes.
    `@/core/**`, `@/modules/**`, `electron`, `node:*`, or `drizzle-orm`. The UI
    reaches the backend **only** through `bindings`/`md`. The backend must not
    import from `src/ui/**` either.
-7. **No `// ./path` file headers.** Unlike some frameworks, deskapp source files
-   do **not** open with a location comment. Do not add one.
+7. **Every source file opens with its location header on line 1, then one blank
+   line.** The header is `// ./<path-from-project-root>`, e.g.
+   `// ./src/modules/blog/controllers/post.controller.ts`; a Vue SFC uses the HTML
+   form, e.g. `<!-- ./src/ui/src/pages/dashboard/index.vue -->`. Keep it in place —
+   never remove it and never add a second one. `maker` writes it on every file it
+   scaffolds.
 8. **After adding or removing a controller, run `npm run maker -- bindings:gen`**
    (or `npm run maker -- codegen` for schema + bindings). Packaged builds read
    the generated manifest; an un-regenerated binding does not exist at runtime.
@@ -72,9 +76,10 @@ src/
     winsetup.ts                   # window presets + dev-tools mode + chrome flags — edit this
   modules/                        # YOUR application code
     <module>/
+      facade.ts                   # public API of the module (cross-module imports)
       controllers/
         <name>.controller.ts      # named handlers + `handlers` map  (required to be callable)
-        <name>.schema.ts          # Zod schemas for that controller
+        <name>.schema.ts          # Zod schemas + inferred `<X>Type` for that controller
       database/
         models/<name>.model.ts    # Drizzle sqlite table
         seeders/<name>.seed.ts    # default-export seeder (+ `table`)
@@ -114,7 +119,7 @@ vitest.config.ts, biome.json, tsconfig.json, package.json
 A module is a self-contained feature under `src/modules/<name>/`. Create one with:
 
 ```sh
-npm run maker make:module blog          # module + model + seeder + controller + schema
+npm run maker make:module blog          # module + model + seeder + controller + schema + facade
 npm run maker make:controller blog Post # add another controller (+ schema) to a module
 npm run maker make:model blog Post      # add a model
 npm run maker make:seeder blog Post     # add a seeder (model must already exist)
@@ -132,9 +137,19 @@ Rules:
   map; schemas go in the sibling `<name>.schema.ts`.
 - The module folder name is the binding namespace. `src/modules/blog/...` binds as
   `blog.<controller>.<handler>`.
-- Cross-module access: import the other module's **model** directly when you need
-  a table, and its **controller/schema** only if you genuinely reuse it. There is
-  no per-module facade in deskapp — keep coupling shallow and explicit.
+- **Cross-module access goes through the module's `facade.ts`.** Import from
+  `@/modules/<other>/facade`, never from its `controllers/` or `database/`
+  directly. The facade re-exports the pieces other modules may depend on — the
+  module's controller handlers and its model(s). The one exception is a Drizzle
+  `relations()` reference to another module's model, which may import the model
+  file directly.
+- Facade rules: a module **never** imports its own facade, and a facade **never**
+  imports another facade. `make:module` scaffolds it as a namespace re-export of
+  the module's controller plus its model:
+  `export * as <module> from "./controllers/<module>.controller"` and
+  `export * from "./database/models/<module>.model"`. Add another namespace line
+  (`export * as post from "./controllers/post.controller"`) for each extra
+  controller other modules may use.
 
 ## 3. Controllers & bindings
 
@@ -148,7 +163,8 @@ renderer as `bindings['<module>.<controller>.<handler>'](...)` and, nested, as
 Canonical shape (this is exactly what `make:controller` generates):
 
 ```ts
-// src/modules/blog/controllers/post.controller.ts
+// ./src/modules/blog/controllers/post.controller.ts
+
 import { validate } from "@/core/facade";
 import { CreatePostSchema, PostIdParamsSchema, UpdatePostSchema } from "@/modules/blog/controllers/post.schema";
 
@@ -205,17 +221,29 @@ Rules:
 
 ## 4. Schemas & validation
 
-Schemas are Zod. Put them in the controller's sibling `<name>.schema.ts`. The
-generated stub imports `z` from `"zod"`:
+Schemas are Zod and are the **single source of truth for input and its type**.
+Put them in the controller's sibling `<name>.schema.ts`. Every schema is paired
+with its inferred type on the next line — `z.input` for a request shape (a
+`.default()` field stays optional), `z.infer` for a response shape:
 
 ```ts
-// src/modules/blog/controllers/post.schema.ts
+// ./src/modules/blog/controllers/post.schema.ts
+
 import { z } from "zod";
 
 export const CreatePostSchema = z.object({ name: z.string().min(1) });
+export type CreatePostType = z.input<typeof CreatePostSchema>;
+
 export const UpdatePostSchema = z.object({ name: z.string().min(1) });
+export type UpdatePostType = z.input<typeof UpdatePostSchema>;
+
 export const PostIdParamsSchema = z.object({ id: z.coerce.number().int().positive() });
+export type PostIdParamsType = z.input<typeof PostIdParamsSchema>;
 ```
+
+- Name the pair `<X>Schema` / `<X>Type`. Import the `*Type` wherever a shape is
+  needed — a controller, a store, a helper — instead of re-declaring a body,
+  params or query by hand.
 
 Run them with the facade's `validate`:
 
@@ -249,7 +277,8 @@ at boot; `db.close()` runs on shutdown. Calls before `init()` throw.
 Models use `drizzle-orm/sqlite-core`:
 
 ```ts
-// src/modules/blog/database/models/post.model.ts
+// ./src/modules/blog/database/models/post.model.ts
+
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const posts = sqliteTable("posts", {
@@ -280,7 +309,8 @@ Seeders are default-exported functions with a `table` export (used for FK
 ordering):
 
 ```ts
-// src/modules/blog/database/seeders/post.seed.ts
+// ./src/modules/blog/database/seeders/post.seed.ts
+
 import { db } from "@/core/database/connection";
 import { posts } from "@/modules/blog/database/models/post.model";
 
@@ -370,6 +400,10 @@ Rule: **new app code imports from `@/core/facade`.** Do not import
 `@/core/database/connection`, `@/core/utils/queue`, etc. directly in a module.
 The facade only exports what is implemented, so if it is not there, ask whether
 you need it at all before reaching past it.
+
+`@/core/facade` is the **framework's** public API. Each app module has its own
+`facade.ts` as well (see §2) — that is the **module's** public API, the one other
+modules import from.
 
 ## 7. Queue & scheduler
 
@@ -622,6 +656,8 @@ npm run lint                # Biome
 - Mock the facade when a handler touches framework services, e.g.:
 
   ```ts
+  // ./src/modules/app/__tests__/demo.controller.test.ts
+
   import { describe, expect, it, vi } from "vitest";
   vi.mock("@/core/facade", () => ({ queue: { create: () => ({ add: (t: () => Promise<unknown>) => t() }) } }));
   import { handlers, queue } from "@/modules/app/controllers/demo.controller";
@@ -639,8 +675,7 @@ npm run lint                # Biome
 2. **Verify, don't assume:** run `npm test` and `npm run lint`; for anything that
    touches boot, windows, IPC or the DB, run `npm run dev` and exercise it.
 3. **Check the rules:** no edits under `src/core/**`; no hand-edited generated
-   files; every new handler is in its controller's `handlers` map; the renderer
-   imports no backend code; imports use `@/core/facade` and the `@/ui/*` alias.
-4. **Changelog + docs:** if the change is user-visible, add a `CHANGELOG.md`
-   bullet under the current version and update the matching `packages/docs/**`
-   page in the same change.
+   files; every new file opens with its location header; every new handler is in
+   its controller's `handlers` map; cross-module imports go through a module
+   `facade.ts`; the renderer imports no backend code; imports use `@/core/facade`
+   and the `@/ui/*` alias.

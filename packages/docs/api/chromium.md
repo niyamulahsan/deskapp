@@ -29,7 +29,8 @@ Resolution order for the binary: `DESKAPP_CHROMIUM` env → `<exe dir>/chromium/
 Chromium work belongs in the backend. Write a controller that exposes a handler, and call it from the UI through a binding. The launch flow below is the pattern to use in your controller:
 
 ```ts
-// src/modules/<your-module>/controllers/browser.controller.ts
+// ./src/modules/<your-module>/controllers/browser.controller.ts
+
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

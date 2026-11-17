@@ -1,3 +1,5 @@
+// ./src/core/maker/db/push.ts
+
 import { generateSchema, runDrizzle } from "@/core/maker/db/helpers";
 
 async function withSchema(args: string[]): Promise<void> {

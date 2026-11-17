@@ -1,3 +1,5 @@
+// ./src/config/app.ts
+
 /**
  * App identity config — edit this file to name/brand your app (0 hassle).
  * After changing, run: `npm run config:sync` (or `npm run maker -- config:sync`)

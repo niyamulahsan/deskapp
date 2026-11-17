@@ -1,3 +1,5 @@
+// ./src/core/config.ts
+
 /**
  * config.ts - runtime framework configuration.
  *

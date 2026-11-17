@@ -1,3 +1,5 @@
+// ./src/core/api/binding-error.ts
+
 /**
  * Error envelopes for the bindings bridge.
  *

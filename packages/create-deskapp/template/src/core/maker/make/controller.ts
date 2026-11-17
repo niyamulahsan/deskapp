@@ -1,3 +1,5 @@
+// ./src/core/maker/make/controller.ts
+
 import path from "node:path";
 import type { MakerOptions } from "@/core/maker/make/helpers";
 import { assertModuleExists, assertName, controllerContent, moduleDir, schemaContent, writeFile } from "@/core/maker/make/helpers";
@@ -18,5 +20,6 @@ export function makeController(module: string, name: string, options: MakerOptio
     console.log(
       "Handlers are registered as `<module>.<name>.<handler>` via src/core/api/bindings.generated.ts. Run `npm run maker -- bindings:gen` then rebuild/restart Electron."
     );
+    console.log(`If other modules need this controller, re-export it from src/modules/${moduleName}/facade.ts.`);
   }
 }

@@ -60,11 +60,17 @@ These are the conventions described in [Conventions](/guide/conventions) and
    `@/core/**` path.
 6. **The renderer never imports backend code.** The UI reaches the backend only
    through `bindings` / `md`.
-7. **No `// ./path` file headers.** Deskapp files do not open with a location
-   comment.
-8. **Regenerate after structural changes:** `bindings:gen` after a controller
-   change, `db:generate` after a model change, `config:sync` after an identity
-   change.
+7. **Every file opens with its location header.** Line 1 is
+   `// ./<path-from-project-root>` (a Vue SFC uses `<!-- ./<path> -->`), then one
+   blank line. `maker` writes it; keep it in place.
+8. **Schemas are the single source of truth for input and type.** Declare
+   `<X>Schema` and derive `<X>Type = z.input<...>` on the next line.
+9. **Modules talk through their `facade.ts`** — import from
+   `@/modules/<m>/facade`, never another module's `controllers/` or `database/`
+   directly.
+10. **Regenerate after structural changes:** `bindings:gen` after a controller
+    change, `db:generate` after a model change, `config:sync` after an identity
+    change.
 
 ## Backend rules
 

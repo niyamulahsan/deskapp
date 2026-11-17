@@ -1,3 +1,5 @@
+// ./src/modules/app/__tests__/playwright.controller.test.ts
+
 import { describe, expect, it, vi } from "vitest";
 
 const page = { goto: vi.fn(async () => undefined), title: vi.fn(async () => "Example") };

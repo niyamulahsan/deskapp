@@ -1,3 +1,5 @@
+// ./src/core/utils/password.test.ts
+
 import { describe, expect, it } from "vitest";
 import { pass } from "@/core/utils/password";
 

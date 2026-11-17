@@ -72,7 +72,8 @@ npm install nodemailer
 A tiny mailer service around it:
 
 ```ts
-// src/core/utils/mailer.ts
+// ./src/core/utils/mailer.ts
+
 import nodemailer from "nodemailer";
 import { validate } from "@/core/facade.ts";
 

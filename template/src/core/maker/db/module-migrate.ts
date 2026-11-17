@@ -1,3 +1,5 @@
+// ./src/core/maker/db/module-migrate.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import { ensureMigrationMeta, migrationCount, PROJECT_ROOT, runDrizzle } from "@/core/maker/db/helpers";

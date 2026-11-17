@@ -1,3 +1,5 @@
+// ./src/window/dialogs.test.ts
+
 import { describe, expect, it } from "vitest";
 import { parseFilter } from "@/window/dialogs";
 

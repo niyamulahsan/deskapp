@@ -1,3 +1,5 @@
+// ./src/window/config.test.ts
+
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/core/config", () => ({

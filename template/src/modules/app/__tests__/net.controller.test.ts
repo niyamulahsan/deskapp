@@ -1,3 +1,5 @@
+// ./src/modules/app/__tests__/net.controller.test.ts
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fetchJson, handlers, placeholder } from "@/modules/app/controllers/net.controller";
 

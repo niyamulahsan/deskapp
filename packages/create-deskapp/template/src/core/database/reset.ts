@@ -1,3 +1,5 @@
+// ./src/core/database/reset.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import { sqliteFile } from "@/core/database/config";

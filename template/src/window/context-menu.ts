@@ -1,3 +1,5 @@
+// ./src/window/context-menu.ts
+
 import { Menu } from "electron";
 import type { DesktopWindow } from "@/window/manager";
 

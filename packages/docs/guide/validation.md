@@ -35,16 +35,33 @@ const data = await validate.run(schema, input);
 
 (`errors` is zod's `result.error.flatten()` — `formErrors` + `fieldErrors`.)
 
+A request shape lives in the controller's sibling `<name>.schema.ts`, and each
+schema is paired with its inferred type on the next line:
+
+```ts
+// ./src/modules/blog/controllers/post.schema.ts
+
+import { z } from "zod";
+
+export const CreatePostSchema = z.object({
+  title: z.string().min(1).max(200),
+  body: z.string().min(1),
+});
+export type CreatePostType = z.input<typeof CreatePostSchema>;
+```
+
+- `z.input` is the caller's shape (a `.default()` field stays optional);
+  `z.infer` is the parsed/response shape. Name the pair `<X>Schema` / `<X>Type`.
+- Import the `*Type` where a shape is needed instead of re-declaring it by hand.
+
 Controllers use it as a one-liner before touching the database:
 
 ```ts
+// ./src/modules/blog/controllers/post.controller.ts
+
 import { db, validate } from "@/core/facade.ts";
 import { posts } from "@/modules/blog/database/models/post.model.ts";
-
-const CreatePostSchema = validate.z.object({
-  title: validate.z.string().min(1).max(200),
-  body: validate.z.string().min(1),
-});
+import { CreatePostSchema } from "@/modules/blog/controllers/post.schema";
 
 const create = async (input: unknown) => {
   const data = await validate.run(CreatePostSchema, input); // throws the 422 envelope on bad input

@@ -1,3 +1,5 @@
+// ./src/core/config.test.ts
+
 import { afterEach, describe, expect, it } from "vitest";
 import { envBool } from "@/core/config";
 

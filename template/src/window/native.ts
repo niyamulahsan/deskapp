@@ -1,3 +1,5 @@
+// ./src/window/native.ts
+
 import type { ChromeParts } from "@config/winsetup";
 import { resolveChrome } from "@config/winsetup";
 import { defaultMenuItems, installAppMenu, removeAppMenu } from "./app-menu";

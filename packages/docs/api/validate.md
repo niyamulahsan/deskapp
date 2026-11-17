@@ -75,14 +75,25 @@ await storage.put("profile.json", JSON.stringify(data));
 
 ### Reuse one schema across many controllers
 
-Export the schema from your model layer and import it everywhere.
+Declare the schema once in the controller's sibling `<name>.schema.ts`, with its
+inferred type, and import it everywhere.
 
 ```ts
-// src/modules/blog/database/models/post.schema.ts
-export const postSchema = validate.z.object({ /* ... */ });
+// ./src/modules/blog/controllers/post.schema.ts
 
-// a controller
-const data = await validate.run(postSchema, input);
+import { z } from "zod";
+
+export const PostSchema = z.object({ /* ... */ });
+export type PostType = z.input<typeof PostSchema>;
+```
+
+```ts
+// ./src/modules/blog/controllers/post.controller.ts
+
+import { validate } from "@/core/facade";
+import { PostSchema } from "@/modules/blog/controllers/post.schema";
+
+const data = await validate.run(PostSchema, input);
 ```
 
 ## Notes

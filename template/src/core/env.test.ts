@@ -1,3 +1,5 @@
+// ./src/core/env.test.ts
+
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 

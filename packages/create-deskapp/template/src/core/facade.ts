@@ -1,3 +1,5 @@
+// ./src/core/facade.ts
+
 /**
  * facade - central public API surface for framework consumers.
  *

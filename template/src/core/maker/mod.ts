@@ -1,3 +1,5 @@
+// ./src/core/maker/mod.ts
+
 import { registerDbCommands } from "@/core/maker/db/mod";
 import { type CommandDef, printCommandHelp, printHelp } from "@/core/maker/help";
 import { registerMakeCommands } from "@/core/maker/make/mod";

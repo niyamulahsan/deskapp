@@ -1,3 +1,5 @@
+// ./src/main.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import { windowDev, windows } from "@config/winsetup";

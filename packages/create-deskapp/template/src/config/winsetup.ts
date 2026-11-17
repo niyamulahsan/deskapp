@@ -1,3 +1,5 @@
+// ./src/config/winsetup.ts
+
 /**
  * Window setup/config — edit this file to configure app windows (0 hassle).
  * Each entry in `windows` becomes a native BrowserWindow at boot.

@@ -224,7 +224,8 @@ export const store = async (body?: { name?: string; email?: string; role?: strin
 The `*With` variants take a `fetcher` instead of a URL — hand it a store action so the request logic (and the state) lives in the store:
 
 ```ts
-// src/ui/src/stores/users.ts
+// ./src/ui/src/stores/users.ts
+
 import { defineStore } from "pinia";
 
 export const useUsers = defineStore("users", () => {

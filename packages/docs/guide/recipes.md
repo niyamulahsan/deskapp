@@ -14,7 +14,8 @@ npm run maker make:controller demo hello
 ### Write a handler
 
 ```ts
-// src/modules/demo/controllers/hello.controller.ts
+// ./src/modules/demo/controllers/hello.controller.ts
+
 export const greet = async (name: string) => {
   return { message: `Hello, ${name}!` };
 };
@@ -69,7 +70,8 @@ Use the storage/files API from the facade. The framework provides `files` and `s
 ### In a controller
 
 ```ts
-// src/modules/files/controllers/io.controller.ts
+// ./src/modules/files/controllers/io.controller.ts
+
 import { storage } from "@/core/facade";
 
 // App-managed data lives on the `private` disk; keys are relative to it.
@@ -125,7 +127,8 @@ npx playwright install chromium
 ### Controller example
 
 ```ts
-// src/modules/automation/controllers/browser.controller.ts
+// ./src/modules/automation/controllers/browser.controller.ts
+
 import { chromium } from "@/core/facade";
 import { chromium as pwChromium } from "playwright";
 
@@ -170,7 +173,8 @@ You can load extensions with Playwright's Chromium. Extensions go in `src/extens
 ### Example
 
 ```ts
-// src/modules/automation/controllers/extension.controller.ts
+// ./src/modules/automation/controllers/extension.controller.ts
+
 import { chromium } from "@/core/facade";
 import { chromium as pwChromium } from "playwright";
 import path from "node:path";
@@ -210,7 +214,8 @@ If you use a remote database (e.g., hosted Postgres/LibSQL/Turso), you can track
 Add a presence system using Socket.IO or custom WebSocket. Track connections in memory with heartbeats.
 
 ```ts
-// src/modules/presence/controllers/presence.controller.ts
+// ./src/modules/presence/controllers/presence.controller.ts
+
 const connections = new Map<string, { userId?: string, lastSeen: number }>();
 
 export const heartbeat = async (clientId: string, userId?: string) => {
@@ -274,7 +279,8 @@ npm install json2csv pdfkit
 ### Excel with exceljs
 
 ```ts
-// src/modules/export/controllers/excel.controller.ts
+// ./src/modules/export/controllers/excel.controller.ts
+
 import ExcelJS from 'exceljs';
 import { files, storage } from "@/core/facade";
 import path from "node:path";
@@ -338,7 +344,8 @@ For local files, serve via the backend or read and stream. For large files, stre
 ### Stream local file
 
 ```ts
-// src/modules/media/controllers/stream.controller.ts
+// ./src/modules/media/controllers/stream.controller.ts
+
 import fs from "fs";
 import path from "path";
 import { storage } from "@/core/facade";
@@ -390,7 +397,8 @@ For full video/audio streaming with seeking, better to use chunked reading with 
 ### Define windows in config
 
 ```ts
-// src/config/winsetup.ts
+// ./src/config/winsetup.ts
+
 export const windows = {
   main: { title: "Deskapp", width: 1280, height: 800, route: "/" },
   settings: { title: "Settings", width: 600, height: 500, route: "/settings" },
@@ -401,7 +409,8 @@ export const windows = {
 ### Add routes in the UI
 
 ```ts
-// src/ui/src/router/index.ts
+// ./src/ui/src/router/index.ts
+
 import { createRouter, createWebHashHistory } from 'vue-router';
 import Home from '../pages/dashboard/index.vue';
 import Settings from '../pages/settings/index.vue';
@@ -420,7 +429,8 @@ export default createRouter({
 ### Open windows from UI
 
 ```ts
-// src/modules/app/controllers/window.controller.ts
+// ./src/modules/app/controllers/window.controller.ts
+
 import { win } from "@/core/facade";
 
 export const openSettings = async () => {
@@ -481,7 +491,8 @@ Common options: `title`, `width`, `height`, `x`, `y`, `resizable`, `alwaysOnTop`
 ### Menus & Tray
 
 ```ts
-// src/modules/app/controllers/menu.controller.ts
+// ./src/modules/app/controllers/menu.controller.ts
+
 import { chrome, win } from "@/core/facade";
 
 export const setupChrome = async () => {
@@ -515,7 +526,8 @@ Use `pickers` from the facade. Expose via bindings for UI use.
 ### Controller
 
 ```ts
-// src/modules/app/controllers/dialogs.controller.ts
+// ./src/modules/app/controllers/dialogs.controller.ts
+
 import { pickers, chrome } from "@/core/facade";
 
 export const openFile = async (opts: any = {}) => {
@@ -611,7 +623,8 @@ async function showConfirm() {
 Use for long-running tasks that shouldn't block the UI. Register processors and enqueue jobs.
 
 ```ts
-// src/modules/jobs/controllers/queue.controller.ts
+// ./src/modules/jobs/controllers/queue.controller.ts
+
 import { queue } from "@/core/facade";
 
 // One bounded-concurrency queue shared across the process.
@@ -663,7 +676,8 @@ async function runJob() {
 Use for recurring tasks.
 
 ```ts
-// src/modules/jobs/controllers/scheduler.controller.ts
+// ./src/modules/jobs/controllers/scheduler.controller.ts
+
 import { cron } from "@/core/facade";
 
 let ticker: { stop(): void } | null = null;
@@ -697,7 +711,8 @@ From UI:
 For external API calls without CORS issues, proxy through backend.
 
 ```ts
-// src/modules/app/controllers/net.controller.ts
+// ./src/modules/app/controllers/net.controller.ts
+
 export const fetchRemote = async (url: string) => {
   try {
     const res = await fetch(url);

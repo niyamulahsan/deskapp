@@ -1,3 +1,5 @@
+// ./src/window/manager.ts
+
 import path from "node:path";
 import { app, BrowserWindow, nativeImage } from "electron";
 import { closeDatabase } from "@/core/database/connection";

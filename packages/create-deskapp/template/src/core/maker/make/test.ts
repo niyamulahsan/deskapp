@@ -1,3 +1,5 @@
+// ./src/core/maker/make/test.ts
+
 import path from "node:path";
 import type { MakerOptions } from "@/core/maker/make/helpers";
 import { loadStub } from "@/core/maker/stub";
@@ -17,7 +19,8 @@ export function makeTest(module: string, name?: string, options: MakerOptions = 
   const filePath = path.join(moduleDir(moduleName), "__tests__", `${testName}.test.ts`);
   const content = loadStub("test/test.stub", {
     module: moduleName,
-    name: testName === moduleName ? "" : testName
+    name: testName === moduleName ? "" : testName,
+    file: `${testName}.test.ts`
   }).replace(/\{\{#name\}\}[\s\S]*?\{\{\/name\}\}/g, (m) => {
     // simple conditional: keep inner text when name is non-empty
     return testName === moduleName ? "" : m.replace(/\{\{#name\}\}|\{\{\/name\}\}/g, "");

@@ -1,3 +1,5 @@
+// ./src/window/dialogs.ts
+
 import { BrowserWindow, dialog } from "electron";
 
 // ---------------------------------------------------------------------------

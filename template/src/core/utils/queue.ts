@@ -1,3 +1,5 @@
+// ./src/core/utils/queue.ts
+
 /**
  * queue.ts - reusable in-process async queue.
  *

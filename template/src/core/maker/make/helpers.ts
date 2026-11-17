@@ -1,3 +1,5 @@
+// ./src/core/maker/make/helpers.ts
+
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -88,4 +90,8 @@ export function schemaContent(module: string, name: string): string {
     controller: name,
     ClassName
   });
+}
+
+export function facadeContent(module: string): string {
+  return loadStub("facade/facade.stub", { module });
 }

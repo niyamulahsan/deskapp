@@ -1,3 +1,5 @@
+// ./src/ui/src/router/index.ts
+
 import { createRouter, createWebHashHistory } from "vue-router";
 
 /**

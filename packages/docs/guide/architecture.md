@@ -75,9 +75,10 @@ When headless:
 
 ## Modules & bindings
 
-Every module under `src/modules` may contain `controllers/`, `database/models/`, and `database/seeders/`.
+Every module under `src/modules` may contain `controllers/`, `database/models/`, `database/seeders/`, and a `facade.ts`.
 
 - A controller exports `handlers` — each handler becomes accessible as `bindings['<module>.<controller>.<handler>']` from the renderer.
+- `facade.ts` is the module's public API — other modules import from it, never from `controllers/` or `database/` directly.
 - Models are Drizzle tables aggregated into `src/database/schema.ts` by the maker CLI.
 - Seeders are auto-ordered by foreign keys and run via the maker CLI.
 

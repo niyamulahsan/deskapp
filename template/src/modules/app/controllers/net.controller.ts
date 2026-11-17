@@ -1,3 +1,5 @@
+// ./src/modules/app/controllers/net.controller.ts
+
 /**
  * net.controller.ts (app module) - backend proxy for server API calls.
  *

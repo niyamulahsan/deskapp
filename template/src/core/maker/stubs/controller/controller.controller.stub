@@ -1,3 +1,5 @@
+// ./src/modules/{{module}}/controllers/{{controller}}.controller.ts
+
 import { validate } from "@/core/facade";
 import { Create{{ClassName}}Schema,Update{{ClassName}}Schema,{{ClassName}}IdParamsSchema } from "@/modules/{{module}}/controllers/{{controller}}.schema";
 

@@ -1,3 +1,5 @@
+// ./src/core/facade.test.ts
+
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("electron", () => ({ app: { isPackaged: false, getAppPath: () => "/tmp", getPath: () => "/tmp" } }));

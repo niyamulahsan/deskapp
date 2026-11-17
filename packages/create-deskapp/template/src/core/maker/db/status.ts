@@ -1,3 +1,5 @@
+// ./src/core/maker/db/status.ts
+
 import { runScript } from "@/core/maker/db/helpers";
 
 /** db:status - list generated migration files. */

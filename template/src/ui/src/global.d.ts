@@ -1,3 +1,5 @@
+// ./src/ui/src/global.d.ts
+
 /// <reference types="vite/client" />
 
 /**

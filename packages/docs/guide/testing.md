@@ -9,7 +9,8 @@ on Node with globals enabled — you do not have to import `describe`, `it` or
 Create a test under a module's `__tests__/` folder with a `.test.ts` extension:
 
 ```ts
-// src/modules/blog/__tests__/post.test.ts
+// ./src/modules/blog/__tests__/post.test.ts
+
 describe("blog post", () => {
   it("filters active posts", () => {
     const posts = [
@@ -94,6 +95,8 @@ touches `db`, `queue`, `cron`, `storage` and friends, mock `@/core/facade` so th
 test stays in-process and deterministic.
 
 ```ts
+// ./src/modules/app/__tests__/demo.controller.test.ts
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const stop = vi.fn();

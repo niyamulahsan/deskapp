@@ -20,7 +20,8 @@ const exe = chromium.resolve();
 ### Backend controller
 
 ```ts
-// src/modules/automation/controllers/browser.controller.ts
+// ./src/modules/automation/controllers/browser.controller.ts
+
 import { chromium } from "@/core/facade";
 import { chromium as pwChromium } from "playwright";
 

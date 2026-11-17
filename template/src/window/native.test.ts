@@ -1,3 +1,5 @@
+// ./src/window/native.test.ts
+
 import { describe, expect, it, vi } from "vitest";
 
 const trayInstance = { setToolTip: vi.fn(), setContextMenu: vi.fn() };

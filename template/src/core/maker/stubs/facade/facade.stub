@@ -1,0 +1,21 @@
+// ./src/modules/{{module}}/facade.ts
+
+/**
+ * Public API for the {{module}} module.
+ *
+ * Other modules import from this file, never from controllers/ or database/
+ * directly. Each controller is re-exported under its own namespace, and the
+ * module's model(s) are re-exported directly:
+ *
+ *   import { {{module}} } from "@/modules/{{module}}/facade";
+ *   const rows = await {{module}}.index();
+ *
+ * Share another controller by adding a namespace line for it:
+ *   export * as post from "./controllers/post.controller";
+ *
+ * Rules: a module never imports its own facade; a facade never imports another
+ * facade.
+ */
+
+export * as {{module}} from "./controllers/{{module}}.controller";
+export * from "./database/models/{{module}}.model";

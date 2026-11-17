@@ -1,3 +1,5 @@
+// ./src/ui/src/bindings.d.ts
+
 /**
  * bindings.d.ts - types the Electron `bindings` global exposed by preload.
  *

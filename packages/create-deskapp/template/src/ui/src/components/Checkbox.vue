@@ -1,3 +1,5 @@
+<!-- ./src/ui/src/components/Checkbox.vue -->
+
 <template>
   <div class="form-check mb-0" :class="props.topclass">
     <input

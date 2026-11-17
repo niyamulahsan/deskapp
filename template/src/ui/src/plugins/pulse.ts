@@ -1,3 +1,5 @@
+// ./src/ui/src/plugins/pulse.ts
+
 import { io, type Socket } from "socket.io-client";
 import type { App } from "vue";
 

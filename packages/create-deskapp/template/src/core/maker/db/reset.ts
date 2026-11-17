@@ -1,3 +1,5 @@
+// ./src/core/maker/db/reset.ts
+
 import { runScript } from "@/core/maker/db/helpers";
 
 /** db:reset / db:wipe - delete the SQLite database file only. */

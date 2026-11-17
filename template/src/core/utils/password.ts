@@ -1,3 +1,5 @@
+// ./src/core/utils/password.ts
+
 import bcrypt from "bcryptjs";
 
 /** Number of bcrypt salt rounds. Higher is slower but more secure. */

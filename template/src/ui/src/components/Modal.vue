@@ -1,3 +1,5 @@
+<!-- ./src/ui/src/components/Modal.vue -->
+
 <template>
   <Teleport to="#modal-show">
     <div :id="props.id" ref="modal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"

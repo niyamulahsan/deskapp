@@ -1,3 +1,5 @@
+// ./src/core/maker/db/seed.ts
+
 import { generateSchema, runSeedScript } from "@/core/maker/db/helpers";
 
 /** db:seed - run all seeders (auto FK-ordered), or one module's seeders. */

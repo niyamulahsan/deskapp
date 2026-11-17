@@ -1,3 +1,5 @@
+// ./src/modules/app/controllers/window.controller.ts
+
 import { app } from "electron";
 import { config } from "@/core/config";
 import { chrome, type DesktopWindow, win } from "@/core/facade";

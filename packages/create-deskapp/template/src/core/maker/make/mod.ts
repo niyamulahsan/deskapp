@@ -1,3 +1,5 @@
+// ./src/core/maker/make/mod.ts
+
 import type { CommandDef } from "@/core/maker/help";
 import { makeController } from "@/core/maker/make/controller";
 import type { MakerOptions } from "@/core/maker/make/helpers";
@@ -23,7 +25,7 @@ export function registerMakeCommands(register: (cmd: CommandDef) => void): void 
     name: "make:module",
     usage: "<name> [--force]",
     group: GROUP,
-    description: "Create a module with model, seeder, controller + schema",
+    description: "Create a module with model, seeder, controller + schema + facade",
     action: (flags, args) => makeModule(need(args, 0, "Module name"), opts(flags))
   });
   register({

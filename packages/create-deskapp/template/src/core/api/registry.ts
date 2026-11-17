@@ -1,3 +1,5 @@
+// ./src/core/api/registry.ts
+
 import { ipcMain } from "electron";
 import { toBindingErrorEnvelope } from "@/core/api/binding-error";
 import { GENERATED_CONTROLLERS } from "@/core/api/bindings.generated";

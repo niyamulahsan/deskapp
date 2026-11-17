@@ -1,3 +1,5 @@
+// ./src/core/env.ts
+
 /**
  * env.ts - runtime environment bootstrapping.
  *
