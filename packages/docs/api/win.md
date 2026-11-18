@@ -10,7 +10,7 @@ Before using the functions, understand the three names you'll meet. There is one
 
 | Type                   | What it is                                                                                                                                               | Where it appears                                              |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `WindowPreset`         | The **preset**: `title`, `width`, `height` (all required) plus optional position/flags, a `route`, and a `chrome` flag.                                     | Passed to `openWindow`, and stored in `src/config/winsetup.ts`. |
+| `WindowPreset`         | The **preset**: `title`, `width`, `height` (all required) plus optional size bounds (`min`/`max` width/height), position/flags, a `route`, and a `chrome` flag. | Passed to `openWindow`, and stored in `src/config/winsetup.ts`. |
 | `BrowserWindowOptions` | An alias of `WindowPreset` — the build options you hand to `createWindow`.                                                                               | Passed to `createWindow`.                                     |
 | `DesktopWindow`        | The **actual open window** you get back — it is Electron's `BrowserWindow`, so you call Electron methods on it (`setTitle`, `focus`, `loadURL`, ...).     | Returned by `createWindow`, `openWindow`, `getWindow`.        |
 
@@ -34,7 +34,7 @@ win.openWindow(presetOrName)                     =>  Promise<DesktopWindow | und
 
 **Inputs:**
 
-- `options` (`BrowserWindowOptions`): the preset — required `title`, `width`, `height`, plus optional `x`/`y` and flags (`resizable`, `alwaysOnTop`, `frameless`, `noActivate`, `transparentTitlebar`). All flags default to `false` (except `resizable`, which defaults to `true`).
+- `options` (`BrowserWindowOptions`): the preset — required `title`, `width`, `height`, plus optional size bounds (`minWidth`, `minHeight`, `maxWidth`, `maxHeight`), optional `x`/`y`, and flags (`resizable`, `alwaysOnTop`, `frameless`, `noActivate`, `transparentTitlebar`). All flags default to `false` (except `resizable`, which defaults to `true`). Bounds are omitted for unlimited shrink/growth.
 - `name` (`string`): a label used to track the window by name (so reopening the same name focuses it instead of duplicating). Optional. Only meaningful for `createWindow`.
 - `preloadPath` (`string`): the preload script for the window's `webPreferences`. Optional — `main.ts` passes `out/preload/index.cjs`, and the first resolved preload becomes the default for later windows.
 - `presetOrName` (`string | WindowPreset`): either a **preset name** declared in `src/config/winsetup.ts` (e.g. `"settings"`), or an inline `WindowPreset` object.
@@ -77,6 +77,10 @@ interface WindowPreset {
   title: string;                 // required
   width: number;                 // required
   height: number;                // required
+  minWidth?: number;             // optional minimum resize width
+  minHeight?: number;            // optional minimum resize height
+  maxWidth?: number;             // optional maximum resize width
+  maxHeight?: number;            // optional maximum resize height
   x?: number; y?: number;        // centered when omitted
   resizable?: boolean;           // default true
   alwaysOnTop?: boolean;         // default false

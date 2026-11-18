@@ -36,6 +36,14 @@ export interface WindowPreset {
   width: number;
   /** Initial height in logical pixels. */
   height: number;
+  /** Minimum width the user can resize to. Omit to allow unlimited shrink. */
+  minWidth?: number;
+  /** Minimum height the user can resize to. Omit to allow unlimited shrink. */
+  minHeight?: number;
+  /** Maximum width the user can resize to. Omit for unlimited growth. */
+  maxWidth?: number;
+  /** Maximum height the user can resize to. Omit for unlimited growth. */
+  maxHeight?: number;
   /** Initial horizontal position; centered if omitted. */
   x?: number;
   /** Initial vertical position; centered if omitted. */

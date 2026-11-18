@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.2] - 2026-11-19
+
+### Added
+- **Window size bounds** - `WindowPreset` now accepts optional `minWidth`, `minHeight`, `maxWidth`, and `maxHeight`, passed through to the Electron `BrowserWindow` (`src/config/winsetup.ts`, `src/window/manager.ts`), so app windows can declare resize limits.
+
 ## [1.3.1] - 2026-11-18
 
 ### Fixed

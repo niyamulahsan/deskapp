@@ -71,6 +71,10 @@ function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath
     title: preset.title,
     width: preset.width,
     height: preset.height,
+    minWidth: preset.minWidth,
+    minHeight: preset.minHeight,
+    maxWidth: preset.maxWidth,
+    maxHeight: preset.maxHeight,
     x: preset.x,
     y: preset.y,
     resizable: preset.resizable ?? true,
@@ -83,8 +87,8 @@ function createWindow(options?: BrowserWindowOptions, name?: string, preloadPath
       preload: resolvedPreload,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
-    },
+      sandbox: false
+    }
   });
 
   const winId = win.id;

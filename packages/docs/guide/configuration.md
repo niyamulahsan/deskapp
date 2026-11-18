@@ -45,6 +45,10 @@ export interface WindowPreset {
   title: string;
   width: number;
   height: number;
+  minWidth?: number;             // optional minimum resize width
+  minHeight?: number;            // optional minimum resize height
+  maxWidth?: number;             // optional maximum resize width
+  maxHeight?: number;            // optional maximum resize height
   x?: number;                    // centered if omitted
   y?: number;
   resizable?: boolean;
