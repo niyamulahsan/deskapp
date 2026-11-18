@@ -10,7 +10,7 @@
     "dev": "npm run config:sync && npm run db:schema && npm run bindings:gen && concurrently -k --success command-electron -n ui,main,electron \"npm run dev:ui\" \"npm run dev:main\" \"npm run dev:electron\"",
     "dev:ui": "vite --config src/ui/vite.config.ts",
     "dev:main": "node scripts/build-electron.mjs --watch",
-    "dev:electron": "wait-on tcp:5173 out/main/index.cjs && cross-env NODE_ENV=development electron out/main/index.cjs",
+    "dev:electron": "node scripts/wait-electron.mjs",
     "build": "npm run config:sync && npm run db:schema && npm run bindings:gen && npm run build:ui && npm run build:electron",
     "build:ui": "vite build --config src/ui/vite.config.ts",
     "build:electron": "node scripts/build-electron.mjs",

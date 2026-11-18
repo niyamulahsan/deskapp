@@ -13,7 +13,7 @@ Everything local keeps using `bindings` (see [Controllers & Bindings](./controll
 
 ## Why route server calls through the main process
 
-The renderer's own `fetch`/`axios` runs in a Chromium window whose origin is `http://localhost:5173` in dev and `file://` when packaged. That causes three problems:
+The renderer's own `fetch`/`axios` runs in a Chromium window whose origin is the Vite dev server in dev (`http://localhost:<VITE_DEV_PORT>`, default `5173`) and `file://` when packaged. That causes three problems:
 
 1. **CORS** — a cross-origin API is blocked unless the server opts in.
 2. **Cookies** — a `file://` page is a third-party origin, so an `httpOnly` login cookie usually will not stick.
@@ -337,7 +337,7 @@ window.location.hash = "#/login";   // NOT window.location.href = "/login"
 
 | | Dev (`npm run dev`) | Packaged (`file://`) |
 | --- | --- | --- |
-| Renderer origin | `http://localhost:5173` | `file://` (opaque) |
+| Renderer origin | `http://localhost:<VITE_DEV_PORT>` (default `5173`) | `file://` (opaque) |
 | `app.net.apiFetch` | works — main process, no origin | works — main process, no origin |
 | `API_URL` | from `.env`, runtime | from `.env` next to the app, runtime |
 | Rebuild to change server? | no | no |

@@ -55,7 +55,8 @@ function resolveRendererIndex(): string {
 
 function isDevServer(): string | undefined {
   if (!app.isPackaged && process.env.NODE_ENV === "development") {
-    return "http://localhost:5173";
+    const port = process.env.VITE_DEV_PORT || "5173";
+    return `http://localhost:${port}`;
   }
   return undefined;
 }

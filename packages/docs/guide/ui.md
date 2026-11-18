@@ -150,7 +150,7 @@ npm run dev              # Vite dev server (HMR) + esbuild watch for main/preloa
 npm run build            # Vite build → src/ui/dist, then esbuild main/preload bundles
 ```
 
-In dev, `src/main.ts` loads the renderer from the Vite dev server (`http://localhost:5173` + the preset's `route`) and Vite's HMR reloads it on every edit — no manual refresh. In a packaged build it loads `src/ui/dist/index.html` via `loadFile` (`app.getAppPath()/src/ui/dist/index.html`), so the SPA must be built first (`npm run build`). `npm run start` runs the built app against that folder.
+In dev, `src/main.ts` loads the renderer from the Vite dev server (`http://localhost:<VITE_DEV_PORT>` + the preset's `route`, default `5173`, set in `.env`) and Vite's HMR reloads it on every edit - no manual refresh. In a packaged build it loads `src/ui/dist/index.html` via `loadFile` (`app.getAppPath()/src/ui/dist/index.html`), so the SPA must be built first (`npm run build`). `npm run start` runs the built app against that folder.
 
 If no UI is built, set `DESKAPP_UI=false` for headless/tray mode (see [No UI — run headless](#no-ui--run-headless)).
 
@@ -181,8 +181,8 @@ So any frontend that compiles to a static single-page app works (React, Svelte, 
 | `src/ui/public/`                                           | Static assets copied verbatim into `dist`                                                                                                   | Keep / extend.                                                                                                                                                                   |
 | `package.json` → `devDependencies`                         | Pins `vite`, `@vitejs/plugin-vue`, `vue`, `bootstrap`, `bootstrap-icons`, `sass-embedded`, `axios`, `pinia`, `vue-router`, `@unhead/vue`, `lodash-es`, ... | Add/remove your framework's packages here.                                                                                                                                       |
 | `package.json` → `scripts` (`dev:ui`, `build:ui`, `dev`, `build`) | Run the Vite build                                                                                                                   | **Keep** — they just invoke `vite`; only edit if you leave Vite.                                                                                                                 |
-| `src/main.ts`                                              | `loadFile(src/ui/dist/index.html)` (dev: `loadURL(localhost:5173)`)                                                                         | **Keep** — never framework-dependent.                                                                                                                                            |
-| `.env` / `.env.example`                                    | `DESKAPP_UI`, `API_URL`, `VITE_SOCKET_URL`, `VITE_API_URL`                                                                                  | Keep; `DESKAPP_UI=false` disables the UI at runtime.                                                                                                                             |
+| `src/main.ts`                                              | `loadFile(src/ui/dist/index.html)` (dev: `loadURL(localhost:<VITE_DEV_PORT>)`, default `5173`)                                               | **Keep** - never framework-dependent.                                                                                                                                            |
+| `.env` / `.env.example`                                    | `DESKAPP_UI`, `VITE_DEV_PORT`, `API_URL`, `VITE_SOCKET_URL`, `VITE_API_URL`                                                                 | Keep; `VITE_DEV_PORT` sets the Vite dev server port (change it to run nexwire and deskapp side by side). `DESKAPP_UI=false` disables the UI at runtime.                       |
 
 ### Reference — full file contents
 
@@ -215,7 +215,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    port: devPort, // VITE_DEV_PORT from .env, default 5173
     strictPort: true,
     fs: {
       allow: [path.resolve(rootDir, "../..")],

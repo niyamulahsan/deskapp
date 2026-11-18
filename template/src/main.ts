@@ -65,7 +65,8 @@ if (!gotLock) {
         let isMain = true;
         const preloadPath = getPreloadPath();
         const isDev = !app.isPackaged && process.env.NODE_ENV === "development";
-        const devUrl = isDev ? "http://localhost:5173" : undefined;
+        const devPort = process.env.VITE_DEV_PORT || "5173";
+        const devUrl = isDev ? `http://localhost:${devPort}` : undefined;
 
         console.log(`[desktop] preload: ${preloadPath}`);
         for (const [name, preset] of Object.entries(windows)) {

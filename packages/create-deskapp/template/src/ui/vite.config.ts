@@ -15,6 +15,7 @@ export default defineConfig(({ mode }) => {
   // file available to the client as `import.meta.env.VITE_*` (used by pulse).
   const env = loadEnv(mode, projectRoot, "VITE_");
   const apiUrl = env.VITE_API_URL || process.env.VITE_API_URL || "";
+  const devPort = Number(env.VITE_DEV_PORT || process.env.VITE_DEV_PORT) || 5173;
 
   return {
     // Use path.resolve for bulletproof Windows support
@@ -32,7 +33,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      port: 5173,
+      port: devPort,
       strictPort: true,
       fs: {
         allow: [projectRoot]
