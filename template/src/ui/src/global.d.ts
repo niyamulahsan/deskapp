@@ -24,29 +24,10 @@ declare module "*.vue" {
 
 declare module "lodash-es" {
   export function debounce<T extends (...args: any[]) => any>(fn: T, wait?: number): T;
-  export function throttle<T extends (...args: any[]) => any>(
-    fn: T,
-    wait?: number
-  ): T & {
+  export function throttle<T extends (...args: any[]) => any>(fn: T,wait?: number): T & {
     cancel: () => void;
     flush: () => void;
   };
-}
-
-declare module "bootstrap/js/dist/modal.js" {
-  export default class Modal {
-    constructor(element: Element, options?: { backdrop?: boolean | "static"; keyboard?: boolean });
-    show(): void;
-    hide(): void;
-    dispose(): void;
-  }
-}
-
-declare module "bootstrap/js/dist/toast.js" {
-  export default class Toast {
-    static getOrCreateInstance(element: Element): Toast;
-    show(): void;
-  }
 }
 
 declare module "luxon";

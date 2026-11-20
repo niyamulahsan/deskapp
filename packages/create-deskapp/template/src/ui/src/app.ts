@@ -12,7 +12,9 @@ import router from "@/ui/router/index.ts";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@/ui/assets/scss/custom.scss";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import * as bootstrap from "bootstrap";
+
+(window as any).bootstrap = bootstrap;
 
 let favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
 if (!favicon) {
